@@ -185,7 +185,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
 
         var aboutItem = new ToolStripMenuItem("О программе");
         aboutItem.Click += (_, _) => MessageBox.Show(
-            "BT Charge Indicator\n\nПоказывает заряд сопряжённых Bluetooth-устройств в системном трее Windows.\n\nДвойной щелчок по иконке открывает параметры Bluetooth.",
+            $"BT Charge Indicator {Application.ProductVersion}\n\nspecial for Vitalik\n\nПоказывает заряд сопряжённых Bluetooth-устройств в системном трее Windows.\n\nДвойной щелчок по иконке открывает параметры Bluetooth.",
             "О программе",
             MessageBoxButtons.OK,
             MessageBoxIcon.Information);

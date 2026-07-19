@@ -50,10 +50,12 @@ internal sealed class BluetoothBatteryService
                 BluetoothLEDevice.GetDeviceSelectorFromPairingState(true),
                 useGattFallback: true);
             var pnpBatteryTask = FindPnpBatteryReadingsAsync();
+            var dualSenseBatteryTask = DualSenseBatteryService.FindReadingsAsync();
 
-            await Task.WhenAll(classicTask, lowEnergyTask, pnpBatteryTask);
+            await Task.WhenAll(classicTask, lowEnergyTask, pnpBatteryTask, dualSenseBatteryTask);
             var devices = MergeDuplicates(classicTask.Result.Concat(lowEnergyTask.Result));
             devices = ApplyPnpBatteryReadings(devices, pnpBatteryTask.Result);
+            devices = ApplyDualSenseBatteryReadings(devices, dualSenseBatteryTask.Result);
 
             return new BluetoothScanResult(devices, BluetoothAvailability.Available);
         }
@@ -210,6 +212,52 @@ internal sealed class BluetoothBatteryService
                     IsConnected = device.IsConnected ?? true
                 };
         }).ToArray();
+    }
+
+    private static IReadOnlyList<BluetoothBatteryDevice> ApplyDualSenseBatteryReadings(
+        IReadOnlyList<BluetoothBatteryDevice> devices,
+        IReadOnlyList<DualSenseBatteryReading> readings)
+    {
+        if (readings.Count == 0)
+        {
+            return devices;
+        }
+
+        var likelyDualSenseDevices = devices.Count(IsLikelyDualSense);
+
+        return devices.Select(device =>
+        {
+            if (device.BatteryPercent.HasValue)
+            {
+                return device;
+            }
+
+            var reading = readings.FirstOrDefault(candidate =>
+                device.ContainerId.HasValue &&
+                candidate.ContainerId.HasValue &&
+                device.ContainerId.Value == candidate.ContainerId.Value);
+
+            // Some Bluetooth stacks do not expose the same container ID for the AEP and HID
+            // interfaces. A name-based fallback is safe when exactly one controller is present.
+            if (reading is null && readings.Count == 1 && likelyDualSenseDevices == 1 && IsLikelyDualSense(device))
+            {
+                reading = readings[0];
+            }
+
+            return reading is null
+                ? device
+                : device with
+                {
+                    BatteryPercent = reading.BatteryPercent,
+                    IsConnected = true
+                };
+        }).ToArray();
+    }
+
+    private static bool IsLikelyDualSense(BluetoothBatteryDevice device)
+    {
+        return device.Name.Contains("DualSense", StringComparison.OrdinalIgnoreCase) ||
+               device.Name.Equals("Wireless Controller", StringComparison.OrdinalIgnoreCase);
     }
 
     private static int? ReadBatteryProperty(DeviceInformation device)

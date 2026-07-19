@@ -2,6 +2,11 @@
 
 All notable changes to BT Charge Indicator are documented here.
 
+## 1.1.0 - 2026-07-19
+
+- Added battery detection for Sony PlayStation DualSense and DualSense Edge controllers over Bluetooth HID.
+- Added the `special for Vitalik` release signature.
+
 ## 1.0.2 - 2026-07-14
 
 - Added HFP/PnP battery detection for Bluetooth headphones and earbuds.

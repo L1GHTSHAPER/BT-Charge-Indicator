@@ -5,6 +5,8 @@
 [![Release](https://img.shields.io/github/v/release/L1GHTSHAPER/BT-Charge-Indicator)](https://github.com/L1GHTSHAPER/BT-Charge-Indicator/releases/latest)
 [![License](https://img.shields.io/github/license/L1GHTSHAPER/BT-Charge-Indicator)](LICENSE)
 
+> special for Vitalik
+
 **BT Charge Indicator** is a lightweight Windows system tray app that displays the battery percentage of connected Bluetooth devices: wireless headphones, earbuds, headsets, game controllers, keyboards, mice, speakers, and other accessories.
 
 It works natively on Windows 10 and Windows 11 and reads battery levels through Windows device properties, Bluetooth HFP/PnP data, and the standard Bluetooth Low Energy GATT Battery Service.
@@ -20,6 +22,7 @@ Download the latest ready-to-run Windows executable from [GitHub Releases](https
 - support for Bluetooth Classic and Bluetooth Low Energy (BLE) devices;
 - HFP/PnP battery reading for wireless headphones and earbuds;
 - BLE GATT Battery Service fallback;
+- Sony PlayStation DualSense and DualSense Edge battery reading over Bluetooth HID;
 - automatic refresh every 30 seconds, 1 minute, or 5 minutes;
 - low battery notifications;
 - optional startup with Windows;
@@ -33,6 +36,7 @@ BT Charge Indicator can display battery information for devices that report thei
 
 - Bluetooth headphones, headsets, and TWS earbuds;
 - Xbox and other Bluetooth game controllers;
+- Sony PlayStation DualSense and DualSense Edge controllers;
 - wireless mice and keyboards;
 - portable speakers;
 - BLE accessories that implement the standard Battery Service.
@@ -77,6 +81,7 @@ The app combines several Windows APIs because different Bluetooth accessories ex
 1. `System.Devices.BatteryLife` for standard Windows device battery data;
 2. the Windows HFP/PnP battery property used by many Bluetooth headsets and earbuds;
 3. the Bluetooth LE GATT Battery Service for compatible BLE devices.
+4. Sony DualSense Bluetooth HID input reports for PlayStation controllers.
 
 This approach supports more devices than relying on a single Bluetooth API.
 

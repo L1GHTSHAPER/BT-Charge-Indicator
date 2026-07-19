@@ -2,6 +2,12 @@
 
 All notable changes to BT Charge Indicator are documented here.
 
+## 1.2.0 - 2026-07-19
+
+- Added AirPods battery detection from Apple Continuity Bluetooth LE advertisements.
+- Enlarged percentage digits for better tray readability.
+- Added a persistent tray icon style option: percentage or smartphone-style battery.
+
 ## 1.1.0 - 2026-07-19
 
 - Added battery detection for Sony PlayStation DualSense and DualSense Edge controllers over Bluetooth HID.

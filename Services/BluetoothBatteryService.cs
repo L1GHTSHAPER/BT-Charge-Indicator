@@ -7,7 +7,7 @@ using Windows.Storage.Streams;
 
 namespace BTChargeIndicator.Services;
 
-internal sealed class BluetoothBatteryService
+internal sealed class BluetoothBatteryService : IDisposable
 {
     private const string BatteryLifeProperty = "System.Devices.BatteryLife";
     private const string BluetoothBatteryProperty = "{104EA319-6EE2-4701-BD47-8DDBF425BBE5} 2";
@@ -33,11 +33,14 @@ internal sealed class BluetoothBatteryService
         PresentProperty
     ];
 
+    private readonly AirPodsBatteryService _airPodsBatteryService = new();
+
     public async Task<BluetoothScanResult> ScanAsync()
     {
         var radioState = await GetBluetoothAvailabilityAsync();
         if (radioState is BluetoothAvailability.TurnedOff or BluetoothAvailability.NotFound)
         {
+            _airPodsBatteryService.SetEnabled(false);
             return new BluetoothScanResult([], radioState);
         }
 
@@ -56,6 +59,21 @@ internal sealed class BluetoothBatteryService
             var devices = MergeDuplicates(classicTask.Result.Concat(lowEnergyTask.Result));
             devices = ApplyPnpBatteryReadings(devices, pnpBatteryTask.Result);
             devices = ApplyDualSenseBatteryReadings(devices, dualSenseBatteryTask.Result);
+
+            var needsAirPodsFallback = devices.Any(device =>
+                IsLikelyAirPods(device) &&
+                device.IsConnected != false &&
+                !device.BatteryPercent.HasValue);
+            _airPodsBatteryService.SetEnabled(needsAirPodsFallback);
+
+            if (needsAirPodsFallback)
+            {
+                var airPodsReading = await _airPodsBatteryService.GetReadingAsync(TimeSpan.FromSeconds(2));
+                if (airPodsReading is not null)
+                {
+                    devices = ApplyAirPodsBatteryReading(devices, airPodsReading);
+                }
+            }
 
             return new BluetoothScanResult(devices, BluetoothAvailability.Available);
         }
@@ -260,6 +278,38 @@ internal sealed class BluetoothBatteryService
                device.Name.Equals("Wireless Controller", StringComparison.OrdinalIgnoreCase);
     }
 
+    private static IReadOnlyList<BluetoothBatteryDevice> ApplyAirPodsBatteryReading(
+        IReadOnlyList<BluetoothBatteryDevice> devices,
+        AirPodsBatteryReading reading)
+    {
+        var candidates = devices
+            .Where(device =>
+                IsLikelyAirPods(device) &&
+                device.IsConnected != false &&
+                !device.BatteryPercent.HasValue)
+            .ToArray();
+
+        if (candidates.Length != 1)
+        {
+            return devices;
+        }
+
+        var targetId = candidates[0].Id;
+        return devices.Select(device => device.Id == targetId
+            ? device with
+            {
+                BatteryPercent = reading.BatteryPercent,
+                IsConnected = true
+            }
+            : device).ToArray();
+    }
+
+    private static bool IsLikelyAirPods(BluetoothBatteryDevice device)
+    {
+        return device.Name.Contains("AirPods", StringComparison.OrdinalIgnoreCase) ||
+               device.Name.Contains("Air Pods", StringComparison.OrdinalIgnoreCase);
+    }
+
     private static int? ReadBatteryProperty(DeviceInformation device)
     {
         return ReadPercentage(device, BatteryLifeProperty)
@@ -378,4 +428,9 @@ internal sealed class BluetoothBatteryService
         int? BatteryPercent,
         Guid? ContainerId,
         bool? IsPresent);
+
+    public void Dispose()
+    {
+        _airPodsBatteryService.Dispose();
+    }
 }

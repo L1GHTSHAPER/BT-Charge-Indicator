@@ -17,11 +17,13 @@ Download the latest ready-to-run Windows executable from [GitHub Releases](https
 
 ## Features
 
-- battery percentage directly in the Windows notification area;
+- large, readable battery percentage directly in the Windows notification area;
+- optional smartphone-style battery icon in the notification area;
 - all paired Bluetooth devices in one tray menu;
 - support for Bluetooth Classic and Bluetooth Low Energy (BLE) devices;
 - HFP/PnP battery reading for wireless headphones and earbuds;
 - BLE GATT Battery Service fallback;
+- Apple AirPods battery reading from Continuity Bluetooth LE advertisements;
 - Sony PlayStation DualSense and DualSense Edge battery reading over Bluetooth HID;
 - automatic refresh every 30 seconds, 1 minute, or 5 minutes;
 - low battery notifications;
@@ -81,7 +83,8 @@ The app combines several Windows APIs because different Bluetooth accessories ex
 1. `System.Devices.BatteryLife` for standard Windows device battery data;
 2. the Windows HFP/PnP battery property used by many Bluetooth headsets and earbuds;
 3. the Bluetooth LE GATT Battery Service for compatible BLE devices.
-4. Sony DualSense Bluetooth HID input reports for PlayStation controllers.
+4. Apple Continuity Bluetooth LE advertisements for AirPods.
+5. Sony DualSense Bluetooth HID input reports for PlayStation controllers.
 
 This approach supports more devices than relying on a single Bluetooth API.
 

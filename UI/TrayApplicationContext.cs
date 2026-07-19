@@ -25,7 +25,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
     public TrayApplicationContext()
     {
         _settings = _settingsStore.Load();
-        _currentIcon = TrayIconRenderer.Create(null);
+        _currentIcon = TrayIconRenderer.Create(null, _settings.IconStyle);
         _notifyIcon = new NotifyIcon
         {
             Icon = _currentIcon,
@@ -133,6 +133,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
         menu.Items.Add(bluetoothSettingsItem);
 
         menu.Items.Add(BuildRefreshIntervalMenu());
+        menu.Items.Add(BuildTrayIconStyleMenu());
 
         var notificationsItem = new ToolStripMenuItem("Уведомлять при низком заряде")
         {
@@ -242,6 +243,30 @@ internal sealed class TrayApplicationContext : ApplicationContext
         parent.DropDownItems.Add(item);
     }
 
+    private ToolStripMenuItem BuildTrayIconStyleMenu()
+    {
+        var styleMenu = new ToolStripMenuItem("Вид значка в трее");
+        AddTrayIconStyleItem(styleMenu, "Крупные цифры", TrayIconStyle.Percentage);
+        AddTrayIconStyleItem(styleMenu, "Батарея", TrayIconStyle.Battery);
+        return styleMenu;
+    }
+
+    private void AddTrayIconStyleItem(ToolStripMenuItem parent, string text, TrayIconStyle style)
+    {
+        var item = new ToolStripMenuItem(text)
+        {
+            Checked = _settings.IconStyle == style
+        };
+        item.Click += (_, _) =>
+        {
+            _settings.IconStyle = style;
+            _settingsStore.Save(_settings);
+            UpdateTrayIcon();
+            ReplaceContextMenu();
+        };
+        parent.DropDownItems.Add(item);
+    }
+
     private void ReplaceContextMenu()
     {
         var previous = _notifyIcon.ContextMenuStrip;
@@ -257,7 +282,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
         var lowestCharge = relevantDevices.Select(device => device.BatteryPercent).Min();
 
         var previousIcon = _currentIcon;
-        _currentIcon = TrayIconRenderer.Create(lowestCharge);
+        _currentIcon = TrayIconRenderer.Create(lowestCharge, _settings.IconStyle);
         _notifyIcon.Icon = _currentIcon;
         previousIcon?.Dispose();
 
@@ -394,6 +419,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
         _notifyIcon.Dispose();
         _currentIcon?.Dispose();
         _refreshTimer.Dispose();
+        _bluetoothService.Dispose();
         _refreshLock.Dispose();
         base.ExitThreadCore();
     }

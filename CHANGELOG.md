@@ -2,6 +2,16 @@
 
 All notable changes to BT Charge Indicator are documented here.
 
+## 1.3.0 - 2026-08-09
+
+- Fixed missing check marks for low-battery notifications and Windows startup settings.
+- Added a configurable low-battery threshold that also controls the tray icon warning color.
+- Added per-device renaming, visibility, tray icon, and notification settings.
+- Added separate left, right, and charging case levels for supported AirPods readings.
+- Added device diagnostics with connection, battery source, address, and container details.
+- Added native Windows notifications with snooze and action buttons, with a tray balloon fallback.
+- Added optional automatic and manual GitHub release checks.
+
 ## 1.2.0 - 2026-07-19
 
 - Added AirPods battery detection from Apple Continuity Bluetooth LE advertisements.
@@ -11,7 +21,6 @@ All notable changes to BT Charge Indicator are documented here.
 ## 1.1.0 - 2026-07-19
 
 - Added battery detection for Sony PlayStation DualSense and DualSense Edge controllers over Bluetooth HID.
-- Added the `special for Vitalik` release signature.
 
 ## 1.0.2 - 2026-07-14
 

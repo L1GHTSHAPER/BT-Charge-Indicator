@@ -7,7 +7,7 @@ namespace BTChargeIndicator.UI;
 
 internal static class TrayIconRenderer
 {
-    public static Icon Create(int? percentage, TrayIconStyle style)
+    public static Icon Create(int? percentage, TrayIconStyle style, int lowBatteryThreshold)
     {
         using var bitmap = new Bitmap(32, 32, PixelFormat.Format32bppArgb);
         using var graphics = Graphics.FromImage(bitmap);
@@ -18,9 +18,9 @@ internal static class TrayIconRenderer
 
         var background = percentage switch
         {
-            <= 20 => Color.FromArgb(220, 55, 55),
-            <= 40 => Color.FromArgb(235, 145, 35),
             null => Color.FromArgb(105, 112, 122),
+            int value when value <= lowBatteryThreshold => Color.FromArgb(220, 55, 55),
+            int value when value <= Math.Min(lowBatteryThreshold + 20, 100) => Color.FromArgb(235, 145, 35),
             _ => Color.FromArgb(32, 158, 92)
         };
 

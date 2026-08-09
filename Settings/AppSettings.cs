@@ -10,6 +10,12 @@ internal sealed class AppSettings
 
     public TrayIconStyle IconStyle { get; set; } = TrayIconStyle.Percentage;
 
+    public bool CheckForUpdatesAutomatically { get; set; } = true;
+
+    public DateTimeOffset? LastUpdateCheckUtc { get; set; }
+
+    public Dictionary<string, DevicePreferences> Devices { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+
     public void Normalize()
     {
         RefreshIntervalSeconds = RefreshIntervalSeconds is 30 or 60 or 300
@@ -19,7 +25,24 @@ internal sealed class AppSettings
         IconStyle = Enum.IsDefined(IconStyle)
             ? IconStyle
             : TrayIconStyle.Percentage;
+
+        Devices = new Dictionary<string, DevicePreferences>(
+            Devices ?? [],
+            StringComparer.OrdinalIgnoreCase);
     }
+}
+
+internal sealed class DevicePreferences
+{
+    public string? LastKnownName { get; set; }
+
+    public string? CustomName { get; set; }
+
+    public bool IsHidden { get; set; }
+
+    public bool IncludeInTrayIcon { get; set; } = true;
+
+    public bool LowBatteryNotifications { get; set; } = true;
 }
 
 internal enum TrayIconStyle

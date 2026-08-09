@@ -6,7 +6,28 @@ internal sealed record BluetoothBatteryDevice(
     int? BatteryPercent,
     bool? IsConnected,
     string? Address,
-    Guid? ContainerId);
+    Guid? ContainerId)
+{
+    public BatteryReadingSource BatterySource { get; init; }
+
+    public BatteryComponents? Components { get; init; }
+}
+
+internal sealed record BatteryComponents(
+    int? LeftPercent,
+    int? RightPercent,
+    int? CasePercent);
+
+internal enum BatteryReadingSource
+{
+    None,
+    WindowsDeviceProperty,
+    BluetoothHfp,
+    BluetoothGatt,
+    PlugAndPlay,
+    AirPodsAdvertisement,
+    DualSenseHid
+}
 
 internal enum BluetoothAvailability
 {

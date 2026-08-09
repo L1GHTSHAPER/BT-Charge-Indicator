@@ -5,8 +5,6 @@
 [![Release](https://img.shields.io/github/v/release/L1GHTSHAPER/BT-Charge-Indicator)](https://github.com/L1GHTSHAPER/BT-Charge-Indicator/releases/latest)
 [![License](https://img.shields.io/github/license/L1GHTSHAPER/BT-Charge-Indicator)](LICENSE)
 
-> special for Vitalik
-
 **BT Charge Indicator** is a lightweight Windows system tray app that displays the battery percentage of connected Bluetooth devices: wireless headphones, earbuds, headsets, game controllers, keyboards, mice, speakers, and other accessories.
 
 It works natively on Windows 10 and Windows 11 and reads battery levels through Windows device properties, Bluetooth HFP/PnP data, and the standard Bluetooth Low Energy GATT Battery Service.
@@ -23,14 +21,17 @@ Download the latest ready-to-run Windows executable from [GitHub Releases](https
 - support for Bluetooth Classic and Bluetooth Low Energy (BLE) devices;
 - HFP/PnP battery reading for wireless headphones and earbuds;
 - BLE GATT Battery Service fallback;
-- Apple AirPods battery reading from Continuity Bluetooth LE advertisements;
+- Apple AirPods battery reading from Continuity Bluetooth LE advertisements, including separate left, right, and case levels;
 - Sony PlayStation DualSense and DualSense Edge battery reading over Bluetooth HID;
 - automatic refresh every 30 seconds, 1 minute, or 5 minutes;
-- low battery notifications;
+- configurable low battery threshold and native Windows notifications with snooze;
+- per-device renaming, hiding, tray icon inclusion, and notification settings;
+- device diagnostics showing the battery data source and Bluetooth identifiers;
 - optional startup with Windows;
+- optional automatic update checks through GitHub Releases;
 - quick access to Windows Bluetooth settings;
 - native C# WinForms app with no web browser or background server;
-- no telemetry, accounts, or network access.
+- no telemetry or accounts.
 
 ## Supported devices
 
@@ -54,6 +55,7 @@ Battery reporting depends on the device firmware and Windows driver. Accessories
 5. Double-click it to open Windows Bluetooth settings.
 
 The tray icon shows the lowest known battery percentage among currently connected devices, helping you notice the accessory that needs charging first.
+On first run, the app creates a Start menu shortcut for itself so Windows can display native notifications. Moving the portable executable is supported; the shortcut is refreshed on the next launch.
 
 ## Build from source
 
@@ -96,7 +98,7 @@ This approach supports more devices than relying on a single Bluetooth API.
 
 ## Privacy
 
-BT Charge Indicator works locally. It does not collect analytics, send device information, or connect to external services.
+BT Charge Indicator processes Bluetooth device data locally and does not collect analytics or send device information. When automatic update checks are enabled, it contacts only the public GitHub Releases API for this repository; the option can be disabled from the tray menu.
 
 ## Contributing
 

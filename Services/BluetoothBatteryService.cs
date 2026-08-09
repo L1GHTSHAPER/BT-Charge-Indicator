@@ -127,13 +127,7 @@ internal sealed class BluetoothBatteryService : IDisposable
         // проверка этого флага скрывала весь найденный список.
         var devices = information
             .Where(device => !string.IsNullOrWhiteSpace(device.Name))
-            .Select(device => new BluetoothBatteryDevice(
-                device.Id,
-                device.Name.Trim(),
-                ReadBatteryProperty(device),
-                ReadConnectionState(device),
-                ReadString(device, AddressProperty),
-                ReadGuid(device, AepContainerIdProperty)))
+            .Select(CreateDevice)
             .ToArray();
 
         if (!useGattFallback)
@@ -161,7 +155,13 @@ internal sealed class BluetoothBatteryService : IDisposable
                 battery = null;
             }
 
-            return device with { BatteryPercent = battery };
+            return device with
+            {
+                BatteryPercent = battery,
+                BatterySource = battery.HasValue
+                    ? BatteryReadingSource.BluetoothGatt
+                    : BatteryReadingSource.None
+            };
         });
 
         return await Task.WhenAll(reads);
@@ -227,7 +227,8 @@ internal sealed class BluetoothBatteryService : IDisposable
                 : device with
                 {
                     BatteryPercent = reading.BatteryPercent,
-                    IsConnected = device.IsConnected ?? true
+                    IsConnected = device.IsConnected ?? true,
+                    BatterySource = BatteryReadingSource.PlugAndPlay
                 };
         }).ToArray();
     }
@@ -267,7 +268,8 @@ internal sealed class BluetoothBatteryService : IDisposable
                 : device with
                 {
                     BatteryPercent = reading.BatteryPercent,
-                    IsConnected = true
+                    IsConnected = true,
+                    BatterySource = BatteryReadingSource.DualSenseHid
                 };
         }).ToArray();
     }
@@ -299,7 +301,12 @@ internal sealed class BluetoothBatteryService : IDisposable
             ? device with
             {
                 BatteryPercent = reading.BatteryPercent,
-                IsConnected = true
+                IsConnected = true,
+                BatterySource = BatteryReadingSource.AirPodsAdvertisement,
+                Components = new BatteryComponents(
+                    reading.LeftBatteryPercent,
+                    reading.RightBatteryPercent,
+                    reading.CaseBatteryPercent)
             }
             : device).ToArray();
     }
@@ -310,10 +317,33 @@ internal sealed class BluetoothBatteryService : IDisposable
                device.Name.Contains("Air Pods", StringComparison.OrdinalIgnoreCase);
     }
 
-    private static int? ReadBatteryProperty(DeviceInformation device)
+    private static BluetoothBatteryDevice CreateDevice(DeviceInformation device)
     {
-        return ReadPercentage(device, BatteryLifeProperty)
-            ?? ReadPercentage(device, BluetoothBatteryProperty);
+        var battery = ReadBatteryProperty(device);
+        return new BluetoothBatteryDevice(
+            device.Id,
+            device.Name.Trim(),
+            battery.Percentage,
+            ReadConnectionState(device),
+            ReadString(device, AddressProperty),
+            ReadGuid(device, AepContainerIdProperty))
+        {
+            BatterySource = battery.Source
+        };
+    }
+
+    private static BatteryReading ReadBatteryProperty(DeviceInformation device)
+    {
+        var standardBattery = ReadPercentage(device, BatteryLifeProperty);
+        if (standardBattery.HasValue)
+        {
+            return new BatteryReading(standardBattery, BatteryReadingSource.WindowsDeviceProperty);
+        }
+
+        var hfpBattery = ReadPercentage(device, BluetoothBatteryProperty);
+        return new BatteryReading(
+            hfpBattery,
+            hfpBattery.HasValue ? BatteryReadingSource.BluetoothHfp : BatteryReadingSource.None);
     }
 
     private static int? ReadPercentage(DeviceInformation device, string propertyName)
@@ -428,6 +458,10 @@ internal sealed class BluetoothBatteryService : IDisposable
         int? BatteryPercent,
         Guid? ContainerId,
         bool? IsPresent);
+
+    private sealed record BatteryReading(
+        int? Percentage,
+        BatteryReadingSource Source);
 
     public void Dispose()
     {

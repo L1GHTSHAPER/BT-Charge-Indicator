@@ -497,7 +497,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
         var first = includedDevices.FirstOrDefault(device => device.BatteryPercent.HasValue);
         return first is null
             ? $"BT Charge Indicator — {includedDevices.Length} устр., заряд недоступен"
-            : $"{GetDisplayName(first)}: {first.BatteryPercent}%";
+            : $"{GetDisplayName(first)}: {FormatBatterySummary(first)}";
     }
 
     private void SetTrayText(string text)
@@ -569,6 +569,19 @@ internal sealed class TrayApplicationContext : ApplicationContext
         return parts.Count == 0 ? string.Empty : $"  [{string.Join(" · ", parts)}]";
     }
 
+    private static string FormatBatterySummary(BluetoothBatteryDevice device)
+    {
+        if (device.Components is null)
+        {
+            return device.BatteryPercent is int percentage ? $"{percentage}%" : "нет данных";
+        }
+
+        var formatted = FormatBatteryComponents(device.Components).Trim();
+        return formatted.Length >= 2 && formatted[0] == '[' && formatted[^1] == ']'
+            ? formatted[1..^1]
+            : formatted;
+    }
+
     private void SaveDeviceSettings(bool updateIcon = true)
     {
         _settingsStore.Save(_settings);
@@ -584,6 +597,9 @@ internal sealed class TrayApplicationContext : ApplicationContext
         var components = device.Components is null
             ? "нет"
             : FormatBatteryComponents(device.Components).Trim();
+        var categories = device.Categories.Count == 0
+            ? "не указаны"
+            : string.Join(", ", device.Categories);
         var connection = device.IsConnected switch
         {
             true => "подключено",
@@ -595,8 +611,11 @@ internal sealed class TrayApplicationContext : ApplicationContext
             BatteryReadingSource.WindowsDeviceProperty => "свойство батареи Windows",
             BatteryReadingSource.BluetoothHfp => "Bluetooth HFP",
             BatteryReadingSource.BluetoothGatt => "BLE GATT Battery Service",
+            BatteryReadingSource.BluetoothGattComponents => "BLE GATT Battery Service (компоненты)",
             BatteryReadingSource.PlugAndPlay => "свойство Plug and Play",
             BatteryReadingSource.AirPodsAdvertisement => "Apple Continuity BLE",
+            BatteryReadingSource.GoogleFastPairAdvertisement => "Google Fast Pair BLE",
+            BatteryReadingSource.NothingRfcomm => "Nothing/CMF RFCOMM",
             BatteryReadingSource.DualSenseHid => "Bluetooth HID DualSense",
             _ => "источник заряда не найден"
         };
@@ -608,6 +627,8 @@ internal sealed class TrayApplicationContext : ApplicationContext
             $"Заряд: {(device.BatteryPercent is int percent ? $"{percent}%" : "нет данных")}\n" +
             $"Источник: {source}\n" +
             $"Компоненты: {components}\n" +
+            $"Категории: {categories}\n" +
+            $"Bluetooth CoD: {device.BluetoothClassMajor?.ToString() ?? "не указан"}\n" +
             $"Bluetooth-адрес: {device.Address ?? "не указан"}\n" +
             $"Container ID: {device.ContainerId?.ToString("D") ?? "не указан"}\n\n" +
             $"ID устройства:\n{device.Id}\n\n" +
@@ -776,8 +797,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
             return;
         }
 
-        var details = string.Join(", ", newLowDevices.Select(device =>
-            $"{GetDisplayName(device)}: {device.BatteryPercent}%"));
+        var details = string.Join(", ", newLowDevices.Select(FormatLowBatteryDevice));
         if (!DesktopNotificationService.TryShow(
                 "Низкий заряд Bluetooth-устройства",
                 details,
@@ -806,9 +826,32 @@ internal sealed class TrayApplicationContext : ApplicationContext
             : string.Join(
                 Environment.NewLine,
                 visibleDevices.Take(5).Select(device =>
-                    $"{GetDisplayName(device)}: {(device.BatteryPercent is int percent ? $"{percent}%" : "нет данных")}"));
+                    $"{GetDisplayName(device)}: {FormatBatterySummary(device)}"));
 
         _notifyIcon.ShowBalloonTip(4000, "BT Charge Indicator", text, ToolTipIcon.Info);
+    }
+
+    private string FormatLowBatteryDevice(BluetoothBatteryDevice device)
+    {
+        if (device.Components is null)
+        {
+            return $"{GetDisplayName(device)}: {device.BatteryPercent}%";
+        }
+
+        var lowComponents = new[]
+            {
+                (Name: "Л", Percentage: device.Components.LeftPercent),
+                (Name: "П", Percentage: device.Components.RightPercent),
+                (Name: "кейс", Percentage: device.Components.CasePercent)
+            }
+            .Where(component => component.Percentage.HasValue &&
+                                component.Percentage <= _settings.LowBatteryThreshold)
+            .Select(component => $"{component.Name} {component.Percentage}%")
+            .ToArray();
+
+        return lowComponents.Length == 0
+            ? $"{GetDisplayName(device)}: {device.BatteryPercent}%"
+            : $"{GetDisplayName(device)}: {string.Join(" · ", lowComponents)}";
     }
 
     private static void OpenBluetoothSettings()

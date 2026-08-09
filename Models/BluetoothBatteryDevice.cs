@@ -11,6 +11,10 @@ internal sealed record BluetoothBatteryDevice(
     public BatteryReadingSource BatterySource { get; init; }
 
     public BatteryComponents? Components { get; init; }
+
+    public IReadOnlyList<string> Categories { get; init; } = [];
+
+    public ushort? BluetoothClassMajor { get; init; }
 }
 
 internal sealed record BatteryComponents(
@@ -24,8 +28,11 @@ internal enum BatteryReadingSource
     WindowsDeviceProperty,
     BluetoothHfp,
     BluetoothGatt,
+    BluetoothGattComponents,
     PlugAndPlay,
     AirPodsAdvertisement,
+    GoogleFastPairAdvertisement,
+    NothingRfcomm,
     DualSenseHid
 }
 

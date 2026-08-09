@@ -14,6 +14,8 @@ internal sealed class BluetoothBatteryService : IDisposable
     private const string ConnectedProperty = "System.Devices.Aep.IsConnected";
     private const string AddressProperty = "System.Devices.Aep.DeviceAddress";
     private const string AepContainerIdProperty = "System.Devices.Aep.ContainerId";
+    private const string AepCategoryProperty = "System.Devices.Aep.Category";
+    private const string BluetoothClassMajorProperty = "System.Devices.Aep.Bluetooth.Cod.Major";
     private const string DeviceContainerIdProperty = "System.Devices.ContainerId";
     private const string PresentProperty = "System.Devices.Present";
 
@@ -23,7 +25,9 @@ internal sealed class BluetoothBatteryService : IDisposable
         BluetoothBatteryProperty,
         ConnectedProperty,
         AddressProperty,
-        AepContainerIdProperty
+        AepContainerIdProperty,
+        AepCategoryProperty,
+        BluetoothClassMajorProperty
     ];
 
     private static readonly string[] PnpBatteryProperties =
@@ -34,6 +38,8 @@ internal sealed class BluetoothBatteryService : IDisposable
     ];
 
     private readonly AirPodsBatteryService _airPodsBatteryService = new();
+    private readonly FastPairBatteryService _fastPairBatteryService = new();
+    private readonly NothingBatteryService _nothingBatteryService = new();
 
     public async Task<BluetoothScanResult> ScanAsync()
     {
@@ -41,8 +47,14 @@ internal sealed class BluetoothBatteryService : IDisposable
         if (radioState is BluetoothAvailability.TurnedOff or BluetoothAvailability.NotFound)
         {
             _airPodsBatteryService.SetEnabled(false);
+            _fastPairBatteryService.SetEnabled(false);
             return new BluetoothScanResult([], radioState);
         }
+
+        // Fast Pair battery data is normally advertised for only a few seconds
+        // when a TWS case opens. Keep the watcher alive so the next regular
+        // refresh can use a packet that arrived between scans.
+        _fastPairBatteryService.SetEnabled(true);
 
         try
         {
@@ -63,7 +75,7 @@ internal sealed class BluetoothBatteryService : IDisposable
             var needsAirPodsFallback = devices.Any(device =>
                 IsLikelyAirPods(device) &&
                 device.IsConnected != false &&
-                !device.BatteryPercent.HasValue);
+                device.Components is null);
             _airPodsBatteryService.SetEnabled(needsAirPodsFallback);
 
             if (needsAirPodsFallback)
@@ -73,6 +85,31 @@ internal sealed class BluetoothBatteryService : IDisposable
                 {
                     devices = ApplyAirPodsBatteryReading(devices, airPodsReading);
                 }
+            }
+
+            var nothingCandidates = devices
+                .Where(device =>
+                    IsLikelyNothingOrCmf(device) &&
+                    device.IsConnected != false &&
+                    device.Components is null)
+                .ToArray();
+            if (nothingCandidates.Length > 0)
+            {
+                var reads = nothingCandidates.Select(async device => new NothingDeviceReading(
+                    device.Id,
+                    await _nothingBatteryService.GetReadingAsync(
+                        device.Address,
+                        TimeSpan.FromSeconds(4))));
+                devices = ApplyNothingBatteryReadings(devices, await Task.WhenAll(reads));
+            }
+
+            var needsFastPairFallback = devices.Any(device =>
+                IsLikelyTws(device) &&
+                device.IsConnected != false &&
+                device.Components is null);
+            if (needsFastPairFallback)
+            {
+                devices = ApplyFastPairBatteryReading(devices);
             }
 
             return new BluetoothScanResult(devices, BluetoothAvailability.Available);
@@ -139,12 +176,13 @@ internal sealed class BluetoothBatteryService : IDisposable
         {
             // Не инициируем GATT-подключение к выключенным устройствам. Это может задержать
             // всё обновление на десятки секунд, если Windows не знает состояние соединения.
-            if (device.BatteryPercent is not null || device.IsConnected != true)
+            if (device.IsConnected != true ||
+                device.BatteryPercent is not null && !IsLikelyTws(device))
             {
                 return device;
             }
 
-            int? battery;
+            GattBatteryReading? battery;
             try
             {
                 battery = await TryReadGattBatteryAsync(device.Id)
@@ -157,10 +195,13 @@ internal sealed class BluetoothBatteryService : IDisposable
 
             return device with
             {
-                BatteryPercent = battery,
-                BatterySource = battery.HasValue
-                    ? BatteryReadingSource.BluetoothGatt
-                    : BatteryReadingSource.None
+                BatteryPercent = battery?.BatteryPercent ?? device.BatteryPercent,
+                Components = battery?.Components ?? device.Components,
+                BatterySource = battery is null
+                    ? device.BatterySource
+                    : battery.Components is null
+                        ? BatteryReadingSource.BluetoothGatt
+                        : BatteryReadingSource.BluetoothGattComponents
             };
         });
 
@@ -177,7 +218,8 @@ internal sealed class BluetoothBatteryService : IDisposable
                     : device.Name,
                 StringComparer.OrdinalIgnoreCase)
             .Select(group => group
-                .OrderByDescending(device => device.BatteryPercent.HasValue)
+                .OrderByDescending(device => device.Components is not null)
+                .ThenByDescending(device => device.BatteryPercent.HasValue)
                 .ThenByDescending(device => device.IsConnected == true)
                 .First())
             .OrderByDescending(device => device.IsConnected == true)
@@ -288,7 +330,7 @@ internal sealed class BluetoothBatteryService : IDisposable
             .Where(device =>
                 IsLikelyAirPods(device) &&
                 device.IsConnected != false &&
-                !device.BatteryPercent.HasValue)
+                device.Components is null)
             .ToArray();
 
         if (candidates.Length != 1)
@@ -317,6 +359,107 @@ internal sealed class BluetoothBatteryService : IDisposable
                device.Name.Contains("Air Pods", StringComparison.OrdinalIgnoreCase);
     }
 
+    private static IReadOnlyList<BluetoothBatteryDevice> ApplyNothingBatteryReadings(
+        IReadOnlyList<BluetoothBatteryDevice> devices,
+        IEnumerable<NothingDeviceReading> readings)
+    {
+        var values = readings
+            .Where(value => value.Reading is not null)
+            .ToDictionary(value => value.Id, value => value.Reading!, StringComparer.OrdinalIgnoreCase);
+
+        return devices.Select(device => values.TryGetValue(device.Id, out var reading)
+            ? ApplyComponentReading(device, reading, BatteryReadingSource.NothingRfcomm)
+            : device).ToArray();
+    }
+
+    private IReadOnlyList<BluetoothBatteryDevice> ApplyFastPairBatteryReading(
+        IReadOnlyList<BluetoothBatteryDevice> devices)
+    {
+        var candidates = devices
+            .Where(device =>
+                IsLikelyTws(device) &&
+                device.IsConnected != false &&
+                device.Components is null)
+            .ToArray();
+
+        var exactMatches = candidates
+            .Select(device => new
+            {
+                Device = device,
+                Reading = _fastPairBatteryService.GetLatestReading(device.Address)
+            })
+            .Where(match => match.Reading?.ShouldShow == true)
+            .ToArray();
+
+        BluetoothBatteryDevice? target;
+        FastPairBatteryReading? reading;
+        if (exactMatches.Length == 1)
+        {
+            target = exactMatches[0].Device;
+            reading = exactMatches[0].Reading;
+        }
+        else if (exactMatches.Length == 0 && candidates.Length == 1)
+        {
+            target = candidates[0];
+            reading = _fastPairBatteryService.GetLatestReading();
+        }
+        else
+        {
+            return devices;
+        }
+
+        if (reading?.ShouldShow != true)
+        {
+            return devices;
+        }
+
+        return devices.Select(device => device.Id == target.Id
+            ? ApplyComponentReading(
+                device,
+                reading.Battery,
+                BatteryReadingSource.GoogleFastPairAdvertisement)
+            : device).ToArray();
+    }
+
+    private static BluetoothBatteryDevice ApplyComponentReading(
+        BluetoothBatteryDevice device,
+        TwsBatteryReading reading,
+        BatteryReadingSource source)
+    {
+        return device with
+        {
+            BatteryPercent = reading.LowestPercent ?? device.BatteryPercent,
+            IsConnected = true,
+            BatterySource = source,
+            Components = reading.Components
+        };
+    }
+
+    private static bool IsLikelyNothingOrCmf(BluetoothBatteryDevice device)
+    {
+        return device.Name.Contains("Nothing", StringComparison.OrdinalIgnoreCase) ||
+               device.Name.Contains("CMF", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsLikelyTws(BluetoothBatteryDevice device)
+    {
+        var name = device.Name;
+        return IsLikelyAirPods(device) ||
+               IsLikelyNothingOrCmf(device) ||
+               device.BluetoothClassMajor == 4 ||
+               device.Categories.Any(category =>
+                   category.Contains("Audio", StringComparison.OrdinalIgnoreCase) ||
+                   category.Contains("Headphone", StringComparison.OrdinalIgnoreCase) ||
+                   category.Contains("Headset", StringComparison.OrdinalIgnoreCase)) ||
+               name.Contains("Buds", StringComparison.OrdinalIgnoreCase) ||
+               name.Contains("Earbuds", StringComparison.OrdinalIgnoreCase) ||
+               name.Contains("FreeBuds", StringComparison.OrdinalIgnoreCase) ||
+               name.Contains("TWS", StringComparison.OrdinalIgnoreCase) ||
+               name.StartsWith("WF-", StringComparison.OrdinalIgnoreCase) ||
+               name.Contains("LinkBuds", StringComparison.OrdinalIgnoreCase) ||
+               name.Contains("Pixel Buds", StringComparison.OrdinalIgnoreCase);
+    }
+
     private static BluetoothBatteryDevice CreateDevice(DeviceInformation device)
     {
         var battery = ReadBatteryProperty(device);
@@ -328,7 +471,9 @@ internal sealed class BluetoothBatteryService : IDisposable
             ReadString(device, AddressProperty),
             ReadGuid(device, AepContainerIdProperty))
         {
-            BatterySource = battery.Source
+            BatterySource = battery.Source,
+            Categories = ReadStrings(device, AepCategoryProperty),
+            BluetoothClassMajor = ReadUInt16(device, BluetoothClassMajorProperty)
         };
     }
 
@@ -391,6 +536,38 @@ internal sealed class BluetoothBatteryService : IDisposable
         return value is Guid guid && guid != Guid.Empty ? guid : null;
     }
 
+    private static IReadOnlyList<string> ReadStrings(DeviceInformation device, string propertyName)
+    {
+        if (!device.Properties.TryGetValue(propertyName, out var value) || value is null)
+        {
+            return [];
+        }
+
+        return value switch
+        {
+            string single when !string.IsNullOrWhiteSpace(single) => [single],
+            IEnumerable<string> many => many.Where(item => !string.IsNullOrWhiteSpace(item)).ToArray(),
+            _ => []
+        };
+    }
+
+    private static ushort? ReadUInt16(DeviceInformation device, string propertyName)
+    {
+        if (!device.Properties.TryGetValue(propertyName, out var value) || value is null)
+        {
+            return null;
+        }
+
+        try
+        {
+            return Convert.ToUInt16(value);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     private static bool? ReadBoolean(DeviceInformation device, string propertyName)
     {
         return device.Properties.TryGetValue(propertyName, out var value) && value is bool result
@@ -398,7 +575,7 @@ internal sealed class BluetoothBatteryService : IDisposable
             : null;
     }
 
-    private static async Task<int?> TryReadGattBatteryAsync(string deviceId)
+    private static async Task<GattBatteryReading?> TryReadGattBatteryAsync(string deviceId)
     {
         try
         {
@@ -417,6 +594,7 @@ internal sealed class BluetoothBatteryService : IDisposable
                 return null;
             }
 
+            var levels = new List<GattComponentReading>();
             foreach (var service in servicesResult.Services)
             {
                 using (service)
@@ -440,10 +618,30 @@ internal sealed class BluetoothBatteryService : IDisposable
 
                         using var reader = DataReader.FromBuffer(readResult.Value);
                         var percentage = reader.ReadByte();
-                        return percentage <= 100 ? percentage : null;
+                        if (percentage <= 100)
+                        {
+                            levels.Add(new GattComponentReading(
+                                percentage,
+                                ClassifyGattComponent(characteristic.UserDescription)));
+                        }
                     }
                 }
             }
+
+            if (levels.Count == 0)
+            {
+                return null;
+            }
+
+            var components = CreateGattComponents(levels);
+            var aggregate = components is null
+                ? levels.Min(level => level.Percentage)
+                : new TwsBatteryReading(
+                        components.LeftPercent,
+                        components.RightPercent,
+                        components.CasePercent)
+                    .LowestPercent ?? levels.Min(level => level.Percentage);
+            return new GattBatteryReading(aggregate, components);
         }
         catch
         {
@@ -451,6 +649,49 @@ internal sealed class BluetoothBatteryService : IDisposable
         }
 
         return null;
+    }
+
+    private static BatteryComponentKind ClassifyGattComponent(string? description)
+    {
+        if (string.IsNullOrWhiteSpace(description))
+        {
+            return BatteryComponentKind.Unknown;
+        }
+
+        if (description.Contains("left", StringComparison.OrdinalIgnoreCase) ||
+            description.Contains("лев", StringComparison.OrdinalIgnoreCase))
+        {
+            return BatteryComponentKind.Left;
+        }
+
+        if (description.Contains("right", StringComparison.OrdinalIgnoreCase) ||
+            description.Contains("прав", StringComparison.OrdinalIgnoreCase))
+        {
+            return BatteryComponentKind.Right;
+        }
+
+        if (description.Contains("case", StringComparison.OrdinalIgnoreCase) ||
+            description.Contains("box", StringComparison.OrdinalIgnoreCase) ||
+            description.Contains("кейс", StringComparison.OrdinalIgnoreCase) ||
+            description.Contains("cradle", StringComparison.OrdinalIgnoreCase))
+        {
+            return BatteryComponentKind.Case;
+        }
+
+        return BatteryComponentKind.Unknown;
+    }
+
+    private static BatteryComponents? CreateGattComponents(IReadOnlyList<GattComponentReading> readings)
+    {
+        var left = readings.FirstOrDefault(reading => reading.Kind == BatteryComponentKind.Left)?.Percentage;
+        var right = readings.FirstOrDefault(reading => reading.Kind == BatteryComponentKind.Right)?.Percentage;
+        var chargingCase = readings.FirstOrDefault(reading => reading.Kind == BatteryComponentKind.Case)?.Percentage;
+
+        // Some BAS 1.1 devices expose three service instances without textual
+        // descriptors. The spec orders no instances, so do not guess left/right.
+        return left.HasValue || right.HasValue || chargingCase.HasValue
+            ? new BatteryComponents(left, right, chargingCase)
+            : null;
     }
 
     private sealed record PnpBatteryReading(
@@ -463,8 +704,29 @@ internal sealed class BluetoothBatteryService : IDisposable
         int? Percentage,
         BatteryReadingSource Source);
 
+    private sealed record GattBatteryReading(
+        int BatteryPercent,
+        BatteryComponents? Components);
+
+    private sealed record NothingDeviceReading(
+        string Id,
+        TwsBatteryReading? Reading);
+
+    private sealed record GattComponentReading(
+        int Percentage,
+        BatteryComponentKind Kind);
+
+    private enum BatteryComponentKind
+    {
+        Unknown,
+        Left,
+        Right,
+        Case
+    }
+
     public void Dispose()
     {
         _airPodsBatteryService.Dispose();
+        _fastPairBatteryService.Dispose();
     }
 }

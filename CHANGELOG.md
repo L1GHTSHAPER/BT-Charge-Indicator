@@ -2,6 +2,14 @@
 
 All notable changes to BT Charge Indicator are documented here.
 
+## 1.4.0 - 2026-08-09
+
+- Added separate left, right, and charging case levels for Nothing and CMF earbuds over their RFCOMM companion protocol.
+- Added generic Google Fast Pair battery advertisement support for compatible TWS earbuds.
+- Added support for labeled multiple-instance BLE GATT Battery Services.
+- Component levels now appear in quick summaries, diagnostics, tooltips, and low-battery notifications.
+- Added protocol parser tests for Fast Pair and current/legacy Nothing battery frames.
+
 ## 1.3.0 - 2026-08-09
 
 - Fixed missing check marks for low-battery notifications and Windows startup settings.

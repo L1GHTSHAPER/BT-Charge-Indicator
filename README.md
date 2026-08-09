@@ -22,6 +22,9 @@ Download the latest ready-to-run Windows executable from [GitHub Releases](https
 - HFP/PnP battery reading for wireless headphones and earbuds;
 - BLE GATT Battery Service fallback;
 - Apple AirPods battery reading from Continuity Bluetooth LE advertisements, including separate left, right, and case levels;
+- separate left, right, and case levels for Nothing and CMF earbuds, including CMF Buds Pro 2;
+- Google Fast Pair battery advertisements for compatible TWS earbuds from other manufacturers;
+- multiple-instance BLE GATT Battery Service support when component labels are exposed;
 - Sony PlayStation DualSense and DualSense Edge battery reading over Bluetooth HID;
 - automatic refresh every 30 seconds, 1 minute, or 5 minutes;
 - configurable low battery threshold and native Windows notifications with snooze;
@@ -44,7 +47,7 @@ BT Charge Indicator can display battery information for devices that report thei
 - portable speakers;
 - BLE accessories that implement the standard Battery Service.
 
-Battery reporting depends on the device firmware and Windows driver. Accessories that use a proprietary battery protocol may appear with `—` instead of a percentage.
+Battery reporting depends on the device firmware and Windows driver. Separate TWS component levels are available through Apple Continuity, Nothing/CMF RFCOMM, Google Fast Pair, or labeled multiple-instance GATT services. Accessories that use another proprietary battery protocol may still expose only one combined percentage or appear with `—`.
 
 ## Usage
 
@@ -84,11 +87,15 @@ The app combines several Windows APIs because different Bluetooth accessories ex
 
 1. `System.Devices.BatteryLife` for standard Windows device battery data;
 2. the Windows HFP/PnP battery property used by many Bluetooth headsets and earbuds;
-3. the Bluetooth LE GATT Battery Service for compatible BLE devices.
-4. Apple Continuity Bluetooth LE advertisements for AirPods.
-5. Sony DualSense Bluetooth HID input reports for PlayStation controllers.
+3. the Bluetooth LE GATT Battery Service, including labeled multiple battery instances;
+4. Apple Continuity Bluetooth LE advertisements for AirPods;
+5. Google Fast Pair battery advertisements for compatible TWS earbuds;
+6. the Nothing/CMF RFCOMM companion protocol for separate earbud and case levels;
+7. Sony DualSense Bluetooth HID input reports for PlayStation controllers.
 
 This approach supports more devices than relying on a single Bluetooth API.
+
+The Fast Pair battery layout follows the official [Google Fast Pair Battery Notification specification](https://developers.google.com/nearby/fast-pair/specifications/extensions/batterynotification). The Nothing/CMF adapter is compatible with the reverse-engineered protocol documented by the open-source [Something X](https://github.com/SoaOaoS/something-x) project.
 
 ## Русский
 

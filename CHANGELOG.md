@@ -2,6 +2,10 @@
 
 All notable changes to BT Charge Indicator are documented here.
 
+## 1.4.1 - 2026-10-05
+
+- Fixed low-battery notification banners staying on screen until manually dismissed; they now use the standard Windows timeout while retaining snooze and action buttons.
+
 ## 1.4.0 - 2026-08-09
 
 - Added separate left, right, and charging case levels for Nothing and CMF earbuds over their RFCOMM companion protocol.

@@ -430,17 +430,35 @@ internal sealed class TrayApplicationContext : ApplicationContext
     private ToolStripMenuItem BuildTrayIconStyleMenu()
     {
         var styleMenu = new ToolStripMenuItem("Вид значка в трее");
+        if (styleMenu.DropDown is ToolStripDropDownMenu dropDown)
+        {
+            dropDown.ShowImageMargin = true;
+            dropDown.ShowCheckMargin = true;
+            dropDown.ImageScalingSize = new Size(20, 20);
+        }
         AddTrayIconStyleItem(styleMenu, "Крупные цифры", TrayIconStyle.Percentage);
         AddTrayIconStyleItem(styleMenu, "Батарея", TrayIconStyle.Battery);
+        AddTrayIconStyleItem(styleMenu, "Кольцо", TrayIconStyle.Ring);
+        AddTrayIconStyleItem(styleMenu, "Сегментное кольцо", TrayIconStyle.SegmentedRing);
+        AddTrayIconStyleItem(styleMenu, "Шкала", TrayIconStyle.Bars);
+        AddTrayIconStyleItem(styleMenu, "Вертикальная батарея", TrayIconStyle.VerticalBattery);
+        AddTrayIconStyleItem(styleMenu, "Цифры без фона", TrayIconStyle.Minimal);
+        AddTrayIconStyleItem(styleMenu, "Капсула", TrayIconStyle.Capsule);
+        AddTrayIconStyleItem(styleMenu, "Градиент", TrayIconStyle.Gradient);
+        AddTrayIconStyleItem(styleMenu, "Дуга", TrayIconStyle.Gauge);
         return styleMenu;
     }
 
     private void AddTrayIconStyleItem(ToolStripMenuItem parent, string text, TrayIconStyle style)
     {
+        using var previewIcon = TrayIconRenderer.Create(73, style, _settings.LowBatteryThreshold);
+        var preview = previewIcon.ToBitmap();
         var item = new ToolStripMenuItem(text)
         {
-            Checked = _settings.IconStyle == style
+            Checked = _settings.IconStyle == style,
+            Image = preview
         };
+        item.Disposed += (_, _) => preview.Dispose();
         item.Click += (_, _) =>
         {
             _settings.IconStyle = style;

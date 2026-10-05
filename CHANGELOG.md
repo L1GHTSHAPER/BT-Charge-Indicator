@@ -2,6 +2,13 @@
 
 All notable changes to BT Charge Indicator are documented here.
 
+## 1.5.0 - 2026-10-05
+
+- Added eight tray icon styles: ring, segmented ring, bars, vertical battery, minimal numbers, capsule, gradient, and gauge, bringing the total to ten.
+- Added icon previews alongside style names in the tray menu.
+- All styles follow the configured low-battery warning threshold and distinguish unavailable readings from an empty battery.
+- Preserved saved style selections, including the original percentage and battery styles.
+
 ## 1.4.1 - 2026-10-05
 
 - Fixed low-battery notification banners staying on screen until manually dismissed; they now use the standard Windows timeout while retaining snooze and action buttons.

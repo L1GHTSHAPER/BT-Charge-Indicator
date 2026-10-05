@@ -16,7 +16,7 @@ Download the latest ready-to-run Windows executable from [GitHub Releases](https
 ## Features
 
 - large, readable battery percentage directly in the Windows notification area;
-- optional smartphone-style battery icon in the notification area;
+- ten tray icon styles: large numbers, battery, ring, segmented ring, bars, vertical battery, minimal numbers, capsule, gradient, and gauge;
 - all paired Bluetooth devices in one tray menu;
 - support for Bluetooth Classic and Bluetooth Low Energy (BLE) devices;
 - HFP/PnP battery reading for wireless headphones and earbuds;
@@ -58,6 +58,10 @@ Battery reporting depends on the device firmware and Windows driver. Separate TW
 5. Double-click it to open Windows Bluetooth settings.
 
 The tray icon shows the lowest known battery percentage among currently connected devices, helping you notice the accessory that needs charging first.
+Choose a style from **«Вид значка в трее»** in the right-click menu. The selection is saved automatically; every style indicates low charge in red, medium charge in amber, and unavailable readings with a question mark.
+
+![Ten tray icon styles on dark and light backgrounds, at 32 and 16 pixels](docs/tray-icon-styles.png)
+
 On first run, the app creates a Start menu shortcut for itself so Windows can display native notifications. Moving the portable executable is supported; the shortcut is refreshed on the next launch.
 
 ## Build from source

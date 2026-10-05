@@ -47,6 +47,15 @@ internal sealed class DevicePreferences
 
 internal enum TrayIconStyle
 {
-    Percentage,
-    Battery
+    // These values are persisted in settings.json; keep existing IDs stable.
+    Percentage = 0,
+    Battery = 1,
+    Ring = 2,
+    SegmentedRing = 3,
+    Bars = 4,
+    VerticalBattery = 5,
+    Minimal = 6,
+    Capsule = 7,
+    Gradient = 8,
+    Gauge = 9
 }

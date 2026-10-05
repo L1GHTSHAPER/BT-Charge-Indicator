@@ -45,7 +45,6 @@ internal static class DesktopNotificationService
             var escapedMessage = Escape(message);
             var escapedActionLabel = Escape(actionLabel);
             var escapedActionUri = Escape(actionUri);
-            var reminderAttribute = allowSnooze ? " scenario=\"reminder\"" : string.Empty;
             var actions = allowSnooze
                 ? $"""
                   <actions>
@@ -69,7 +68,7 @@ internal static class DesktopNotificationService
             var document = new XmlDocument();
             document.LoadXml(
                 $"""
-                <toast{reminderAttribute}>
+                <toast duration="short">
                   <visual>
                     <binding template="ToastGeneric">
                       <text>{escapedTitle}</text>

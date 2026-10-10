@@ -11,6 +11,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
     private readonly UpdateService _updateService = new();
     private readonly SettingsStore _settingsStore = new();
     private readonly NotifyIcon _notifyIcon;
+    private readonly Bitmap _appLogo = AppBranding.CreateLogoBitmap(24);
     private readonly System.Windows.Forms.Timer _refreshTimer;
     private readonly SemaphoreSlim _refreshLock = new(1, 1);
     private readonly HashSet<string> _lowBatteryNotifications = new(StringComparer.OrdinalIgnoreCase);
@@ -95,9 +96,11 @@ internal sealed class TrayApplicationContext : ApplicationContext
             MinimumSize = new Size(310, 0)
         };
 
-        var title = new ToolStripMenuItem("BT Charge Indicator")
+        var title = new ToolStripLabel("BT Charge Indicator")
         {
-            Enabled = false,
+            Image = _appLogo,
+            ImageScaling = ToolStripItemImageScaling.None,
+            Padding = new Padding(0, 4, 0, 4),
             Font = new Font(SystemFonts.MenuFont ?? SystemFonts.DefaultFont, FontStyle.Bold)
         };
         menu.Items.Add(title);
@@ -900,6 +903,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
         _notifyIcon.Visible = false;
         _notifyIcon.ContextMenuStrip?.Dispose();
         _notifyIcon.Dispose();
+        _appLogo.Dispose();
         _currentIcon?.Dispose();
         _refreshTimer.Dispose();
         _bluetoothService.Dispose();

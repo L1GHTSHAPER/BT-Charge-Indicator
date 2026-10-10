@@ -8,18 +8,20 @@
     <LangVersion>latest</LangVersion>
     <AssemblyName>BTChargeIndicator</AssemblyName>
     <RootNamespace>BTChargeIndicator</RootNamespace>
-    <Version>1.5.0</Version>
-    <FileVersion>1.5.0.0</FileVersion>
+    <Version>1.5.1</Version>
+    <FileVersion>1.5.1.0</FileVersion>
     <Description>Windows system tray Bluetooth battery monitor for headphones, earbuds, game controllers, keyboards, mice, and BLE devices.</Description>
     <Authors>L1GHTSHAPER</Authors>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <RepositoryUrl>https://github.com/L1GHTSHAPER/BT-Charge-Indicator</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
     <SatelliteResourceLanguages>ru</SatelliteResourceLanguages>
   </PropertyGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Assets\app.ico" LogicalName="BTChargeIndicator.AppIcon" />
     <Compile Remove="Tests\**\*.cs" />
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
       <_Parameter1>BTChargeIndicator.ProtocolTests</_Parameter1>

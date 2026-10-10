@@ -2,6 +2,12 @@
 
 All notable changes to BT Charge Indicator are documented here.
 
+## 1.5.1 - 2026-10-11
+
+- Added a black, white, and purple application logo combining a battery and Bluetooth symbol, with no corner signature.
+- Added the logo to the executable, Start menu shortcut, tray menu header, rename dialog, and README.
+- Added editable SVG sources and a script to regenerate PNG assets and the Windows icon at ten sizes.
+
 ## 1.5.0 - 2026-10-05
 
 - Added eight tray icon styles: ring, segmented ring, bars, vertical battery, minimal numbers, capsule, gradient, and gauge, bringing the total to ten.

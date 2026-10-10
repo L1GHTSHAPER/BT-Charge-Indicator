@@ -8,8 +8,8 @@
     <LangVersion>latest</LangVersion>
     <AssemblyName>BTChargeIndicator</AssemblyName>
     <RootNamespace>BTChargeIndicator</RootNamespace>
-    <Version>1.5.1</Version>
-    <FileVersion>1.5.1.0</FileVersion>
+    <Version>1.6.0</Version>
+    <FileVersion>1.6.0.0</FileVersion>
     <Description>Windows system tray Bluetooth battery monitor for headphones, earbuds, game controllers, keyboards, mice, and BLE devices.</Description>
     <Authors>L1GHTSHAPER</Authors>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>

@@ -9,9 +9,9 @@ namespace BTChargeIndicator.Services;
 
 internal sealed class BluetoothBatteryService : IDisposable
 {
-    private const string BatteryLifeProperty = "System.Devices.BatteryLife";
-    private const string BluetoothBatteryProperty = "{104EA319-6EE2-4701-BD47-8DDBF425BBE5} 2";
-    private const string ConnectedProperty = "System.Devices.Aep.IsConnected";
+    internal const string BatteryLifeProperty = "System.Devices.BatteryLife";
+    internal const string BluetoothBatteryProperty = "{104EA319-6EE2-4701-BD47-8DDBF425BBE5} 2";
+    internal const string ConnectedProperty = "System.Devices.Aep.IsConnected";
     private const string AddressProperty = "System.Devices.Aep.DeviceAddress";
     private const string AepContainerIdProperty = "System.Devices.Aep.ContainerId";
     private const string AepCategoryProperty = "System.Devices.Aep.Category";
@@ -41,7 +41,7 @@ internal sealed class BluetoothBatteryService : IDisposable
     private readonly FastPairBatteryService _fastPairBatteryService = new();
     private readonly NothingBatteryService _nothingBatteryService = new();
 
-    public async Task<BluetoothScanResult> ScanAsync()
+    public async Task<BluetoothScanResult> ScanAsync(bool refreshGattBattery = false)
     {
         var radioState = await GetBluetoothAvailabilityAsync();
         if (radioState is BluetoothAvailability.TurnedOff or BluetoothAvailability.NotFound)
@@ -63,7 +63,8 @@ internal sealed class BluetoothBatteryService : IDisposable
                 useGattFallback: false);
             var lowEnergyTask = FindPairedDevicesAsync(
                 BluetoothLEDevice.GetDeviceSelectorFromPairingState(true),
-                useGattFallback: true);
+                useGattFallback: true,
+                refreshGattBattery: refreshGattBattery);
             var pnpBatteryTask = FindPnpBatteryReadingsAsync();
             var dualSenseBatteryTask = DualSenseBatteryService.FindReadingsAsync();
 
@@ -155,7 +156,8 @@ internal sealed class BluetoothBatteryService : IDisposable
 
     private static async Task<IReadOnlyList<BluetoothBatteryDevice>> FindPairedDevicesAsync(
         string selector,
-        bool useGattFallback)
+        bool useGattFallback,
+        bool refreshGattBattery = false)
     {
         var information = await DeviceInformation.FindAllAsync(selector, RequestedProperties);
 
@@ -177,7 +179,7 @@ internal sealed class BluetoothBatteryService : IDisposable
             // Не инициируем GATT-подключение к выключенным устройствам. Это может задержать
             // всё обновление на десятки секунд, если Windows не знает состояние соединения.
             if (device.IsConnected != true ||
-                device.BatteryPercent is not null && !IsLikelyTws(device))
+                device.BatteryPercent is not null && !IsLikelyTws(device) && !refreshGattBattery)
             {
                 return device;
             }

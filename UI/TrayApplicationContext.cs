@@ -8,13 +8,17 @@ namespace BTChargeIndicator.UI;
 internal sealed class TrayApplicationContext : ApplicationContext
 {
     private readonly BluetoothBatteryService _bluetoothService = new();
+    private readonly BluetoothDeviceWatcher _deviceWatcher = new();
     private readonly UpdateService _updateService = new();
     private readonly SettingsStore _settingsStore = new();
     private readonly NotifyIcon _notifyIcon;
     private readonly Bitmap _appLogo = AppBranding.CreateLogoBitmap(24);
     private readonly System.Windows.Forms.Timer _refreshTimer;
+    private readonly System.Windows.Forms.Timer _deviceChangeTimer;
     private readonly SemaphoreSlim _refreshLock = new(1, 1);
     private readonly HashSet<string> _lowBatteryNotifications = new(StringComparer.OrdinalIgnoreCase);
+    // Images are shared across rebuilt menus and owned by this context.
+    private readonly Dictionary<(TrayIconStyle Style, int Threshold), Bitmap> _trayIconPreviews = [];
 
     private AppSettings _settings;
     private IReadOnlyList<BluetoothBatteryDevice> _devices = [];
@@ -26,6 +30,11 @@ internal sealed class TrayApplicationContext : ApplicationContext
     private bool _isExiting;
     private bool _automaticUpdateCheckStarted;
     private bool _isCheckingUpdates;
+    private int _pendingDeviceChanges;
+    private bool _processingDeviceChanges;
+    private bool _deviceChangeRefreshPending;
+    private bool _connectionRefreshPending;
+    private DateTime? _connectionRetryAt;
 
     public TrayApplicationContext()
     {
@@ -52,20 +61,84 @@ internal sealed class TrayApplicationContext : ApplicationContext
         };
         _refreshTimer.Tick += async (_, _) => await RefreshAsync();
 
+        _deviceChangeTimer = new System.Windows.Forms.Timer
+        {
+            Interval = 500,
+            Enabled = true
+        };
+        _deviceChangeTimer.Tick += async (_, _) => await ProcessDeviceChangesAsync();
+        _deviceWatcher.Changed += DeviceWatcher_Changed;
+        _deviceWatcher.Start();
+
         _ = RefreshAsync();
     }
 
-    private async Task RefreshAsync()
+    private void DeviceWatcher_Changed(BluetoothDeviceChangeKind change)
     {
-        if (!await _refreshLock.WaitAsync(0))
+        // DeviceWatcher callbacks run on worker threads; the timer consumes the
+        // flags on the UI thread and coalesces Classic/BLE notifications.
+        Interlocked.Or(ref _pendingDeviceChanges, (int)change);
+    }
+
+    private async Task ProcessDeviceChangesAsync()
+    {
+        if (_isExiting || _processingDeviceChanges)
         {
             return;
+        }
+
+        _processingDeviceChanges = true;
+        try
+        {
+            var changes = (BluetoothDeviceChangeKind)Interlocked.Exchange(ref _pendingDeviceChanges, 0);
+            _deviceChangeRefreshPending |= changes != BluetoothDeviceChangeKind.None;
+            _connectionRefreshPending |= (changes & BluetoothDeviceChangeKind.Connected) ==
+                                         BluetoothDeviceChangeKind.Connected;
+            var retryDue = _connectionRetryAt.HasValue && DateTime.UtcNow >= _connectionRetryAt.Value;
+            if (!_deviceChangeRefreshPending && !retryDue)
+            {
+                return;
+            }
+
+            if (!await RefreshAsync(refreshGattBattery: _connectionRefreshPending || retryDue) || _isExiting)
+            {
+                // Keep the request if a manual or scheduled scan is in progress.
+                return;
+            }
+
+            _deviceChangeRefreshPending = false;
+            if (_connectionRefreshPending)
+            {
+                // HFP/PnP battery data can arrive after the connection event.
+                _connectionRefreshPending = false;
+                _connectionRetryAt = DateTime.UtcNow.AddSeconds(5);
+            }
+            else if (retryDue)
+            {
+                _connectionRetryAt = null;
+            }
+        }
+        finally
+        {
+            _processingDeviceChanges = false;
+        }
+    }
+
+    private async Task<bool> RefreshAsync(bool refreshGattBattery = false)
+    {
+        if (_isExiting || !await _refreshLock.WaitAsync(0))
+        {
+            return false;
         }
 
         try
         {
             SetTrayText("BT Charge Indicator — обновление…");
-            var result = await _bluetoothService.ScanAsync();
+            var result = await _bluetoothService.ScanAsync(refreshGattBattery);
+            if (_isExiting)
+            {
+                return true;
+            }
             _devices = result.Devices;
             _availability = result.Availability;
             _lastErrorMessage = result.ErrorMessage;
@@ -80,10 +153,16 @@ internal sealed class TrayApplicationContext : ApplicationContext
                 _automaticUpdateCheckStarted = true;
                 _ = CheckForUpdatesIfNeededAsync();
             }
+            return true;
         }
         finally
         {
             _refreshLock.Release();
+            if (_isExiting)
+            {
+                _bluetoothService.Dispose();
+                _refreshLock.Dispose();
+            }
         }
     }
 
@@ -150,6 +229,13 @@ internal sealed class TrayApplicationContext : ApplicationContext
         var bluetoothSettingsItem = new ToolStripMenuItem("Открыть параметры Bluetooth");
         bluetoothSettingsItem.Click += (_, _) => OpenBluetoothSettings();
         menu.Items.Add(bluetoothSettingsItem);
+
+        var lowLatencyItem = new ToolStripMenuItem("Игровой режим / низкая задержка…")
+        {
+            ToolTipText = "Проверить поддержку Bluetooth LE Audio и открыть параметры Windows"
+        };
+        lowLatencyItem.Click += (_, _) => ShowLowLatencyModeHelp();
+        menu.Items.Add(lowLatencyItem);
 
         menu.Items.Add(BuildRefreshIntervalMenu());
         menu.Items.Add(BuildTrayIconStyleMenu());
@@ -454,14 +540,17 @@ internal sealed class TrayApplicationContext : ApplicationContext
 
     private void AddTrayIconStyleItem(ToolStripMenuItem parent, string text, TrayIconStyle style)
     {
-        using var previewIcon = TrayIconRenderer.Create(73, style, _settings.LowBatteryThreshold);
-        var preview = previewIcon.ToBitmap();
+        var key = (style, _settings.LowBatteryThreshold);
+        if (!_trayIconPreviews.TryGetValue(key, out var preview))
+        {
+            preview = TrayIconRenderer.CreateBitmap(73, style, _settings.LowBatteryThreshold);
+            _trayIconPreviews.Add(key, preview);
+        }
         var item = new ToolStripMenuItem(text)
         {
             Checked = _settings.IconStyle == style,
             Image = preview
         };
-        item.Disposed += (_, _) => preview.Dispose();
         item.Click += (_, _) =>
         {
             _settings.IconStyle = style;
@@ -477,6 +566,13 @@ internal sealed class TrayApplicationContext : ApplicationContext
         var previous = _notifyIcon.ContextMenuStrip;
         _notifyIcon.ContextMenuStrip = BuildContextMenu();
         previous?.Dispose();
+        // Release outdated previews only after the menu using them is disposed.
+        foreach (var key in _trayIconPreviews.Keys
+                     .Where(key => key.Threshold != _settings.LowBatteryThreshold).ToArray())
+        {
+            _trayIconPreviews[key].Dispose();
+            _trayIconPreviews.Remove(key);
+        }
     }
 
     private void UpdateTrayIcon()
@@ -891,6 +987,26 @@ internal sealed class TrayApplicationContext : ApplicationContext
         }
     }
 
+    private static void ShowLowLatencyModeHelp()
+    {
+        var openSettings = MessageBox.Show(
+            "Windows не может принудительно включить игровой режим конкретных наушников: " +
+            "его включает производитель в наушниках или в фирменном приложении.\n\n" +
+            "Для более низкой задержки в Windows 11 проверьте Bluetooth LE Audio:\n" +
+            "1. Откройте «Bluetooth и устройства» → «Устройства».\n" +
+            "2. Включите «Использовать LE Audio, если доступно».\n\n" +
+            "Пункт появится только если его поддерживают и Bluetooth-адаптер с драйвером, и наушники. " +
+            "Открыть параметры Bluetooth?",
+            "Игровой режим / низкая задержка",
+            MessageBoxButtons.YesNo,
+            MessageBoxIcon.Information);
+
+        if (openSettings == DialogResult.Yes)
+        {
+            OpenBluetoothSettings();
+        }
+    }
+
     protected override void ExitThreadCore()
     {
         if (_isExiting)
@@ -900,15 +1016,27 @@ internal sealed class TrayApplicationContext : ApplicationContext
 
         _isExiting = true;
         _refreshTimer.Stop();
+        _deviceChangeTimer.Stop();
+        _deviceWatcher.Changed -= DeviceWatcher_Changed;
+        _deviceWatcher.Dispose();
         _notifyIcon.Visible = false;
         _notifyIcon.ContextMenuStrip?.Dispose();
         _notifyIcon.Dispose();
+        foreach (var preview in _trayIconPreviews.Values)
+        {
+            preview.Dispose();
+        }
+        _trayIconPreviews.Clear();
         _appLogo.Dispose();
         _currentIcon?.Dispose();
         _refreshTimer.Dispose();
-        _bluetoothService.Dispose();
+        _deviceChangeTimer.Dispose();
+        if (_refreshLock.CurrentCount > 0)
+        {
+            _bluetoothService.Dispose();
+            _refreshLock.Dispose();
+        }
         _updateService.Dispose();
-        _refreshLock.Dispose();
         base.ExitThreadCore();
     }
 }

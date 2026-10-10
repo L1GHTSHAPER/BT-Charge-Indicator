@@ -9,8 +9,37 @@ internal static class TrayIconRenderer
 {
     public static Icon Create(int? percentage, TrayIconStyle style, int lowBatteryThreshold)
     {
-        using var bitmap = new Bitmap(32, 32, PixelFormat.Format32bppArgb);
-        using var graphics = Graphics.FromImage(bitmap);
+        using var bitmap = CreateBitmap(percentage, style, lowBatteryThreshold);
+        var handle = bitmap.GetHicon();
+        try
+        {
+            using var icon = Icon.FromHandle(handle);
+            return (Icon)icon.Clone();
+        }
+        finally
+        {
+            DestroyIcon(handle);
+        }
+    }
+
+    public static Bitmap CreateBitmap(int? percentage, TrayIconStyle style, int lowBatteryThreshold)
+    {
+        var bitmap = new Bitmap(32, 32, PixelFormat.Format32bppArgb);
+        try
+        {
+            using var graphics = Graphics.FromImage(bitmap);
+            Draw(graphics, percentage, style, lowBatteryThreshold);
+            return bitmap;
+        }
+        catch
+        {
+            bitmap.Dispose();
+            throw;
+        }
+    }
+
+    private static void Draw(Graphics graphics, int? percentage, TrayIconStyle style, int lowBatteryThreshold)
+    {
         graphics.SmoothingMode = SmoothingMode.AntiAlias;
         graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
         graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit;
@@ -61,16 +90,6 @@ internal static class TrayIconRenderer
                 break;
         }
 
-        var handle = bitmap.GetHicon();
-        try
-        {
-            using var icon = Icon.FromHandle(handle);
-            return (Icon)icon.Clone();
-        }
-        finally
-        {
-            DestroyIcon(handle);
-        }
     }
 
     private static readonly Color Surface = Color.FromArgb(28, 34, 45);

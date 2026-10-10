@@ -31,12 +31,14 @@ Download the latest ready-to-run Windows executable from [GitHub Releases](https
 - multiple-instance BLE GATT Battery Service support when component labels are exposed;
 - Sony PlayStation DualSense and DualSense Edge battery reading over Bluetooth HID;
 - automatic refresh every 30 seconds, 1 minute, or 5 minutes;
+- automatic refresh on device connection, disconnection, and reported battery changes, with a follow-up reading after connection;
 - configurable low battery threshold and native Windows notifications with snooze;
 - per-device renaming, hiding, tray icon inclusion, and notification settings;
 - device diagnostics showing the battery data source and Bluetooth identifiers;
 - optional startup with Windows;
 - optional automatic update checks through GitHub Releases;
 - quick access to Windows Bluetooth settings;
+- a quick guide to the headset gaming/low-latency mode and Windows Bluetooth LE Audio;
 - native C# WinForms app with no web browser or background server;
 - no telemetry or accounts.
 

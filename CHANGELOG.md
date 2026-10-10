@@ -2,6 +2,15 @@
 
 All notable changes to BT Charge Indicator are documented here.
 
+## 1.6.0 - 2026-10-11
+
+- Added automatic refresh when paired Bluetooth devices connect, disconnect, appear, disappear, or report a battery change.
+- Added a fresh GATT reading on connection and a follow-up scan after five seconds for delayed battery reports.
+- Coalesced duplicate device notifications and retained pending refreshes while a scan is running.
+- Reused tray style preview bitmaps across menu rebuilds and disposed them safely when settings change or the app exits.
+- Added a quick guide to headset gaming mode and Windows Bluetooth LE Audio.
+- Retained all ten tray styles and the black, white, and purple application logo without a corner signature.
+
 ## 1.5.1 - 2026-10-11
 
 - Added a black, white, and purple application logo combining a battery and Bluetooth symbol, with no corner signature.

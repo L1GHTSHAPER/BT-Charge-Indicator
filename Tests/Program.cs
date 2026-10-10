@@ -34,7 +34,91 @@ Assert(legacyReading?.LeftPercent == 70, "Nothing legacy left battery");
 Assert(legacyReading?.RightPercent == 80, "Nothing legacy right battery");
 Assert(legacyReading?.CasePercent == 50, "Nothing legacy case battery");
 
-Console.WriteLine("Protocol parser tests passed.");
+var tracker = new BluetoothDeviceChangeTracker();
+var connectedProperty = BluetoothBatteryService.ConnectedProperty;
+var batteryProperty = BluetoothBatteryService.BatteryLifeProperty;
+var hfpProperty = BluetoothBatteryService.BluetoothBatteryProperty;
+Assert(tracker.Add("headset", new Dictionary<string, object>
+{
+    [connectedProperty] = false,
+    [batteryProperty] = 30
+}) == BluetoothDeviceChangeKind.None, "Initial enumeration is coalesced");
+Assert(tracker.Add("mouse", new Dictionary<string, object>
+{
+    [connectedProperty] = true
+}) == BluetoothDeviceChangeKind.None, "Initially connected device is part of baseline");
+Assert(tracker.CompleteEnumeration() == BluetoothDeviceChangeKind.Refresh,
+    "Enumeration completion refreshes startup state");
+Assert(tracker.Update("HEADSET", new Dictionary<string, object>
+{
+    [connectedProperty] = true
+}) == BluetoothDeviceChangeKind.Connected, "Reconnect triggers a fresh reading and retry");
+Assert(tracker.Update("headset", new Dictionary<string, object>
+{
+    [connectedProperty] = true,
+    [batteryProperty] = 30
+}) == BluetoothDeviceChangeKind.None, "Duplicate connection and battery reports are ignored");
+Assert(tracker.Update("headset", new Dictionary<string, object>
+{
+    [batteryProperty] = 90
+}) == BluetoothDeviceChangeKind.Refresh, "Delayed battery report triggers refresh");
+Assert(tracker.Update("headset", new Dictionary<string, object>
+{
+    [connectedProperty] = true
+}) == BluetoothDeviceChangeKind.None, "Partial battery update preserves connection state");
+Assert(tracker.Update("headset", new Dictionary<string, object>
+{
+    [hfpProperty] = 85
+}) == BluetoothDeviceChangeKind.Refresh, "HFP battery updates trigger refresh");
+Assert(tracker.Update("headset", new Dictionary<string, object>
+{
+    [hfpProperty] = 85,
+    ["System.ItemNameDisplay"] = "New name"
+}) == BluetoothDeviceChangeKind.None, "Unrelated metadata and duplicate HFP updates are ignored");
+Assert(tracker.Update("headset", new Dictionary<string, object>
+{
+    [connectedProperty] = false
+}) == BluetoothDeviceChangeKind.Refresh, "Disconnect removes device from tray calculation");
+Assert(tracker.Update("headset", new Dictionary<string, object>
+{
+    [connectedProperty] = true
+}) == BluetoothDeviceChangeKind.Connected, "Subsequent reconnect triggers another retry");
+Assert(tracker.Update("missing", new Dictionary<string, object>
+{
+    [connectedProperty] = true
+}) == BluetoothDeviceChangeKind.None, "Unknown device update is ignored");
+Assert(tracker.Remove("headset") == BluetoothDeviceChangeKind.Refresh,
+    "Removed paired device triggers refresh");
+Assert(tracker.Remove("headset") == BluetoothDeviceChangeKind.None,
+    "Duplicate removal is ignored");
+Assert(tracker.Add("new headset", new Dictionary<string, object>
+{
+    [connectedProperty] = true
+}) == BluetoothDeviceChangeKind.Connected, "New connected device triggers reading and retry");
+Assert(tracker.Add("new keyboard", new Dictionary<string, object>()) == BluetoothDeviceChangeKind.Refresh,
+    "New paired device with unknown connection triggers refresh");
+Assert(tracker.Update("new keyboard", new Dictionary<string, object>
+{
+    [connectedProperty] = true
+}) == BluetoothDeviceChangeKind.Connected, "Unknown to connected transition triggers retry");
+
+var enumeratingTracker = new BluetoothDeviceChangeTracker();
+enumeratingTracker.Add("headset", new Dictionary<string, object> { [connectedProperty] = false });
+Assert(enumeratingTracker.Update("headset", new Dictionary<string, object>
+{
+    [connectedProperty] = true
+}) == BluetoothDeviceChangeKind.Connected, "Connection during initial enumeration is not lost");
+
+Console.WriteLine("Protocol parser and Bluetooth device change tests passed.");
+
+if (args.Contains("--watch", StringComparer.OrdinalIgnoreCase))
+{
+    using var watcher = new BluetoothDeviceWatcher();
+    watcher.Changed += change => Console.WriteLine($"Bluetooth device change: {change}");
+    watcher.Start();
+    await Task.Delay(TimeSpan.FromSeconds(10));
+    Console.WriteLine("Bluetooth device monitoring completed.");
+}
 
 var deviceArgument = Array.IndexOf(args, "--device");
 if (deviceArgument >= 0 && deviceArgument + 1 < args.Length)

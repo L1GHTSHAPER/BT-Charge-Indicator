@@ -9,6 +9,8 @@ internal sealed class TrayApplicationContext : ApplicationContext
 {
     private readonly BluetoothBatteryService _bluetoothService = new();
     private readonly BluetoothDeviceWatcher _deviceWatcher = new();
+    private readonly DeviceConnectionTracker _connectionTracker = new(GetDeviceKey);
+    private readonly ConnectionNotificationPresenter _connectionNotifications = new();
     private readonly UpdateService _updateService = new();
     private readonly SettingsStore _settingsStore = new();
     private readonly NotifyIcon _notifyIcon;
@@ -144,6 +146,8 @@ internal sealed class TrayApplicationContext : ApplicationContext
             _lastErrorMessage = result.ErrorMessage;
             _lastUpdated = DateTime.Now;
 
+            ShowConnectionNotifications();
+
             UpdateTrayIcon();
             ReplaceContextMenu();
             ShowLowBatteryNotificationIfNeeded();
@@ -164,6 +168,26 @@ internal sealed class TrayApplicationContext : ApplicationContext
                 _refreshLock.Dispose();
             }
         }
+    }
+
+    private void ShowConnectionNotifications()
+    {
+        var changes = _connectionTracker.Observe(_devices, _availability);
+        if (!_settings.ConnectionNotifications) return;
+        foreach (var change in changes)
+        {
+            if (GetDevicePreferences(change.Device).IsHidden) continue;
+            _connectionNotifications.Show(new ConnectionNotification(GetDeviceKey(change.Device),
+                GetDisplayName(change.Device), change.IsConnected, change.Device.BatteryPercent));
+        }
+    }
+
+    private void ShowConnectionPreview(bool connected)
+    {
+        var device = GetVisibleDevices().FirstOrDefault(item => item.IsConnected is true);
+        _connectionNotifications.Show(new ConnectionNotification("preview",
+            device is null ? "Bluetooth-наушники" : GetDisplayName(device), connected,
+            device is null ? 76 : device.BatteryPercent));
     }
 
     private ContextMenuStrip BuildContextMenu()
@@ -256,6 +280,27 @@ internal sealed class TrayApplicationContext : ApplicationContext
             _settingsStore.Save(_settings);
         };
         menu.Items.Add(notificationsItem);
+
+        var connectionMenu = new ToolStripMenuItem("Подключение устройств");
+        var connectionNotificationsItem = new ToolStripMenuItem("Показывать анимацию")
+        {
+            CheckOnClick = true,
+            Checked = _settings.ConnectionNotifications
+        };
+        connectionNotificationsItem.CheckedChanged += (_, _) =>
+        {
+            _settings.ConnectionNotifications = connectionNotificationsItem.Checked;
+            if (!_settings.ConnectionNotifications) _connectionNotifications.Clear();
+            _settingsStore.Save(_settings);
+        };
+        connectionMenu.DropDownItems.Add(connectionNotificationsItem);
+        var previewConnectionItem = new ToolStripMenuItem("Пример подключения");
+        previewConnectionItem.Click += (_, _) => ShowConnectionPreview(true);
+        connectionMenu.DropDownItems.Add(previewConnectionItem);
+        var previewDisconnectionItem = new ToolStripMenuItem("Пример отключения");
+        previewDisconnectionItem.Click += (_, _) => ShowConnectionPreview(false);
+        connectionMenu.DropDownItems.Add(previewDisconnectionItem);
+        menu.Items.Add(connectionMenu);
 
         var autoStartItem = new ToolStripMenuItem("Запускать вместе с Windows")
         {
@@ -1019,6 +1064,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
         _deviceChangeTimer.Stop();
         _deviceWatcher.Changed -= DeviceWatcher_Changed;
         _deviceWatcher.Dispose();
+        _connectionNotifications.Dispose();
         _notifyIcon.Visible = false;
         _notifyIcon.ContextMenuStrip?.Dispose();
         _notifyIcon.Dispose();

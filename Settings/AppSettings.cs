@@ -8,6 +8,8 @@ internal sealed class AppSettings
 
     public bool LowBatteryNotifications { get; set; } = true;
 
+    public bool ConnectionNotifications { get; set; } = true;
+
     public TrayIconStyle IconStyle { get; set; } = TrayIconStyle.Percentage;
 
     public bool CheckForUpdatesAutomatically { get; set; } = true;

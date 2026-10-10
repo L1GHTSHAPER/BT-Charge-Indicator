@@ -1,4 +1,5 @@
 using BTChargeIndicator.Services;
+using BTChargeIndicator.Models;
 using Windows.Devices.Bluetooth;
 
 var fastPairShow = FastPairBatteryService.ParseServiceData(
@@ -109,7 +110,46 @@ Assert(enumeratingTracker.Update("headset", new Dictionary<string, object>
     [connectedProperty] = true
 }) == BluetoothDeviceChangeKind.Connected, "Connection during initial enumeration is not lost");
 
-Console.WriteLine("Protocol parser and Bluetooth device change tests passed.");
+var notifications = new DeviceConnectionTracker(device => device.Address ?? device.Id);
+var available = BluetoothAvailability.Available;
+Assert(notifications.Observe([], BluetoothAvailability.Error).Count == 0, "Failed startup scan is quiet");
+Assert(notifications.Observe([ConnectionDevice("headset", true)], available).Count == 0,
+    "Already-connected startup devices do not produce popups");
+Assert(notifications.Observe([ConnectionDevice("headset", true, 85)], available).Count == 0,
+    "Battery updates do not produce connection popups");
+Assert(notifications.Observe([ConnectionDevice("headset", null)], available).Count == 0,
+    "Unknown connection reading preserves known state");
+Assert(notifications.Observe([], BluetoothAvailability.Error).Count == 0,
+    "Scan failure does not disconnect devices");
+Assert(notifications.Observe([], BluetoothAvailability.AccessDenied).Count == 0,
+    "Access denial does not disconnect devices");
+var disconnected = notifications.Observe([ConnectionDevice("headset", false)], available);
+Assert(disconnected.Count == 1 && !disconnected[0].IsConnected,
+    "Known disconnect produces one popup after unknown and failed readings");
+Assert(notifications.Observe([ConnectionDevice("headset", false)], available).Count == 0,
+    "Repeated disconnected scan is quiet");
+var reconnected = notifications.Observe([ConnectionDevice("headset", true)], available);
+Assert(reconnected.Count == 1 && reconnected[0].IsConnected, "Reconnect produces one popup");
+var removed = notifications.Observe([], available);
+Assert(removed.Count == 1 && !removed[0].IsConnected && removed[0].Device.Name == "headset",
+    "Disappearing connected device preserves its name in one disconnect popup");
+Assert(notifications.Observe([], available).Count == 0, "Repeated empty scan is quiet");
+
+var dualEndpointNotifications = new DeviceConnectionTracker(device => device.Address ?? device.Id);
+dualEndpointNotifications.Observe([], available);
+var dualConnected = dualEndpointNotifications.Observe([
+    ConnectionDevice("classic", true, address: "AA:BB"),
+    ConnectionDevice("ble", false, address: "aa:bb")], available);
+Assert(dualConnected.Count == 1 && dualConnected[0].IsConnected,
+    "Classic and BLE endpoints produce one physical device popup");
+Assert(dualEndpointNotifications.Observe([
+    ConnectionDevice("classic", false, address: "AA:BB"),
+    ConnectionDevice("ble", true, address: "aa:bb")], available).Count == 0,
+    "One connected endpoint prevents a false disconnect popup");
+var radioOff = dualEndpointNotifications.Observe([], BluetoothAvailability.TurnedOff);
+Assert(radioOff.Count == 1 && !radioOff[0].IsConnected, "Radio off produces one physical disconnect popup");
+
+Console.WriteLine("Protocol parser, Bluetooth device change, and connection notification tests passed.");
 
 if (args.Contains("--watch", StringComparer.OrdinalIgnoreCase))
 {
@@ -165,6 +205,9 @@ if (args.Contains("--scan", StringComparer.OrdinalIgnoreCase))
             $"source={device.BatterySource}; components={device.Components}");
     }
 }
+
+static BluetoothBatteryDevice ConnectionDevice(string id, bool? connected, int? battery = 76, string? address = null) =>
+    new(id, id, battery, connected, address, null);
 
 static void Assert(bool condition, string name)
 {

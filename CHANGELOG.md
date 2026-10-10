@@ -2,6 +2,13 @@
 
 All notable changes to BT Charge Indicator are documented here.
 
+## 1.7.0 - 2026-10-11
+
+- Added animated connection/disconnection cards with device names and available battery levels in the LightShaper black, white, and purple palette.
+- Cards slide and fade in without taking focus, close after four seconds, and respect the Windows animation setting.
+- Added a saved on/off setting and a preview under the tray's connection menu.
+- Kept startup silent, combined Classic/BLE endpoints, and suppressed notifications for hidden devices, unknown readings, and failed scans.
+
 ## 1.6.0 - 2026-10-11
 
 - Added automatic refresh when paired Bluetooth devices connect, disconnect, appear, disappear, or report a battery change.

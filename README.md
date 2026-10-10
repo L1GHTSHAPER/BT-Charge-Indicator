@@ -32,6 +32,7 @@ Download the latest ready-to-run Windows executable from [GitHub Releases](https
 - Sony PlayStation DualSense and DualSense Edge battery reading over Bluetooth HID;
 - automatic refresh every 30 seconds, 1 minute, or 5 minutes;
 - automatic refresh on device connection, disconnection, and reported battery changes, with a follow-up reading after connection;
+- animated connection/disconnection cards with device names, quiet startup, and a saved on/off setting;
 - configurable low battery threshold and native Windows notifications with snooze;
 - per-device renaming, hiding, tray icon inclusion, and notification settings;
 - device diagnostics showing the battery data source and Bluetooth identifiers;
@@ -69,6 +70,10 @@ Choose a style from **«Вид значка в трее»** in the right-click m
 ![Ten tray icon styles on dark and light backgrounds, at 32 and 16 pixels](docs/tray-icon-styles.png)
 
 On first run, the app creates a Start menu shortcut for itself so Windows can display native notifications. Moving the portable executable is supported; the shortcut is refreshed on the next launch.
+
+Connection cards appear in the lower-right screen corner, slide and fade in, and close automatically after four seconds. They preserve focus, respect Windows' animation setting, and combine Classic/BLE endpoints into one device notification. Hidden devices and failed scans do not produce cards. Use **«Подключение устройств» → «Показывать анимацию»** to turn them on or off, or **«Пример подключения» / «Пример отключения»** to preview either status.
+
+![Connection and disconnection animation preview](docs/connection-animation.gif)
 
 ## Build from source
 

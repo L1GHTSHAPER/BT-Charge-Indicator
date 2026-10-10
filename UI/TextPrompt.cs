@@ -4,9 +4,11 @@ internal static class TextPrompt
 {
     public static string? Show(string title, string label, string initialValue)
     {
+        using var icon = AppBranding.CreateIcon();
         using var form = new Form
         {
             Text = title,
+            Icon = icon,
             FormBorderStyle = FormBorderStyle.FixedDialog,
             StartPosition = FormStartPosition.CenterScreen,
             ClientSize = new Size(390, 120),

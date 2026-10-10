@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="Assets/logo.png" width="128" height="128" alt="BT Charge Indicator logo" />
+</p>
+
 # Bluetooth Battery Indicator for Windows
 
 [![Windows](https://img.shields.io/badge/Windows-10%20%7C%2011-0078D4?logo=windows)](https://github.com/L1GHTSHAPER/BT-Charge-Indicator)
@@ -118,6 +122,10 @@ Bug reports and pull requests are welcome. When reporting a device that does not
 ## License
 
 Distributed under the [MIT License](LICENSE).
+
+<p>
+  <img src="Assets/lightshaper-wordmark.png" width="240" height="60" alt="LightShaper" />
+</p>
 
 ---
 

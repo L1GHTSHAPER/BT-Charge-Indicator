@@ -34,6 +34,7 @@ Download the latest ready-to-run Windows executable from [GitHub Releases](https
 - automatic refresh on device connection, disconnection, and reported battery changes, with a follow-up reading after connection;
 - animated connection/disconnection cards with device names, quiet startup, and a saved on/off setting;
 - configurable low battery threshold and native Windows notifications with snooze;
+- English and Russian interface and notifications, automatic Windows language detection, and a saved language selector;
 - per-device renaming, hiding, tray icon inclusion, and notification settings;
 - device diagnostics showing the battery data source and Bluetooth identifiers;
 - optional startup with Windows;
@@ -65,13 +66,16 @@ Battery reporting depends on the device firmware and Windows driver. Separate TW
 5. Double-click it to open Windows Bluetooth settings.
 
 The tray icon shows the lowest known battery percentage among currently connected devices, helping you notice the accessory that needs charging first.
-Choose a style from **«Вид значка в трее»** in the right-click menu. The selection is saved automatically; every style indicates low charge in red, medium charge in amber, and unavailable readings with a question mark.
+
+The app uses Russian when the Windows display language is Russian and English for other display languages. Select **Language / Язык → Automatic (Windows), Русский, or English** in the tray menu to choose a language. The selection is saved and applies immediately to menus, dialogs, new Windows notifications, and active connection cards. Device names stay as you entered them. Windows owns the generic buttons in its standard message boxes.
+
+Choose a style from **Tray icon style / Вид значка в трее** in the right-click menu. The selection is saved automatically; every style indicates low charge in red, medium charge in amber, and unavailable readings with a question mark.
 
 ![Ten tray icon styles on dark and light backgrounds, at 32 and 16 pixels](docs/tray-icon-styles.png)
 
 On first run, the app creates a Start menu shortcut for itself so Windows can display native notifications. Moving the portable executable is supported; the shortcut is refreshed on the next launch.
 
-Connection cards appear in the lower-right screen corner, slide and fade in, and close automatically after four seconds. They preserve focus, respect Windows' animation setting, and combine Classic/BLE endpoints into one device notification. Hidden devices and failed scans do not produce cards. Use **«Подключение устройств» → «Показывать анимацию»** to turn them on or off, or **«Пример подключения» / «Пример отключения»** to preview either status.
+Connection cards appear in the lower-right screen corner, slide and fade in, and close automatically after four seconds. They preserve focus, respect Windows' animation setting, and combine Classic/BLE endpoints into one device notification. Hidden devices and failed scans do not produce cards. Use **Device connections → Show animation** (Russian: **Подключение устройств → Показывать анимацию**) to turn them on or off, or **Preview connection / Preview disconnection** to preview either status.
 
 ![Connection and disconnection animation preview](docs/connection-animation.gif)
 
@@ -119,6 +123,8 @@ The Fast Pair battery layout follows the official [Google Fast Pair Battery Noti
 **BT Charge Indicator** — приложение для отображения заряда Bluetooth-устройств в системном трее Windows 10/11. Поддерживаются беспроводные наушники, TWS-гарнитуры, геймпады, мыши, клавиатуры, колонки и BLE-аксессуары.
 
 Скачайте готовый файл на странице [последнего релиза](https://github.com/L1GHTSHAPER/BT-Charge-Indicator/releases/latest), запустите его и откройте меню правым щелчком по значку в трее. Установка не требуется.
+
+Уведомления, меню и диалоги поддерживают русский и английский. По умолчанию язык выбирается по языку интерфейса Windows: русский для русской Windows, английский для остальных языков. В меню **Язык / Language** можно выбрать **Автоматически (Windows)**, **Русский** или **English**. Выбор сохраняется и применяется сразу, без перезапуска; имена устройств остаются прежними.
 
 ## Privacy
 

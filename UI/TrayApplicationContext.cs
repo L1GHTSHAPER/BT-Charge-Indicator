@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using BTChargeIndicator.Localization;
 using BTChargeIndicator.Models;
 using BTChargeIndicator.Services;
 using BTChargeIndicator.Settings;
@@ -41,6 +42,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
     public TrayApplicationContext()
     {
         _settings = _settingsStore.Load();
+        AppText.Apply(_settings.Language);
         DesktopNotificationService.Initialize();
         _currentIcon = TrayIconRenderer.Create(
             null,
@@ -49,7 +51,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
         _notifyIcon = new NotifyIcon
         {
             Icon = _currentIcon,
-            Text = "BT Charge Indicator — загрузка…",
+            Text = AppText.Get("Loading"),
             Visible = true,
             ContextMenuStrip = BuildContextMenu()
         };
@@ -136,7 +138,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
 
         try
         {
-            SetTrayText("BT Charge Indicator — обновление…");
+            SetTrayText(AppText.Get("Refreshing"));
             var result = await _bluetoothService.ScanAsync(refreshGattBattery);
             if (_isExiting)
             {
@@ -187,7 +189,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
     {
         var device = GetVisibleDevices().FirstOrDefault(item => item.IsConnected is true);
         _connectionNotifications.Show(new ConnectionNotification("preview",
-            device is null ? "Bluetooth-наушники" : GetDisplayName(device), connected,
+            device is null ? AppText.Get("PreviewDevice") : GetDisplayName(device), connected,
             device is null ? 76 : device.BatteryPercent));
     }
 
@@ -215,17 +217,17 @@ internal sealed class TrayApplicationContext : ApplicationContext
         if (visibleDevices.Count == 0)
         {
             menu.Items.Add(new ToolStripMenuItem(
-                _devices.Count == 0 ? GetEmptyStateText() : "Все найденные устройства скрыты")
+                _devices.Count == 0 ? GetEmptyStateText() : AppText.Get("AllDevicesHidden"))
             {
                 Enabled = false
             });
 
             if (_availability == BluetoothAvailability.Error && !string.IsNullOrWhiteSpace(_lastErrorMessage))
             {
-                var detailsItem = new ToolStripMenuItem("Показать сведения об ошибке");
+                var detailsItem = new ToolStripMenuItem(AppText.Get("ErrorDetails"));
                 detailsItem.Click += (_, _) => MessageBox.Show(
-                    $"{_lastErrorMessage}\n\nЖурнал: {AppLogger.LogPath}",
-                    "Ошибка Bluetooth",
+                    AppText.Format("ErrorWithLog", _lastErrorMessage, AppLogger.LogPath),
+                    AppText.Get("BluetoothError"),
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
                 menu.Items.Add(detailsItem);
@@ -247,26 +249,27 @@ internal sealed class TrayApplicationContext : ApplicationContext
 
         menu.Items.Add(new ToolStripSeparator());
 
-        var refreshItem = new ToolStripMenuItem("Обновить сейчас");
+        var refreshItem = new ToolStripMenuItem(AppText.Get("RefreshNow"));
         refreshItem.Click += async (_, _) => await RefreshAsync();
         menu.Items.Add(refreshItem);
 
-        var bluetoothSettingsItem = new ToolStripMenuItem("Открыть параметры Bluetooth");
+        var bluetoothSettingsItem = new ToolStripMenuItem(AppText.Get("BluetoothSettings"));
         bluetoothSettingsItem.Click += (_, _) => OpenBluetoothSettings();
         menu.Items.Add(bluetoothSettingsItem);
 
-        var lowLatencyItem = new ToolStripMenuItem("Игровой режим / низкая задержка…")
+        var lowLatencyItem = new ToolStripMenuItem(AppText.Get("LowLatencyMenu"))
         {
-            ToolTipText = "Проверить поддержку Bluetooth LE Audio и открыть параметры Windows"
+            ToolTipText = AppText.Get("LowLatencyTooltip")
         };
         lowLatencyItem.Click += (_, _) => ShowLowLatencyModeHelp();
         menu.Items.Add(lowLatencyItem);
 
+        menu.Items.Add(BuildLanguageMenu());
         menu.Items.Add(BuildRefreshIntervalMenu());
         menu.Items.Add(BuildTrayIconStyleMenu());
         menu.Items.Add(BuildLowBatteryThresholdMenu());
 
-        var notificationsItem = new ToolStripMenuItem("Уведомлять при низком заряде")
+        var notificationsItem = new ToolStripMenuItem(AppText.Get("LowBatteryNotifications"))
         {
             CheckOnClick = true,
             Checked = _settings.LowBatteryNotifications
@@ -282,8 +285,8 @@ internal sealed class TrayApplicationContext : ApplicationContext
         };
         menu.Items.Add(notificationsItem);
 
-        var connectionMenu = new ToolStripMenuItem("Подключение устройств");
-        var connectionNotificationsItem = new ToolStripMenuItem("Показывать анимацию")
+        var connectionMenu = new ToolStripMenuItem(AppText.Get("DeviceConnections"));
+        var connectionNotificationsItem = new ToolStripMenuItem(AppText.Get("ShowAnimation"))
         {
             CheckOnClick = true,
             Checked = _settings.ConnectionNotifications
@@ -295,15 +298,15 @@ internal sealed class TrayApplicationContext : ApplicationContext
             _settingsStore.Save(_settings);
         };
         connectionMenu.DropDownItems.Add(connectionNotificationsItem);
-        var previewConnectionItem = new ToolStripMenuItem("Пример подключения");
+        var previewConnectionItem = new ToolStripMenuItem(AppText.Get("PreviewConnection"));
         previewConnectionItem.Click += (_, _) => ShowConnectionPreview(true);
         connectionMenu.DropDownItems.Add(previewConnectionItem);
-        var previewDisconnectionItem = new ToolStripMenuItem("Пример отключения");
+        var previewDisconnectionItem = new ToolStripMenuItem(AppText.Get("PreviewDisconnection"));
         previewDisconnectionItem.Click += (_, _) => ShowConnectionPreview(false);
         connectionMenu.DropDownItems.Add(previewDisconnectionItem);
         menu.Items.Add(connectionMenu);
 
-        var autoStartItem = new ToolStripMenuItem("Запускать вместе с Windows")
+        var autoStartItem = new ToolStripMenuItem(AppText.Get("StartWithWindows"))
         {
             CheckOnClick = true,
             Checked = AutoStartManager.IsEnabled
@@ -326,7 +329,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
                 autoStartItem.Checked = !autoStartItem.Checked;
                 isRevertingAutoStart = false;
                 MessageBox.Show(
-                    $"Не удалось изменить автозапуск.\n\n{ex.Message}",
+                    AppText.Format("AutoStartError", ex.Message),
                     "BT Charge Indicator",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
@@ -334,7 +337,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
         };
         menu.Items.Add(autoStartItem);
 
-        var automaticUpdatesItem = new ToolStripMenuItem("Автоматически проверять обновления")
+        var automaticUpdatesItem = new ToolStripMenuItem(AppText.Get("AutomaticUpdates"))
         {
             CheckOnClick = true,
             Checked = _settings.CheckForUpdatesAutomatically
@@ -348,8 +351,8 @@ internal sealed class TrayApplicationContext : ApplicationContext
 
         var updateItem = new ToolStripMenuItem(
             _availableRelease is null
-                ? (_isCheckingUpdates ? "Проверка обновлений…" : "Проверить обновления")
-                : $"Доступна версия {_availableRelease.Tag}")
+                ? (_isCheckingUpdates ? AppText.Get("CheckingUpdates") : AppText.Get("CheckUpdates"))
+                : AppText.Format("VersionAvailable", _availableRelease.Tag))
         {
             Enabled = !_isCheckingUpdates
         };
@@ -367,15 +370,15 @@ internal sealed class TrayApplicationContext : ApplicationContext
 
         menu.Items.Add(new ToolStripSeparator());
 
-        var aboutItem = new ToolStripMenuItem("О программе");
+        var aboutItem = new ToolStripMenuItem(AppText.Get("About"));
         aboutItem.Click += (_, _) => MessageBox.Show(
-            $"BT Charge Indicator {Application.ProductVersion}\n\nПоказывает заряд сопряжённых Bluetooth-устройств в системном трее Windows.\n\nДвойной щелчок по иконке открывает параметры Bluetooth.",
-            "О программе",
+            AppText.Format("AboutText", Application.ProductVersion),
+            AppText.Get("About"),
             MessageBoxButtons.OK,
             MessageBoxIcon.Information);
         menu.Items.Add(aboutItem);
 
-        var exitItem = new ToolStripMenuItem("Выход");
+        var exitItem = new ToolStripMenuItem(AppText.Get("Exit"));
         exitItem.Click += (_, _) => ExitThread();
         menu.Items.Add(exitItem);
 
@@ -386,12 +389,12 @@ internal sealed class TrayApplicationContext : ApplicationContext
     {
         var status = _availability switch
         {
-            BluetoothAvailability.TurnedOff => "Bluetooth выключен",
-            BluetoothAvailability.NotFound => "Bluetooth-адаптер не найден",
-            BluetoothAvailability.AccessDenied => "Нет доступа к Bluetooth",
-            BluetoothAvailability.Error => "Не удалось получить данные",
-            _ when _lastUpdated.HasValue => $"Обновлено: {_lastUpdated:HH:mm}",
-            _ => "Получение данных…"
+            BluetoothAvailability.TurnedOff => AppText.Get("BluetoothOff"),
+            BluetoothAvailability.NotFound => AppText.Get("AdapterNotFound"),
+            BluetoothAvailability.AccessDenied => AppText.Get("BluetoothAccessDenied"),
+            BluetoothAvailability.Error => AppText.Get("DataUnavailable"),
+            _ when _lastUpdated.HasValue => AppText.Format("UpdatedAt", _lastUpdated),
+            _ => AppText.Get("ReadingData")
         };
 
         return new ToolStripMenuItem(status)
@@ -408,26 +411,26 @@ internal sealed class TrayApplicationContext : ApplicationContext
         {
             ToolTipText = device.IsConnected switch
             {
-                true => "Подключено",
-                false => "Не подключено",
-                _ => "Состояние подключения неизвестно"
+                true => AppText.Get("Connected"),
+                false => AppText.Get("NotConnected"),
+                _ => AppText.Get("ConnectionUnknown")
             }
         };
 
-        var openItem = new ToolStripMenuItem("Открыть параметры Bluetooth");
+        var openItem = new ToolStripMenuItem(AppText.Get("BluetoothSettings"));
         openItem.Click += (_, _) => OpenBluetoothSettings();
         item.DropDownItems.Add(openItem);
 
-        var diagnosticsItem = new ToolStripMenuItem("Диагностика устройства…");
+        var diagnosticsItem = new ToolStripMenuItem(AppText.Get("DeviceDiagnosticsMenu"));
         diagnosticsItem.Click += (_, _) => ShowDeviceDiagnostics(device);
         item.DropDownItems.Add(diagnosticsItem);
 
-        var renameItem = new ToolStripMenuItem("Переименовать…");
+        var renameItem = new ToolStripMenuItem(AppText.Get("Rename"));
         renameItem.Click += (_, _) =>
         {
             var value = TextPrompt.Show(
-                "Имя устройства",
-                "Введите имя. Пустое поле вернёт исходное название:",
+                AppText.Get("DeviceName"),
+                AppText.Get("RenamePrompt"),
                 preferences.CustomName ?? device.Name);
             if (value is null)
             {
@@ -443,7 +446,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
         item.DropDownItems.Add(renameItem);
         item.DropDownItems.Add(new ToolStripSeparator());
 
-        var trayItem = new ToolStripMenuItem("Учитывать в значке")
+        var trayItem = new ToolStripMenuItem(AppText.Get("IncludeInTrayIcon"))
         {
             CheckOnClick = true,
             Checked = preferences.IncludeInTrayIcon
@@ -455,7 +458,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
         };
         item.DropDownItems.Add(trayItem);
 
-        var notificationItem = new ToolStripMenuItem("Уведомлять о низком заряде")
+        var notificationItem = new ToolStripMenuItem(AppText.Get("DeviceLowBatteryNotifications"))
         {
             CheckOnClick = true,
             Checked = preferences.LowBatteryNotifications
@@ -471,7 +474,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
         };
         item.DropDownItems.Add(notificationItem);
 
-        var visibleItem = new ToolStripMenuItem("Показывать в списке")
+        var visibleItem = new ToolStripMenuItem(AppText.Get("ShowInList"))
         {
             CheckOnClick = true,
             Checked = !preferences.IsHidden
@@ -497,12 +500,12 @@ internal sealed class TrayApplicationContext : ApplicationContext
             return null;
         }
 
-        var menu = new ToolStripMenuItem($"Скрытые устройства ({hidden.Length})");
+        var menu = new ToolStripMenuItem(AppText.Format("HiddenDevices", hidden.Length));
         foreach (var entry in hidden)
         {
             var preferences = entry.Value;
             var restoreItem = new ToolStripMenuItem(
-                preferences.CustomName ?? preferences.LastKnownName ?? "Неизвестное устройство");
+                preferences.CustomName ?? preferences.LastKnownName ?? AppText.Get("UnknownDevice"));
             restoreItem.Click += (_, _) =>
             {
                 preferences.IsHidden = false;
@@ -514,9 +517,37 @@ internal sealed class TrayApplicationContext : ApplicationContext
         return menu;
     }
 
+    private ToolStripMenuItem BuildLanguageMenu()
+    {
+        var menu = new ToolStripMenuItem(AppText.Get("Language"));
+        foreach (var (language, key) in new[]
+                 {
+                     (AppLanguage.Auto, "LanguageAuto"),
+                     (AppLanguage.Russian, "LanguageRussian"),
+                     (AppLanguage.English, "LanguageEnglish")
+                 })
+        {
+            var item = new ToolStripMenuItem(AppText.Get(key))
+            {
+                Checked = _settings.Language == language
+            };
+            item.Click += (_, _) =>
+            {
+                _settings.Language = language;
+                _settingsStore.Save(_settings);
+                AppText.Apply(language);
+                SetTrayText(BuildToolTip());
+                ReplaceContextMenu();
+                _connectionNotifications.RefreshLanguage();
+            };
+            menu.DropDownItems.Add(item);
+        }
+        return menu;
+    }
+
     private ToolStripMenuItem BuildLowBatteryThresholdMenu()
     {
-        var menu = new ToolStripMenuItem($"Низкий заряд: {_settings.LowBatteryThreshold}%");
+        var menu = new ToolStripMenuItem(AppText.Format("LowBatteryThreshold", _settings.LowBatteryThreshold));
         foreach (var threshold in new[] { 10, 15, 20, 25, 30, 40, 50 })
         {
             var item = new ToolStripMenuItem($"{threshold}%")
@@ -539,10 +570,10 @@ internal sealed class TrayApplicationContext : ApplicationContext
 
     private ToolStripMenuItem BuildRefreshIntervalMenu()
     {
-        var intervalMenu = new ToolStripMenuItem("Интервал обновления");
-        AddIntervalItem(intervalMenu, "30 секунд", 30);
-        AddIntervalItem(intervalMenu, "1 минута", 60);
-        AddIntervalItem(intervalMenu, "5 минут", 300);
+        var intervalMenu = new ToolStripMenuItem(AppText.Get("RefreshInterval"));
+        AddIntervalItem(intervalMenu, AppText.Get("Seconds30"), 30);
+        AddIntervalItem(intervalMenu, AppText.Get("Minute1"), 60);
+        AddIntervalItem(intervalMenu, AppText.Get("Minutes5"), 300);
         return intervalMenu;
     }
 
@@ -564,23 +595,23 @@ internal sealed class TrayApplicationContext : ApplicationContext
 
     private ToolStripMenuItem BuildTrayIconStyleMenu()
     {
-        var styleMenu = new ToolStripMenuItem("Вид значка в трее");
+        var styleMenu = new ToolStripMenuItem(AppText.Get("TrayIconStyle"));
         if (styleMenu.DropDown is ToolStripDropDownMenu dropDown)
         {
             dropDown.ShowImageMargin = true;
             dropDown.ShowCheckMargin = true;
             dropDown.ImageScalingSize = new Size(20, 20);
         }
-        AddTrayIconStyleItem(styleMenu, "Крупные цифры", TrayIconStyle.Percentage);
-        AddTrayIconStyleItem(styleMenu, "Батарея", TrayIconStyle.Battery);
-        AddTrayIconStyleItem(styleMenu, "Кольцо", TrayIconStyle.Ring);
-        AddTrayIconStyleItem(styleMenu, "Сегментное кольцо", TrayIconStyle.SegmentedRing);
-        AddTrayIconStyleItem(styleMenu, "Шкала", TrayIconStyle.Bars);
-        AddTrayIconStyleItem(styleMenu, "Вертикальная батарея", TrayIconStyle.VerticalBattery);
-        AddTrayIconStyleItem(styleMenu, "Цифры без фона", TrayIconStyle.Minimal);
-        AddTrayIconStyleItem(styleMenu, "Капсула", TrayIconStyle.Capsule);
-        AddTrayIconStyleItem(styleMenu, "Градиент", TrayIconStyle.Gradient);
-        AddTrayIconStyleItem(styleMenu, "Дуга", TrayIconStyle.Gauge);
+        AddTrayIconStyleItem(styleMenu, AppText.Get("StylePercentage"), TrayIconStyle.Percentage);
+        AddTrayIconStyleItem(styleMenu, AppText.Get("StyleBattery"), TrayIconStyle.Battery);
+        AddTrayIconStyleItem(styleMenu, AppText.Get("StyleRing"), TrayIconStyle.Ring);
+        AddTrayIconStyleItem(styleMenu, AppText.Get("StyleSegmentedRing"), TrayIconStyle.SegmentedRing);
+        AddTrayIconStyleItem(styleMenu, AppText.Get("StyleBars"), TrayIconStyle.Bars);
+        AddTrayIconStyleItem(styleMenu, AppText.Get("StyleVerticalBattery"), TrayIconStyle.VerticalBattery);
+        AddTrayIconStyleItem(styleMenu, AppText.Get("StyleMinimal"), TrayIconStyle.Minimal);
+        AddTrayIconStyleItem(styleMenu, AppText.Get("StyleCapsule"), TrayIconStyle.Capsule);
+        AddTrayIconStyleItem(styleMenu, AppText.Get("StyleGradient"), TrayIconStyle.Gradient);
+        AddTrayIconStyleItem(styleMenu, AppText.Get("StyleGauge"), TrayIconStyle.Gauge);
         return styleMenu;
     }
 
@@ -646,12 +677,12 @@ internal sealed class TrayApplicationContext : ApplicationContext
     {
         if (_availability == BluetoothAvailability.TurnedOff)
         {
-            return "BT Charge Indicator — Bluetooth выключен";
+            return AppText.Get("TooltipBluetoothOff");
         }
 
         if (_devices.Count == 0)
         {
-            return "BT Charge Indicator — устройства не найдены";
+            return AppText.Get("TooltipNoDevices");
         }
 
         var includedDevices = _devices
@@ -659,7 +690,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
             .ToArray();
         var first = includedDevices.FirstOrDefault(device => device.BatteryPercent.HasValue);
         return first is null
-            ? $"BT Charge Indicator — {includedDevices.Length} устр., заряд недоступен"
+            ? AppText.Format("TooltipBatteryUnavailable", includedDevices.Length)
             : $"{GetDisplayName(first)}: {FormatBatterySummary(first)}";
     }
 
@@ -718,15 +749,15 @@ internal sealed class TrayApplicationContext : ApplicationContext
         var parts = new List<string>();
         if (components.LeftPercent.HasValue)
         {
-            parts.Add($"Л {components.LeftPercent}%");
+            parts.Add(AppText.Format("ComponentBattery", AppText.Get("LeftShort"), components.LeftPercent));
         }
         if (components.RightPercent.HasValue)
         {
-            parts.Add($"П {components.RightPercent}%");
+            parts.Add(AppText.Format("ComponentBattery", AppText.Get("RightShort"), components.RightPercent));
         }
         if (components.CasePercent.HasValue)
         {
-            parts.Add($"кейс {components.CasePercent}%");
+            parts.Add(AppText.Format("ComponentBattery", AppText.Get("CaseShort"), components.CasePercent));
         }
 
         return parts.Count == 0 ? string.Empty : $"  [{string.Join(" · ", parts)}]";
@@ -736,7 +767,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
     {
         if (device.Components is null)
         {
-            return device.BatteryPercent is int percentage ? $"{percentage}%" : "нет данных";
+            return device.BatteryPercent is int percentage ? $"{percentage}%" : AppText.Get("NoData");
         }
 
         var formatted = FormatBatteryComponents(device.Components).Trim();
@@ -758,48 +789,42 @@ internal sealed class TrayApplicationContext : ApplicationContext
     private void ShowDeviceDiagnostics(BluetoothBatteryDevice device)
     {
         var components = device.Components is null
-            ? "нет"
+            ? AppText.Get("None")
             : FormatBatteryComponents(device.Components).Trim();
         var categories = device.Categories.Count == 0
-            ? "не указаны"
+            ? AppText.Get("NotSpecified")
             : string.Join(", ", device.Categories);
         var connection = device.IsConnected switch
         {
-            true => "подключено",
-            false => "не подключено",
-            _ => "неизвестно"
+            true => AppText.Get("ConnectedState"),
+            false => AppText.Get("NotConnectedState"),
+            _ => AppText.Get("UnknownState")
         };
         var source = device.BatterySource switch
         {
-            BatteryReadingSource.WindowsDeviceProperty => "свойство батареи Windows",
+            BatteryReadingSource.WindowsDeviceProperty => AppText.Get("SourceWindows"),
             BatteryReadingSource.BluetoothHfp => "Bluetooth HFP",
             BatteryReadingSource.BluetoothGatt => "BLE GATT Battery Service",
-            BatteryReadingSource.BluetoothGattComponents => "BLE GATT Battery Service (компоненты)",
-            BatteryReadingSource.PlugAndPlay => "свойство Plug and Play",
+            BatteryReadingSource.BluetoothGattComponents => AppText.Get("SourceGattComponents"),
+            BatteryReadingSource.PlugAndPlay => AppText.Get("SourcePlugAndPlay"),
             BatteryReadingSource.AirPodsAdvertisement => "Apple Continuity BLE",
             BatteryReadingSource.GoogleFastPairAdvertisement => "Google Fast Pair BLE",
             BatteryReadingSource.NothingRfcomm => "Nothing/CMF RFCOMM",
             BatteryReadingSource.DualSenseHid => "Bluetooth HID DualSense",
-            _ => "источник заряда не найден"
+            _ => AppText.Get("SourceNotFound")
         };
 
-        var text =
-            $"Устройство: {GetDisplayName(device)}\n" +
-            $"Исходное имя: {device.Name}\n" +
-            $"Состояние: {connection}\n" +
-            $"Заряд: {(device.BatteryPercent is int percent ? $"{percent}%" : "нет данных")}\n" +
-            $"Источник: {source}\n" +
-            $"Компоненты: {components}\n" +
-            $"Категории: {categories}\n" +
-            $"Bluetooth CoD: {device.BluetoothClassMajor?.ToString() ?? "не указан"}\n" +
-            $"Bluetooth-адрес: {device.Address ?? "не указан"}\n" +
-            $"Container ID: {device.ContainerId?.ToString("D") ?? "не указан"}\n\n" +
-            $"ID устройства:\n{device.Id}\n\n" +
-            "Совет: Ctrl+C скопирует текст этого окна.";
+        var text = AppText.Format("DiagnosticsText",
+            GetDisplayName(device), device.Name, connection,
+            device.BatteryPercent is int percent ? $"{percent}%" : AppText.Get("NoData"),
+            source, components, categories,
+            device.BluetoothClassMajor?.ToString() ?? AppText.Get("Unspecified"),
+            device.Address ?? AppText.Get("Unspecified"),
+            device.ContainerId?.ToString("D") ?? AppText.Get("Unspecified"), device.Id);
 
         MessageBox.Show(
             text,
-            "Диагностика Bluetooth-устройства",
+            AppText.Get("DeviceDiagnostics"),
             MessageBoxButtons.OK,
             device.BatteryPercent.HasValue ? MessageBoxIcon.Information : MessageBoxIcon.Warning);
     }
@@ -837,8 +862,8 @@ internal sealed class TrayApplicationContext : ApplicationContext
                 if (showResult)
                 {
                     var open = MessageBox.Show(
-                        $"Доступна версия {release.Tag}. Открыть страницу загрузки?",
-                        "Обновление BT Charge Indicator",
+                        AppText.Format("UpdatePrompt", release.Tag),
+                        AppText.Get("UpdateTitle"),
                         MessageBoxButtons.YesNo,
                         MessageBoxIcon.Information);
                     if (open == DialogResult.Yes)
@@ -847,23 +872,23 @@ internal sealed class TrayApplicationContext : ApplicationContext
                     }
                 }
                 else if (!DesktopNotificationService.TryShow(
-                             "Доступно обновление BT Charge Indicator",
-                             $"Версия {release.Tag} готова к загрузке.",
-                             "Открыть страницу",
+                             AppText.Get("UpdateAvailableTitle"),
+                             AppText.Format("UpdateAvailableBody", release.Tag),
+                             AppText.Get("OpenPage"),
                              release.Url))
                 {
                     _notifyIcon.ShowBalloonTip(
                         5000,
-                        "Доступно обновление BT Charge Indicator",
-                        $"Версия {release.Tag} готова к загрузке.",
+                        AppText.Get("UpdateAvailableTitle"),
+                        AppText.Format("UpdateAvailableBody", release.Tag),
                         ToolTipIcon.Info);
                 }
             }
             else if (showResult)
             {
                 MessageBox.Show(
-                    "Установлена актуальная версия.",
-                    "Обновление BT Charge Indicator",
+                    AppText.Get("UpToDate"),
+                    AppText.Get("UpdateTitle"),
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Information);
             }
@@ -874,8 +899,8 @@ internal sealed class TrayApplicationContext : ApplicationContext
             if (showResult)
             {
                 MessageBox.Show(
-                    $"Не удалось проверить обновления.\n\n{ex.Message}",
-                    "Обновление BT Charge Indicator",
+                    AppText.Format("UpdateCheckError", ex.Message),
+                    AppText.Get("UpdateTitle"),
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Warning);
             }
@@ -899,7 +924,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
         catch (Exception ex)
         {
             MessageBox.Show(
-                $"Не удалось открыть ссылку.\n\n{ex.Message}",
+                AppText.Format("OpenLinkError", ex.Message),
                 "BT Charge Indicator",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Error);
@@ -923,11 +948,11 @@ internal sealed class TrayApplicationContext : ApplicationContext
     {
         return _availability switch
         {
-            BluetoothAvailability.TurnedOff => "Включите Bluetooth для получения данных",
-            BluetoothAvailability.NotFound => "Bluetooth-адаптер не найден",
-            BluetoothAvailability.AccessDenied => "Windows запретила доступ к Bluetooth",
-            BluetoothAvailability.Error => "Ошибка чтения Bluetooth-устройств",
-            _ => "Сопряжённые устройства не найдены"
+            BluetoothAvailability.TurnedOff => AppText.Get("EnableBluetooth"),
+            BluetoothAvailability.NotFound => AppText.Get("AdapterNotFound"),
+            BluetoothAvailability.AccessDenied => AppText.Get("WindowsDeniedBluetooth"),
+            BluetoothAvailability.Error => AppText.Get("DeviceReadError"),
+            _ => AppText.Get("NoPairedDevices")
         };
     }
 
@@ -969,15 +994,15 @@ internal sealed class TrayApplicationContext : ApplicationContext
 
         var details = string.Join(", ", newLowDevices.Select(FormatLowBatteryDevice));
         if (!DesktopNotificationService.TryShow(
-                "Низкий заряд Bluetooth-устройства",
+                AppText.Get("LowBatteryTitle"),
                 details,
-                "Открыть Bluetooth",
+                AppText.Get("OpenBluetooth"),
                 "ms-settings:bluetooth",
                 allowSnooze: true))
         {
             _notifyIcon.ShowBalloonTip(
                 5000,
-                "Низкий заряд Bluetooth-устройства",
+                AppText.Get("LowBatteryTitle"),
                 details,
                 ToolTipIcon.Warning);
         }
@@ -1010,9 +1035,9 @@ internal sealed class TrayApplicationContext : ApplicationContext
 
         var lowComponents = new[]
             {
-                (Name: "Л", Percentage: device.Components.LeftPercent),
-                (Name: "П", Percentage: device.Components.RightPercent),
-                (Name: "кейс", Percentage: device.Components.CasePercent)
+                (Name: AppText.Get("LeftShort"), Percentage: device.Components.LeftPercent),
+                (Name: AppText.Get("RightShort"), Percentage: device.Components.RightPercent),
+                (Name: AppText.Get("CaseShort"), Percentage: device.Components.CasePercent)
             }
             .Where(component => component.Percentage.HasValue &&
                                 component.Percentage <= _settings.LowBatteryThreshold)
@@ -1033,7 +1058,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
         catch (Exception ex)
         {
             MessageBox.Show(
-                $"Не удалось открыть параметры Bluetooth.\n\n{ex.Message}",
+                AppText.Format("BluetoothSettingsError", ex.Message),
                 "BT Charge Indicator",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Error);
@@ -1043,14 +1068,8 @@ internal sealed class TrayApplicationContext : ApplicationContext
     private static void ShowLowLatencyModeHelp()
     {
         var openSettings = MessageBox.Show(
-            "Windows не может принудительно включить игровой режим конкретных наушников: " +
-            "его включает производитель в наушниках или в фирменном приложении.\n\n" +
-            "Для более низкой задержки в Windows 11 проверьте Bluetooth LE Audio:\n" +
-            "1. Откройте «Bluetooth и устройства» → «Устройства».\n" +
-            "2. Включите «Использовать LE Audio, если доступно».\n\n" +
-            "Пункт появится только если его поддерживают и Bluetooth-адаптер с драйвером, и наушники. " +
-            "Открыть параметры Bluetooth?",
-            "Игровой режим / низкая задержка",
+            AppText.Get("LowLatencyHelp"),
+            AppText.Get("LowLatencyTitle"),
             MessageBoxButtons.YesNo,
             MessageBoxIcon.Information);
 

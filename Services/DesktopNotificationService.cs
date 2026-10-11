@@ -1,6 +1,7 @@
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.ComTypes;
 using System.Security;
+using BTChargeIndicator.Localization;
 using Microsoft.Win32;
 using Windows.Data.Xml.Dom;
 using Windows.UI.Notifications;
@@ -41,43 +42,8 @@ internal static class DesktopNotificationService
         {
             EnsureRegistered();
 
-            var escapedTitle = Escape(title);
-            var escapedMessage = Escape(message);
-            var escapedActionLabel = Escape(actionLabel);
-            var escapedActionUri = Escape(actionUri);
-            var actions = allowSnooze
-                ? $"""
-                  <actions>
-                    <input id="snoozeTime" type="selection" defaultInput="60">
-                      <selection id="15" content="15 минут" />
-                      <selection id="60" content="1 час" />
-                      <selection id="180" content="3 часа" />
-                    </input>
-                    <action content="Напомнить позже" arguments="snooze" activationType="system" hint-inputId="snoozeTime" />
-                    <action content="{escapedActionLabel}" arguments="{escapedActionUri}" activationType="protocol" />
-                    <action content="Закрыть" arguments="dismiss" activationType="system" />
-                  </actions>
-                  """
-                : $"""
-                  <actions>
-                    <action content="{escapedActionLabel}" arguments="{escapedActionUri}" activationType="protocol" />
-                    <action content="Закрыть" arguments="dismiss" activationType="system" />
-                  </actions>
-                  """;
-
             var document = new XmlDocument();
-            document.LoadXml(
-                $"""
-                <toast duration="short">
-                  <visual>
-                    <binding template="ToastGeneric">
-                      <text>{escapedTitle}</text>
-                      <text>{escapedMessage}</text>
-                    </binding>
-                  </visual>
-                  {actions}
-                </toast>
-                """);
+            document.LoadXml(BuildToastXml(title, message, actionLabel, actionUri, allowSnooze));
 
             ToastNotificationManager
                 .CreateToastNotifier(AppUserModelId)
@@ -89,6 +55,44 @@ internal static class DesktopNotificationService
             AppLogger.Error("Windows toast notification failed.", ex);
             return false;
         }
+    }
+
+    internal static string BuildToastXml(
+        string title, string message, string actionLabel, string actionUri, bool allowSnooze = false)
+    {
+        var escapedActionLabel = Escape(actionLabel);
+        var escapedActionUri = Escape(actionUri);
+        var dismiss = Escape(AppText.Get("Dismiss"));
+        var actions = allowSnooze
+            ? $"""
+              <actions>
+                <input id="snoozeTime" type="selection" defaultInput="60">
+                  <selection id="15" content="{Escape(AppText.Get("Snooze15"))}" />
+                  <selection id="60" content="{Escape(AppText.Get("Snooze60"))}" />
+                  <selection id="180" content="{Escape(AppText.Get("Snooze180"))}" />
+                </input>
+                <action content="{Escape(AppText.Get("Snooze"))}" arguments="snooze" activationType="system" hint-inputId="snoozeTime" />
+                <action content="{escapedActionLabel}" arguments="{escapedActionUri}" activationType="protocol" />
+                <action content="{dismiss}" arguments="dismiss" activationType="system" />
+              </actions>
+              """
+            : $"""
+              <actions>
+                <action content="{escapedActionLabel}" arguments="{escapedActionUri}" activationType="protocol" />
+                <action content="{dismiss}" arguments="dismiss" activationType="system" />
+              </actions>
+              """;
+        return $"""
+               <toast duration="short">
+                 <visual>
+                   <binding template="ToastGeneric">
+                     <text>{Escape(title)}</text>
+                     <text>{Escape(message)}</text>
+                   </binding>
+                 </visual>
+                 {actions}
+               </toast>
+               """;
     }
 
     private static string Escape(string value)
@@ -104,7 +108,7 @@ internal static class DesktopNotificationService
         }
 
         var executablePath = Environment.ProcessPath
-            ?? throw new InvalidOperationException("Не удалось определить путь к приложению.");
+            ?? throw new InvalidOperationException(AppText.Get("AppPathError"));
 
         using (var key = Registry.CurrentUser.CreateSubKey(AppIdRegistryPath))
         {

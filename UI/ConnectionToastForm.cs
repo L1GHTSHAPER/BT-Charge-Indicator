@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Drawing.Drawing2D;
 using System.Runtime.InteropServices;
+using BTChargeIndicator.Localization;
 
 namespace BTChargeIndicator.UI;
 
@@ -209,10 +210,10 @@ internal static class ConnectionToastRenderer
         using var white = new SolidBrush(Color.White);
         using var gray = new SolidBrush(Color.FromArgb(155, 152, 167));
         using var format = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap };
-        graphics.DrawString(notification.IsConnected ? "ПОДКЛЮЧЕНО" : "ОТКЛЮЧЕНО", caption, accent, 91, 22);
+        graphics.DrawString(notification.IsConnected ? AppText.Get("ConnectionCaption") : AppText.Get("DisconnectionCaption"), caption, accent, 91, 22);
         graphics.DrawString(notification.DeviceName, name, white, new RectangleF(89, 40, 241, 25), format);
         var description = notification.IsConnected && notification.BatteryPercent is int battery
-            ? $"Bluetooth · заряд {battery}%" : "Bluetooth-устройство";
+            ? AppText.Format("ConnectionBattery", battery) : AppText.Get("BluetoothDevice");
         graphics.DrawString(description, detail, gray, 91, 70);
         using var close = new Pen(Color.FromArgb(145, 141, 155), 1.3f) { StartCap = LineCap.Round, EndCap = LineCap.Round };
         graphics.DrawLine(close, 344, 17, 350, 23);

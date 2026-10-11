@@ -1,3 +1,5 @@
+using BTChargeIndicator.Localization;
+
 namespace BTChargeIndicator.UI;
 
 internal static class TextPrompt
@@ -11,7 +13,7 @@ internal static class TextPrompt
             Icon = icon,
             FormBorderStyle = FormBorderStyle.FixedDialog,
             StartPosition = FormStartPosition.CenterScreen,
-            ClientSize = new Size(390, 120),
+            ClientSize = new Size(440, 140),
             MinimizeBox = false,
             MaximizeBox = false,
             ShowInTaskbar = false
@@ -21,26 +23,27 @@ internal static class TextPrompt
         {
             Text = label,
             AutoSize = true,
+            MaximumSize = new Size(416, 0),
             Location = new Point(12, 12)
         };
         var textBox = new TextBox
         {
             Text = initialValue,
-            Location = new Point(12, 36),
-            Size = new Size(366, 23)
+            Location = new Point(12, 56),
+            Size = new Size(416, 23)
         };
         var okButton = new Button
         {
-            Text = "Сохранить",
+            Text = AppText.Get("Save"),
             DialogResult = DialogResult.OK,
-            Location = new Point(202, 78),
+            Location = new Point(252, 98),
             Size = new Size(84, 28)
         };
         var cancelButton = new Button
         {
-            Text = "Отмена",
+            Text = AppText.Get("Cancel"),
             DialogResult = DialogResult.Cancel,
-            Location = new Point(294, 78),
+            Location = new Point(344, 98),
             Size = new Size(84, 28)
         };
 

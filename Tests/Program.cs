@@ -2,6 +2,8 @@ using BTChargeIndicator.Services;
 using BTChargeIndicator.Models;
 using Windows.Devices.Bluetooth;
 
+await LocalizationTests.RunAsync();
+
 var fastPairShow = FastPairBatteryService.ParseServiceData(
     [0x2C, 0xFE, 0x00, 0xAA, 0xBB, 0x33, 0x57, 0x41, 0x7F]);
 Assert(fastPairShow is not null && fastPairShow.ShouldShow, "Fast Pair show packet");

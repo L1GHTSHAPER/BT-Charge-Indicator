@@ -9,6 +9,10 @@ internal sealed class ConnectionNotificationPresenter : IDisposable
     private ConnectionToastForm? _current;
     private bool _disposed;
 
+    public bool IsBusy => _current is not null || _pending.Count > 0;
+
+    public event EventHandler? Idle;
+
     public void Show(ConnectionNotification notification)
     {
         if (_disposed) return;
@@ -35,6 +39,7 @@ internal sealed class ConnectionNotificationPresenter : IDisposable
         {
             if (ReferenceEquals(_current, form)) _current = null;
             ShowNext();
+            if (!_disposed && !IsBusy) Idle?.Invoke(this, EventArgs.Empty);
         };
         form.Show();
     }

@@ -75,6 +75,8 @@ Connection cards appear in the lower-right screen corner, slide and fade in, and
 
 ![Connection and disconnection animation preview](docs/connection-animation.gif)
 
+When a connection also reports low battery, the Windows warning waits until the connection cards have closed. Device state, charge, and notification settings are checked again before showing the warning.
+
 ## Build from source
 
 Requirements:

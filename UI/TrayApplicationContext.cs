@@ -55,6 +55,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
         };
         _notifyIcon.MouseClick += NotifyIcon_MouseClick;
         _notifyIcon.DoubleClick += (_, _) => OpenBluetoothSettings();
+        _connectionNotifications.Idle += ConnectionNotifications_Idle;
 
         _refreshTimer = new System.Windows.Forms.Timer
         {
@@ -930,6 +931,11 @@ internal sealed class TrayApplicationContext : ApplicationContext
         };
     }
 
+    private void ConnectionNotifications_Idle(object? sender, EventArgs e)
+    {
+        if (!_isExiting) ShowLowBatteryNotificationIfNeeded();
+    }
+
     private void ShowLowBatteryNotificationIfNeeded()
     {
         var currentlyLow = _devices
@@ -946,7 +952,9 @@ internal sealed class TrayApplicationContext : ApplicationContext
             _lowBatteryNotifications.Remove(id);
         }
 
-        if (!_settings.LowBatteryNotifications)
+        // Re-evaluate after the final connection card closes. Do not mark devices
+        // as notified while waiting: they may disconnect, recover, or be muted.
+        if (!_settings.LowBatteryNotifications || _connectionNotifications.IsBusy)
         {
             return;
         }
@@ -1064,6 +1072,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
         _deviceChangeTimer.Stop();
         _deviceWatcher.Changed -= DeviceWatcher_Changed;
         _deviceWatcher.Dispose();
+        _connectionNotifications.Idle -= ConnectionNotifications_Idle;
         _connectionNotifications.Dispose();
         _notifyIcon.Visible = false;
         _notifyIcon.ContextMenuStrip?.Dispose();

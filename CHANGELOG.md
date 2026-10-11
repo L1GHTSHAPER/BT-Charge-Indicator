@@ -2,6 +2,12 @@
 
 All notable changes to BT Charge Indicator are documented here.
 
+## 1.7.1 - 2026-10-11
+
+- Delayed low-battery notifications until the connection/disconnection card queue finishes, preventing a warning from covering a connection card from the same scan.
+- Rechecked current device state, charge, threshold, and notification settings before showing a deferred warning.
+- Prevented deferred warnings from appearing while the app exits.
+
 ## 1.7.0 - 2026-10-11
 
 - Added animated connection/disconnection cards with device names and available battery levels in the LightShaper black, white, and purple palette.

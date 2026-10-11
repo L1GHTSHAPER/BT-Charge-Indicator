@@ -2,6 +2,8 @@ namespace BTChargeIndicator.Settings;
 
 internal sealed class AppSettings
 {
+    public AppLanguage Language { get; set; } = AppLanguage.Auto;
+
     public int RefreshIntervalSeconds { get; set; } = 60;
 
     public int LowBatteryThreshold { get; set; } = 20;
@@ -20,6 +22,7 @@ internal sealed class AppSettings
 
     public void Normalize()
     {
+        Language = Enum.IsDefined(Language) ? Language : AppLanguage.Auto;
         RefreshIntervalSeconds = RefreshIntervalSeconds is 30 or 60 or 300
             ? RefreshIntervalSeconds
             : 60;
@@ -32,6 +35,14 @@ internal sealed class AppSettings
             Devices ?? [],
             StringComparer.OrdinalIgnoreCase);
     }
+}
+
+internal enum AppLanguage
+{
+    // Persisted in settings.json; keep these IDs stable.
+    Auto = 0,
+    Russian = 1,
+    English = 2
 }
 
 internal sealed class DevicePreferences

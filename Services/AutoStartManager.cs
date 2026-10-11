@@ -1,3 +1,4 @@
+using BTChargeIndicator.Localization;
 using Microsoft.Win32;
 
 namespace BTChargeIndicator.Services;
@@ -27,7 +28,7 @@ internal static class AutoStartManager
     public static void SetEnabled(bool enabled)
     {
         using var key = Registry.CurrentUser.CreateSubKey(RegistryPath, true)
-            ?? throw new InvalidOperationException("Не удалось открыть раздел автозапуска Windows.");
+            ?? throw new InvalidOperationException(AppText.Get("AutoStartRegistryError"));
 
         if (enabled)
         {
@@ -42,7 +43,7 @@ internal static class AutoStartManager
     private static string GetCommandLine()
     {
         var executablePath = Environment.ProcessPath
-            ?? throw new InvalidOperationException("Не удалось определить путь к приложению.");
+            ?? throw new InvalidOperationException(AppText.Get("AppPathError"));
         return $"\"{executablePath}\"";
     }
 }

@@ -2,6 +2,13 @@
 
 All notable changes to BT Charge Indicator are documented here.
 
+## 1.8.0 - 2026-10-11
+
+- Added English and Russian translations for tray menus, connection cards, dialogs, diagnostics, and Windows notifications, including snooze and dismiss actions.
+- Added a saved language menu with automatic Windows language detection and immediate manual switching without restarting the app.
+- Defaulted to Russian for Russian Windows UI languages and English for other languages; preserved existing settings and custom device names.
+- Repainted active connection cards when switching languages without interrupting the notification queue.
+
 ## 1.7.1 - 2026-10-11
 
 - Delayed low-battery notifications until the connection/disconnection card queue finishes, preventing a warning from covering a connection card from the same scan.

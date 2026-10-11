@@ -1,0 +1,391 @@
+<?xml version='1.0' encoding='utf-8'?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms</value>
+  </resheader>
+  <data name="AlreadyRunning" xml:space="preserve">
+    <value>BT Charge Indicator уже запущен. Иконка приложения находится в системном трее.</value>
+  </data>
+  <data name="Loading" xml:space="preserve">
+    <value>BT Charge Indicator — загрузка…</value>
+  </data>
+  <data name="Refreshing" xml:space="preserve">
+    <value>BT Charge Indicator — обновление…</value>
+  </data>
+  <data name="PreviewDevice" xml:space="preserve">
+    <value>Bluetooth-наушники</value>
+  </data>
+  <data name="AllDevicesHidden" xml:space="preserve">
+    <value>Все найденные устройства скрыты</value>
+  </data>
+  <data name="ErrorDetails" xml:space="preserve">
+    <value>Показать сведения об ошибке</value>
+  </data>
+  <data name="BluetoothError" xml:space="preserve">
+    <value>Ошибка Bluetooth</value>
+  </data>
+  <data name="ErrorWithLog" xml:space="preserve">
+    <value>{0}
+
+Журнал: {1}</value>
+  </data>
+  <data name="RefreshNow" xml:space="preserve">
+    <value>Обновить сейчас</value>
+  </data>
+  <data name="BluetoothSettings" xml:space="preserve">
+    <value>Открыть параметры Bluetooth</value>
+  </data>
+  <data name="LowLatencyMenu" xml:space="preserve">
+    <value>Игровой режим / низкая задержка…</value>
+  </data>
+  <data name="LowLatencyTooltip" xml:space="preserve">
+    <value>Проверить поддержку Bluetooth LE Audio и открыть параметры Windows</value>
+  </data>
+  <data name="LowBatteryNotifications" xml:space="preserve">
+    <value>Уведомлять при низком заряде</value>
+  </data>
+  <data name="DeviceConnections" xml:space="preserve">
+    <value>Подключение устройств</value>
+  </data>
+  <data name="ShowAnimation" xml:space="preserve">
+    <value>Показывать анимацию</value>
+  </data>
+  <data name="PreviewConnection" xml:space="preserve">
+    <value>Пример подключения</value>
+  </data>
+  <data name="PreviewDisconnection" xml:space="preserve">
+    <value>Пример отключения</value>
+  </data>
+  <data name="StartWithWindows" xml:space="preserve">
+    <value>Запускать вместе с Windows</value>
+  </data>
+  <data name="AutoStartError" xml:space="preserve">
+    <value>Не удалось изменить автозапуск.
+
+{0}</value>
+  </data>
+  <data name="AutomaticUpdates" xml:space="preserve">
+    <value>Автоматически проверять обновления</value>
+  </data>
+  <data name="CheckingUpdates" xml:space="preserve">
+    <value>Проверка обновлений…</value>
+  </data>
+  <data name="CheckUpdates" xml:space="preserve">
+    <value>Проверить обновления</value>
+  </data>
+  <data name="VersionAvailable" xml:space="preserve">
+    <value>Доступна версия {0}</value>
+  </data>
+  <data name="About" xml:space="preserve">
+    <value>О программе</value>
+  </data>
+  <data name="AboutText" xml:space="preserve">
+    <value>BT Charge Indicator {0}
+
+Показывает заряд сопряжённых Bluetooth-устройств в системном трее Windows.
+
+Двойной щелчок по иконке открывает параметры Bluetooth.</value>
+  </data>
+  <data name="Exit" xml:space="preserve">
+    <value>Выход</value>
+  </data>
+  <data name="BluetoothOff" xml:space="preserve">
+    <value>Bluetooth выключен</value>
+  </data>
+  <data name="AdapterNotFound" xml:space="preserve">
+    <value>Bluetooth-адаптер не найден</value>
+  </data>
+  <data name="BluetoothAccessDenied" xml:space="preserve">
+    <value>Нет доступа к Bluetooth</value>
+  </data>
+  <data name="DataUnavailable" xml:space="preserve">
+    <value>Не удалось получить данные</value>
+  </data>
+  <data name="UpdatedAt" xml:space="preserve">
+    <value>Обновлено: {0:HH:mm}</value>
+  </data>
+  <data name="ReadingData" xml:space="preserve">
+    <value>Получение данных…</value>
+  </data>
+  <data name="Connected" xml:space="preserve">
+    <value>Подключено</value>
+  </data>
+  <data name="NotConnected" xml:space="preserve">
+    <value>Не подключено</value>
+  </data>
+  <data name="ConnectionUnknown" xml:space="preserve">
+    <value>Состояние подключения неизвестно</value>
+  </data>
+  <data name="DeviceDiagnosticsMenu" xml:space="preserve">
+    <value>Диагностика устройства…</value>
+  </data>
+  <data name="Rename" xml:space="preserve">
+    <value>Переименовать…</value>
+  </data>
+  <data name="DeviceName" xml:space="preserve">
+    <value>Имя устройства</value>
+  </data>
+  <data name="RenamePrompt" xml:space="preserve">
+    <value>Введите имя. Пустое поле вернёт исходное название:</value>
+  </data>
+  <data name="IncludeInTrayIcon" xml:space="preserve">
+    <value>Учитывать в значке</value>
+  </data>
+  <data name="DeviceLowBatteryNotifications" xml:space="preserve">
+    <value>Уведомлять о низком заряде</value>
+  </data>
+  <data name="ShowInList" xml:space="preserve">
+    <value>Показывать в списке</value>
+  </data>
+  <data name="HiddenDevices" xml:space="preserve">
+    <value>Скрытые устройства ({0})</value>
+  </data>
+  <data name="UnknownDevice" xml:space="preserve">
+    <value>Неизвестное устройство</value>
+  </data>
+  <data name="LowBatteryThreshold" xml:space="preserve">
+    <value>Низкий заряд: {0}%</value>
+  </data>
+  <data name="RefreshInterval" xml:space="preserve">
+    <value>Интервал обновления</value>
+  </data>
+  <data name="Seconds30" xml:space="preserve">
+    <value>30 секунд</value>
+  </data>
+  <data name="Minute1" xml:space="preserve">
+    <value>1 минута</value>
+  </data>
+  <data name="Minutes5" xml:space="preserve">
+    <value>5 минут</value>
+  </data>
+  <data name="TrayIconStyle" xml:space="preserve">
+    <value>Вид значка в трее</value>
+  </data>
+  <data name="StylePercentage" xml:space="preserve">
+    <value>Крупные цифры</value>
+  </data>
+  <data name="StyleBattery" xml:space="preserve">
+    <value>Батарея</value>
+  </data>
+  <data name="StyleRing" xml:space="preserve">
+    <value>Кольцо</value>
+  </data>
+  <data name="StyleSegmentedRing" xml:space="preserve">
+    <value>Сегментное кольцо</value>
+  </data>
+  <data name="StyleBars" xml:space="preserve">
+    <value>Шкала</value>
+  </data>
+  <data name="StyleVerticalBattery" xml:space="preserve">
+    <value>Вертикальная батарея</value>
+  </data>
+  <data name="StyleMinimal" xml:space="preserve">
+    <value>Цифры без фона</value>
+  </data>
+  <data name="StyleCapsule" xml:space="preserve">
+    <value>Капсула</value>
+  </data>
+  <data name="StyleGradient" xml:space="preserve">
+    <value>Градиент</value>
+  </data>
+  <data name="StyleGauge" xml:space="preserve">
+    <value>Дуга</value>
+  </data>
+  <data name="TooltipBluetoothOff" xml:space="preserve">
+    <value>BT Charge Indicator — Bluetooth выключен</value>
+  </data>
+  <data name="TooltipNoDevices" xml:space="preserve">
+    <value>BT Charge Indicator — устройства не найдены</value>
+  </data>
+  <data name="TooltipBatteryUnavailable" xml:space="preserve">
+    <value>BT Charge Indicator — {0} устр., заряд недоступен</value>
+  </data>
+  <data name="LeftShort" xml:space="preserve">
+    <value>Л</value>
+  </data>
+  <data name="RightShort" xml:space="preserve">
+    <value>П</value>
+  </data>
+  <data name="CaseShort" xml:space="preserve">
+    <value>кейс</value>
+  </data>
+  <data name="ComponentBattery" xml:space="preserve">
+    <value>{0} {1}%</value>
+  </data>
+  <data name="NoData" xml:space="preserve">
+    <value>нет данных</value>
+  </data>
+  <data name="None" xml:space="preserve">
+    <value>нет</value>
+  </data>
+  <data name="NotSpecified" xml:space="preserve">
+    <value>не указаны</value>
+  </data>
+  <data name="ConnectedState" xml:space="preserve">
+    <value>подключено</value>
+  </data>
+  <data name="NotConnectedState" xml:space="preserve">
+    <value>не подключено</value>
+  </data>
+  <data name="UnknownState" xml:space="preserve">
+    <value>неизвестно</value>
+  </data>
+  <data name="SourceWindows" xml:space="preserve">
+    <value>свойство батареи Windows</value>
+  </data>
+  <data name="SourceGattComponents" xml:space="preserve">
+    <value>BLE GATT Battery Service (компоненты)</value>
+  </data>
+  <data name="SourcePlugAndPlay" xml:space="preserve">
+    <value>свойство Plug and Play</value>
+  </data>
+  <data name="SourceNotFound" xml:space="preserve">
+    <value>источник заряда не найден</value>
+  </data>
+  <data name="Unspecified" xml:space="preserve">
+    <value>не указан</value>
+  </data>
+  <data name="DeviceDiagnostics" xml:space="preserve">
+    <value>Диагностика Bluetooth-устройства</value>
+  </data>
+  <data name="DiagnosticsText" xml:space="preserve">
+    <value>Устройство: {0}
+Исходное имя: {1}
+Состояние: {2}
+Заряд: {3}
+Источник: {4}
+Компоненты: {5}
+Категории: {6}
+Bluetooth CoD: {7}
+Bluetooth-адрес: {8}
+Container ID: {9}
+
+ID устройства:
+{10}
+
+Совет: Ctrl+C скопирует текст этого окна.</value>
+  </data>
+  <data name="UpdatePrompt" xml:space="preserve">
+    <value>Доступна версия {0}. Открыть страницу загрузки?</value>
+  </data>
+  <data name="UpdateTitle" xml:space="preserve">
+    <value>Обновление BT Charge Indicator</value>
+  </data>
+  <data name="UpdateAvailableTitle" xml:space="preserve">
+    <value>Доступно обновление BT Charge Indicator</value>
+  </data>
+  <data name="UpdateAvailableBody" xml:space="preserve">
+    <value>Версия {0} готова к загрузке.</value>
+  </data>
+  <data name="OpenPage" xml:space="preserve">
+    <value>Открыть страницу</value>
+  </data>
+  <data name="UpToDate" xml:space="preserve">
+    <value>Установлена актуальная версия.</value>
+  </data>
+  <data name="UpdateCheckError" xml:space="preserve">
+    <value>Не удалось проверить обновления.
+
+{0}</value>
+  </data>
+  <data name="OpenLinkError" xml:space="preserve">
+    <value>Не удалось открыть ссылку.
+
+{0}</value>
+  </data>
+  <data name="EnableBluetooth" xml:space="preserve">
+    <value>Включите Bluetooth для получения данных</value>
+  </data>
+  <data name="WindowsDeniedBluetooth" xml:space="preserve">
+    <value>Windows запретила доступ к Bluetooth</value>
+  </data>
+  <data name="DeviceReadError" xml:space="preserve">
+    <value>Ошибка чтения Bluetooth-устройств</value>
+  </data>
+  <data name="NoPairedDevices" xml:space="preserve">
+    <value>Сопряжённые устройства не найдены</value>
+  </data>
+  <data name="LowBatteryTitle" xml:space="preserve">
+    <value>Низкий заряд Bluetooth-устройства</value>
+  </data>
+  <data name="OpenBluetooth" xml:space="preserve">
+    <value>Открыть Bluetooth</value>
+  </data>
+  <data name="BluetoothSettingsError" xml:space="preserve">
+    <value>Не удалось открыть параметры Bluetooth.
+
+{0}</value>
+  </data>
+  <data name="LowLatencyTitle" xml:space="preserve">
+    <value>Игровой режим / низкая задержка</value>
+  </data>
+  <data name="LowLatencyHelp" xml:space="preserve">
+    <value>Windows не может принудительно включить игровой режим конкретных наушников: его включает производитель в наушниках или в фирменном приложении.
+
+Для более низкой задержки в Windows 11 проверьте Bluetooth LE Audio:
+1. Откройте «Bluetooth и устройства» → «Устройства».
+2. Включите «Использовать LE Audio, если доступно».
+
+Пункт появится только если его поддерживают и Bluetooth-адаптер с драйвером, и наушники. Открыть параметры Bluetooth?</value>
+  </data>
+  <data name="Save" xml:space="preserve">
+    <value>Сохранить</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Отмена</value>
+  </data>
+  <data name="ConnectionCaption" xml:space="preserve">
+    <value>ПОДКЛЮЧЕНО</value>
+  </data>
+  <data name="DisconnectionCaption" xml:space="preserve">
+    <value>ОТКЛЮЧЕНО</value>
+  </data>
+  <data name="ConnectionBattery" xml:space="preserve">
+    <value>Bluetooth · заряд {0}%</value>
+  </data>
+  <data name="BluetoothDevice" xml:space="preserve">
+    <value>Bluetooth-устройство</value>
+  </data>
+  <data name="Snooze15" xml:space="preserve">
+    <value>15 минут</value>
+  </data>
+  <data name="Snooze60" xml:space="preserve">
+    <value>1 час</value>
+  </data>
+  <data name="Snooze180" xml:space="preserve">
+    <value>3 часа</value>
+  </data>
+  <data name="Snooze" xml:space="preserve">
+    <value>Напомнить позже</value>
+  </data>
+  <data name="Dismiss" xml:space="preserve">
+    <value>Закрыть</value>
+  </data>
+  <data name="AppPathError" xml:space="preserve">
+    <value>Не удалось определить путь к приложению.</value>
+  </data>
+  <data name="AutoStartRegistryError" xml:space="preserve">
+    <value>Не удалось открыть раздел автозапуска Windows.</value>
+  </data>
+  <data name="Language" xml:space="preserve">
+    <value>Язык / Language</value>
+  </data>
+  <data name="LanguageAuto" xml:space="preserve">
+    <value>Автоматически (Windows)</value>
+  </data>
+  <data name="LanguageRussian" xml:space="preserve">
+    <value>Русский</value>
+  </data>
+  <data name="LanguageEnglish" xml:space="preserve">
+    <value>English</value>
+  </data>
+</root>

@@ -13,6 +13,8 @@ internal sealed class ConnectionNotificationPresenter : IDisposable
 
     public event EventHandler? Idle;
 
+    public void RefreshLanguage() => _current?.Invalidate();
+
     public void Show(ConnectionNotification notification)
     {
         if (_disposed) return;

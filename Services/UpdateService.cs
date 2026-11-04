@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
 
@@ -24,6 +25,12 @@ internal sealed class UpdateService : IDisposable
     public async Task<ReleaseInfo?> GetLatestReleaseAsync(CancellationToken cancellationToken = default)
     {
         using var response = await _httpClient.GetAsync(LatestReleaseApiUrl, cancellationToken);
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            // A fork may not have published its first release yet.
+            return null;
+        }
+
         response.EnsureSuccessStatusCode();
 
         await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);

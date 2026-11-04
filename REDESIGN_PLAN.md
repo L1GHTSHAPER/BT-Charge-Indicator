@@ -173,3 +173,18 @@ Acceptance: reproducible builds, verified installers/artifacts, complete docs, a
 ## Current redesign status
 
 Phase 0 is complete. The Phase 1 runtime extraction and legacy-host integration are implemented and verified: Windows CI passed, and the user manually tested the latest Windows artifact and confirmed that the application behavior is working. `BTChargeIndicator.Core` owns the shared battery/domain/settings code, connection tracker, and UI-independent runtime. `BluetoothBatteryScannerAdapter` bridges the existing `BluetoothBatteryService` without changing protocol readers. The legacy tray host consumes runtime snapshots on its UI thread, delegates manual and watcher-triggered refreshes to the runtime, and updates the periodic interval through it. The old WinForms scan timer and scan lock are removed; the device watcher and its 500 ms UI-thread coalescing timer remain only for change detection. Remaining Phase 1 work is deeper stress testing of cancellation, concurrent refresh requests, and shutdown during real Bluetooth scan timing. Phase 2 has started: the separate WinUI 3 host, initial NavigationView shell, Dashboard/Settings placeholders, and Windows CI build step are in place. The shell deliberately shows no fabricated device data and does not yet start Bluetooth scanning. The next work is to extract the Windows acquisition adapter into a reusable platform project, then connect one shared runtime to the WinUI host while preserving the legacy host.
+
+
+## Phase 2 progress — WinUI runtime and live dashboard
+
+- [x] Create the Windows platform project and move Bluetooth scanner compilation behind it without rewriting protocol readers.
+- [x] Reference the same platform adapter from both the legacy WinForms host and the WinUI host.
+- [x] Compose one shared Core runtime instance in the WinUI process and load the existing refresh-interval setting.
+- [x] Add asynchronous runtime disposal when the WinUI main window closes.
+- [x] Replace the dashboard placeholder with live device cards, connection state, battery values, reading source, availability, and last-update status.
+- [x] Route manual GATT refresh through the shared runtime.
+- [ ] Verify Windows CI and launch the WinUI host on a physical Windows machine with Bluetooth devices.
+- [ ] Add single-instance activation and tray/window lifetime coordination.
+- [ ] Add proper view models, localized strings, theme resources, and settings persistence UI.
+
+The legacy WinForms host remains the tested fallback. The WinUI dashboard is connected to real acquisition code, but it has not yet passed CI or physical-device verification.

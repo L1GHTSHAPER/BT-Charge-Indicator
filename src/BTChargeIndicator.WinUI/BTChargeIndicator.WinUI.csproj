@@ -17,5 +17,6 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.6.5" />
     <ProjectReference Include="..\BTChargeIndicator.Core\BTChargeIndicator.Core.csproj" />
+    <ProjectReference Include="..\BTChargeIndicator.Platform.Windows\BTChargeIndicator.Platform.Windows.csproj" />
   </ItemGroup>
 </Project>

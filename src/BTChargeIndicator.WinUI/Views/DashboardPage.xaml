@@ -4,35 +4,53 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <ScrollViewer>
         <StackPanel Spacing="24" Padding="32">
-            <StackPanel Spacing="6">
-                <TextBlock Text="Dashboard" FontSize="30" FontWeight="SemiBold" />
-                <TextBlock
-                    Text="Your Bluetooth devices and battery status in one place."
-                    FontSize="14"
-                    Opacity="0.72" />
-            </StackPanel>
-
-            <Border
-                Padding="28"
-                CornerRadius="12"
-                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                BorderThickness="1">
-                <StackPanel Spacing="12">
-                    <TextBlock Text="Your devices will appear here" FontSize="20" FontWeight="SemiBold" />
-                    <TextBlock
-                        Text="The WinUI 3 shell is ready. The next step is connecting this window to the shared Bluetooth runtime so the dashboard displays the same device state as the existing tray application."
-                        TextWrapping="Wrap"
-                        MaxWidth="720"
-                        Opacity="0.78" />
-                    <InfoBar
-                        IsOpen="True"
-                        IsClosable="False"
-                        Severity="Informational"
-                        Title="Bluetooth runtime integration is not connected yet"
-                        Message="No device data is being simulated or displayed until the shared runtime is connected." />
+            <Grid ColumnSpacing="16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Spacing="6">
+                    <TextBlock Text="Dashboard" FontSize="30" FontWeight="SemiBold" />
+                    <TextBlock Text="Your Bluetooth devices and battery status in one place." FontSize="14" Opacity="0.72" />
                 </StackPanel>
-            </Border>
+                <Button Grid.Column="1" Content="Refresh" VerticalAlignment="Center" Click="RefreshButton_Click">
+                    <Button.KeyboardAccelerators>
+                        <KeyboardAccelerator Key="R" Modifiers="Control" />
+                    </Button.KeyboardAccelerators>
+                </Button>
+            </Grid>
+            <InfoBar x:Name="RuntimeStatus" IsOpen="True" IsClosable="False" Severity="Informational"
+                     Title="Starting Bluetooth" Message="Waiting for the first device scan..." />
+            <StackPanel x:Name="EmptyState" Spacing="8" Padding="24">
+                <TextBlock Text="No Bluetooth devices found" FontSize="20" FontWeight="SemiBold" HorizontalAlignment="Center" />
+                <TextBlock Text="Pair a Bluetooth device or refresh to check again." TextWrapping="Wrap"
+                           Opacity="0.72" HorizontalAlignment="Center" />
+            </StackPanel>
+            <ItemsControl x:Name="DeviceList">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate><StackPanel Spacing="12" /></ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Padding="20" CornerRadius="12"
+                                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
+                            <Grid ColumnSpacing="20">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="160" /></Grid.ColumnDefinitions>
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="{Binding Name}" FontSize="17" FontWeight="SemiBold" />
+                                    <TextBlock Text="{Binding ConnectionLabel}" FontSize="12" Opacity="0.72" />
+                                    <TextBlock Text="{Binding SourceLabel}" FontSize="12" Opacity="0.62" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Spacing="8" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding BatteryLabel}" FontSize="18" FontWeight="SemiBold" HorizontalAlignment="Right" />
+                                    <ProgressBar Value="{Binding BatteryValue}" Maximum="100" IsIndeterminate="{Binding IsBatteryUnknown}" />
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
         </StackPanel>
     </ScrollViewer>
 </Page>

@@ -146,3 +146,12 @@ The two distributions must use the same application data location and migration 
 - No duplicate Bluetooth scanning in the dashboard, tray, and widget.
 - No arbitrary user scripts for battery rules.
 - No telemetry.
+
+
+## WinUI runtime integration status
+
+The new src/BTChargeIndicator.Platform.Windows project contains the Windows acquisition adapter and links the existing Bluetooth scanner and protocol-reader source files. This is an assembly-boundary extraction only; protocol behavior and source ownership have not been rewritten. The legacy WinForms host and WinUI host both reference this platform project.
+
+The WinUI process composes one ApplicationRuntime instance through RuntimeHost. The dashboard subscribes to immutable runtime snapshots and sends manual refresh requests to that same instance. It does not own timers, scanners, or a separate polling loop. Runtime disposal is awaited when the main window closes.
+
+The two executables are separate processes and therefore each owns a runtime instance when launched independently. This milestone does not yet provide tray/window lifetime coordination or single-instance activation.

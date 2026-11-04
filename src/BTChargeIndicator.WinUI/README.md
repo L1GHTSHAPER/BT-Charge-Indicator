@@ -1,12 +1,10 @@
 # WinUI 3 host
 
-This project is the new presentation host for the BT Charge Indicator redesign.
+The WinUI host composes the shared Core ApplicationRuntime with the existing Windows Bluetooth scanner. Scanner and protocol-reader source files are linked into BTChargeIndicator.Platform.Windows for this extraction step; protocol behavior is not rewritten.
 
-## Current status
+The dashboard displays live device snapshots, connection state, battery values, reading source, Bluetooth availability, and last scan time. Manual refresh requests a GATT battery refresh through the same runtime. There is no mock device data and no second scan scheduler.
 
-The first milestone establishes a separate WinUI 3 executable with a Fluent NavigationView shell and Dashboard/Settings page placeholders. It references the shared Core project but does not yet start Bluetooth acquisition or create a second scan loop.
-
-The dashboard intentionally displays no mock device data. Runtime and Windows platform-service integration will be added in the next milestone. The existing WinForms executable remains the tested application and fallback during this transition.
+The existing WinForms executable remains buildable and retains its tray behavior. Each executable process owns one runtime instance when launched independently.
 
 ## Build
 
@@ -17,4 +15,4 @@ dotnet restore .\src\BTChargeIndicator.WinUI\BTChargeIndicator.WinUI.csproj
 dotnet build .\src\BTChargeIndicator.WinUI\BTChargeIndicator.WinUI.csproj -c Release --no-restore
 ```
 
-The project currently targets unpackaged WinUI 3. Self-contained portable publishing and MSIX packaging are separate deployment tasks and are not enabled by this shell scaffold.
+The project currently targets unpackaged WinUI 3. Portable self-contained publishing and MSIX packaging remain separate deployment tasks.

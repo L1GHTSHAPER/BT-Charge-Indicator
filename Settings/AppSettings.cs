@@ -1,3 +1,5 @@
+using BTChargeIndicator.Models;
+
 namespace BTChargeIndicator.Settings;
 
 internal sealed class AppSettings

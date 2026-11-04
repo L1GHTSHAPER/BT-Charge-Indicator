@@ -1,5 +1,3 @@
-using BTChargeIndicator.Settings;
-
 namespace BTChargeIndicator.Models;
 
 /// <summary>

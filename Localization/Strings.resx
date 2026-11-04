@@ -388,4 +388,23 @@ This option appears only if your Bluetooth adapter, its driver, and your headset
   <data name="LanguageEnglish" xml:space="preserve">
     <value>English</value>
   </data>
+
+  <data name="BatteryProfile" xml:space="preserve">
+    <value>Battery profile</value>
+  </data>
+  <data name="DefaultProfile" xml:space="preserve">
+    <value>Default profile</value>
+  </data>
+  <data name="GlobalBatteryAggregation" xml:space="preserve">
+    <value>Global battery aggregation</value>
+  </data>
+  <data name="AggregationLowest" xml:space="preserve">
+    <value>Lowest battery</value>
+  </data>
+  <data name="AggregationHighest" xml:space="preserve">
+    <value>Highest battery</value>
+  </data>
+  <data name="AggregationAverage" xml:space="preserve">
+    <value>Average battery</value>
+  </data>
 </root>

@@ -663,11 +663,14 @@ internal sealed class TrayApplicationContext : ApplicationContext
     private ContextMenuStrip BuildDeviceTrayContextMenu(BluetoothBatteryDevice device)
     {
         var menu = new ContextMenuStrip { ShowCheckMargin = true };
+        var deviceKey = GetDeviceKey(device);
         var detailsItem = new ToolStripMenuItem(AppText.Get("ShowDeviceBatteryDetails"));
         detailsItem.Click += (_, _) =>
         {
-            var text = $"{GetDisplayName(device)}: {FormatBatterySummary(device)}";
-            _deviceTrayIcons.GetValueOrDefault(GetDeviceKey(device))?.NotifyIcon.ShowBalloonTip(
+            var currentDevice = _devices.FirstOrDefault(candidate =>
+                string.Equals(GetDeviceKey(candidate), deviceKey, StringComparison.OrdinalIgnoreCase)) ?? device;
+            var text = $"{GetDisplayName(currentDevice)}: {FormatBatterySummary(currentDevice)}";
+            _deviceTrayIcons.GetValueOrDefault(deviceKey)?.NotifyIcon.ShowBalloonTip(
                 3500, "BT Charge Indicator", text, ToolTipIcon.Info);
         };
         menu.Items.Add(detailsItem);

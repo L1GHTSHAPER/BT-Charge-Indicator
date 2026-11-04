@@ -72,6 +72,7 @@ try
 {
     var profilePath = Path.Combine(profileTempDirectory, "profiles.json");
     var profileStore = new BatteryProfileStore(profilePath);
+    profileStore.Save([redmiProfile, caseProfile]);
     profileStore.Save([redmiProfile, caseProfile, new BatteryProfile
     {
         Id = "custom-test",
@@ -94,10 +95,13 @@ try
         "Profile store round-trips declarative custom rules");
 
     File.WriteAllText(profilePath, "{ invalid json");
-    Assert(profileStore.Load().Count == 1,
-        "Malformed profile JSON falls back safely to the built-in profile");
+    var recoveredProfiles = profileStore.Load();
+    Assert(recoveredProfiles.Count == 3 && recoveredProfiles.Any(profile => profile.Id == "redmi-buds"),
+        "Malformed profile JSON recovers the previous valid backup");
     Assert(File.ReadAllText(profilePath) == "{ invalid json",
         "Malformed profile JSON is preserved for manual recovery");
+    Assert(File.Exists(profilePath + ".bak"),
+        "Profile store keeps a backup of the previous valid document");
 }
 finally
 {

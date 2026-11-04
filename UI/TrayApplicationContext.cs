@@ -955,10 +955,24 @@ internal sealed class TrayApplicationContext : ApplicationContext
         var includedDevices = BatteryDeviceIdentity.Deduplicate(_devices)
             .Where(device => GetDevicePreferences(device).IncludeInTrayIcon)
             .ToArray();
-        var first = includedDevices.FirstOrDefault(device => GetEffectiveBatteryPercent(device).HasValue);
-        return first is null
-            ? AppText.Format("TooltipBatteryUnavailable", includedDevices.Length)
-            : $"{GetDisplayName(first)}: {FormatBatterySummary(first)}";
+        var knownDevices = includedDevices
+            .Where(device => GetEffectiveBatteryPercent(device).HasValue)
+            .ToArray();
+        var connectedDevices = knownDevices.Where(device => device.IsConnected == true).ToArray();
+        var relevantDevices = connectedDevices.Length > 0 ? connectedDevices : knownDevices;
+        var first = relevantDevices.FirstOrDefault();
+        if (first is null)
+        {
+            return AppText.Format("TooltipBatteryUnavailable", includedDevices.Length);
+        }
+
+        var percentage = BatteryAggregationEngine.AggregateValues(
+            relevantDevices.Select(GetEffectiveBatteryPercent), _settings.GlobalAggregationMode);
+        var details = first.Components is null
+            ? string.Empty
+            : $" ({FormatBatterySummary(first)})";
+        var otherDevices = relevantDevices.Length > 1 ? $" +{relevantDevices.Length - 1}" : string.Empty;
+        return $"{percentage}% · {GetDisplayName(first)}{otherDevices}{details}";
     }
 
     private void SetTrayText(string text)

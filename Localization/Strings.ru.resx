@@ -407,4 +407,97 @@ ID устройства:
   <data name="AggregationAverage" xml:space="preserve">
     <value>Средний заряд</value>
   </data>
+  <data name="ProfileEditorTitle" xml:space="preserve">
+    <value>Редактор профилей батареи</value>
+  </data>
+  <data name="ProfileNew" xml:space="preserve">
+    <value>Создать</value>
+  </data>
+  <data name="ProfileDuplicate" xml:space="preserve">
+    <value>Дублировать</value>
+  </data>
+  <data name="ProfileDelete" xml:space="preserve">
+    <value>Удалить</value>
+  </data>
+  <data name="ProfileName" xml:space="preserve">
+    <value>Название профиля</value>
+  </data>
+  <data name="ProfileContainerIds" xml:space="preserve">
+    <value>Идентификаторы контейнеров Windows</value>
+  </data>
+  <data name="ProfileNameContains" xml:space="preserve">
+    <value>Название устройства содержит</value>
+  </data>
+  <data name="ProfileCategories" xml:space="preserve">
+    <value>Категории устройства</value>
+  </data>
+  <data name="ProfileAnySource" xml:space="preserve">
+    <value>Любой источник</value>
+  </data>
+  <data name="ProfileBatterySource" xml:space="preserve">
+    <value>Источник заряда</value>
+  </data>
+  <data name="ProfileAggregation" xml:space="preserve">
+    <value>Расчёт заряда</value>
+  </data>
+  <data name="ProfileRuleComponents" xml:space="preserve">
+    <value>Компоненты правила</value>
+  </data>
+  <data name="ProfileRuleOperation" xml:space="preserve">
+    <value>Операция правила</value>
+  </data>
+  <data name="ProfileMatchHelp" xml:space="preserve">
+    <value>Совпадение: должны совпасть все заданные группы; внутри группы достаточно одного значения. Идентификаторы контейнеров имеют наивысший приоритет. Разделяйте значения точкой с запятой. Пользовательские правила используют только указанные компоненты и операции.</value>
+  </data>
+  <data name="ProfilePreview" xml:space="preserve">
+    <value>Проверить пример</value>
+  </data>
+  <data name="ProfileSave" xml:space="preserve">
+    <value>Сохранить</value>
+  </data>
+  <data name="ProfileCancel" xml:space="preserve">
+    <value>Отмена</value>
+  </data>
+  <data name="ProfileImport" xml:space="preserve">
+    <value>Импорт JSON</value>
+  </data>
+  <data name="ProfileExport" xml:space="preserve">
+    <value>Экспорт JSON</value>
+  </data>
+  <data name="ProfileNameInvalid" xml:space="preserve">
+    <value>Введите название профиля длиной от 1 до 80 символов.</value>
+  </data>
+  <data name="ProfileContainerInvalid" xml:space="preserve">
+    <value>Каждый идентификатор контейнера должен быть корректным GUID Windows.</value>
+  </data>
+  <data name="ProfileRuleComponentsInvalid" xml:space="preserve">
+    <value>Выберите хотя бы один компонент для пользовательского правила.</value>
+  </data>
+  <data name="ProfileInvalid" xml:space="preserve">
+    <value>Профиль содержит недопустимые или неподдерживаемые параметры.</value>
+  </data>
+  <data name="ProfileNewName" xml:space="preserve">
+    <value>Новый профиль</value>
+  </data>
+  <data name="ProfileCopyName" xml:space="preserve">
+    <value>Копия {0}</value>
+  </data>
+  <data name="ProfileDeleteConfirm" xml:space="preserve">
+    <value>Удалить профиль «{0}»?</value>
+  </data>
+  <data name="ProfileSaveError" xml:space="preserve">
+    <value>Не удалось сохранить профили: {0}</value>
+  </data>
+  <data name="ProfileImportError" xml:space="preserve">
+    <value>Не удалось импортировать профиль: {0}</value>
+  </data>
+  <data name="ProfileExportError" xml:space="preserve">
+    <value>Не удалось экспортировать профиль: {0}</value>
+  </data>
+  <data name="ProfilePreviewUnavailable" xml:space="preserve">
+    <value>Выберите профиль для предварительного просмотра.</value>
+  </data>
+  <data name="ProfilePreviewResult" xml:space="preserve">
+    <value>Пример (L 100%, R 100%, кейс 55%): {0}</value>
+  </data>
 </root>

@@ -503,4 +503,7 @@ ID устройства:
   <data name="ManageProfiles" xml:space="preserve">
     <value>Управление профилями батареи</value>
   </data>
+  <data name="ProfileSourceInvalid" xml:space="preserve">
+    <value>Введите допустимые имена источников батареи через точку с запятой.</value>
+  </data>
 </root>

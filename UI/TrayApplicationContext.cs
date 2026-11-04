@@ -841,7 +841,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
         return parts.Count == 0 ? string.Empty : $"  [{string.Join(" · ", parts)}]";
     }
 
-    private static string FormatBatterySummary(BluetoothBatteryDevice device)
+    private string FormatBatterySummary(BluetoothBatteryDevice device)
     {
         if (device.Components is null)
         {

@@ -34,7 +34,7 @@ being treated as zero. The engine is not yet wired to the profile or tray UI;
 that integration belongs to later phases.
 
 ## Profile persistence and rules
-`Settings/BatteryProfile.cs` defines profile matching criteria and a declarative aggregation rule. `Settings/BatteryProfileStore.cs` stores a schema-versioned `profiles.json` beside the existing settings file, writes atomically, keeps a previous valid `.bak`, and falls back to that backup if the current document cannot be read. The rule evaluator only accepts known component identifiers and a fixed operation enum; it never evaluates arbitrary user code.
+`Settings/BatteryProfile.cs` defines profile matching criteria; `Models/BatteryAggregationRule.cs` defines typed component selections and declarative aggregation operations. `Settings/BatteryProfileStore.cs` stores a schema-versioned `profiles.json` beside the existing settings file, writes atomically, keeps a previous valid `.bak`, and falls back to that backup if the current document cannot be read. The rule evaluator only accepts known component identifiers and a fixed operation enum; it never evaluates arbitrary user code.
 
 Each device can store an explicit `ProfileId` in the existing settings document. Automatic matching uses Windows container GUIDs, categories, name fragments, and protocol source values. Bluetooth MAC addresses are not used as the only identity.
 

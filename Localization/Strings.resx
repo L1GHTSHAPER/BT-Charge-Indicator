@@ -506,4 +506,19 @@ This option appears only if your Bluetooth adapter, its driver, and your headset
   <data name="ProfileSourceInvalid" xml:space="preserve">
     <value>Enter valid battery source enum names separated by semicolons.</value>
   </data>
+  <data name="IndividualTrayIcon" xml:space="preserve">
+    <value>Show separate tray icon</value>
+  </data>
+  <data name="IndividualTrayIconStyle" xml:space="preserve">
+    <value>Individual tray icon style</value>
+  </data>
+  <data name="UseGlobalTrayIconStyle" xml:space="preserve">
+    <value>Use global style</value>
+  </data>
+  <data name="HideIndividualTrayIcon" xml:space="preserve">
+    <value>Hide this tray icon</value>
+  </data>
+  <data name="ShowDeviceBatteryDetails" xml:space="preserve">
+    <value>Show battery details</value>
+  </data>
 </root>

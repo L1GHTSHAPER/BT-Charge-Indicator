@@ -45,3 +45,6 @@ Each device can store an explicit `ProfileId` in the existing settings document.
 The main `NotifyIcon` remains the global aggregate. Optional per-device `NotifyIcon` instances are keyed by the stable device key, use their own icon style (or inherit the global style), and are disposed when disabled, removed, or when the application exits. Each per-device icon has a compact context menu for details, profile management, Bluetooth settings, and hiding that icon.
 
 The tabbed settings form edits a cloned settings object and only applies it after Save. Cancel discards its pending changes. It exposes per-device inclusion/profile/icon controls and global aggregation/style, notifications, language, refresh, update, and startup settings.
+
+## Physical device deduplication
+`BatteryDeviceIdentity` uses the Windows container GUID first, then the Bluetooth address, then the Windows device ID. The tray, settings window, notifications, and global aggregation use this shared key. If multiple endpoints share a key, one representative is selected, preferring component readings, then a known scalar reading, then a connected endpoint. This prevents a Classic/BLE pair for the same container from being counted twice.

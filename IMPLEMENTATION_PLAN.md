@@ -33,15 +33,19 @@ Acceptance: the test suite proves L=100/R=100/case=55 produces a primary percent
 ## Phase 1 — Battery domain and aggregation design
 - [x] Define a normalized battery snapshot with typed components, percentage, source, connection state, and observation time.
 - [x] Keep protocol readings raw and calculate per-device/global display values in separate aggregation/profile engines.
-- [x] Add a pure aggregation engine with left, right, case, all-component min/max/average, and earbud-only min/average modes.\n- [ ] Add safe custom declarative rules and selected-component fallback policy.
-- [ ] Define missing/stale/disconnected behavior; never coerce unknown values to zero.
-- [x] Add regression tests for known/missing/invalid component values and global aggregation.\n- [ ] Run the Windows CI build/test and extend tests as the profile engine lands.
+- [x] Add a pure aggregation engine with left, right, case, all-component min/max/average, and earbud-only min/average modes.
+- [x] Add safe custom declarative rules and strict selected-component behavior.
+- [x] Never coerce unknown values to zero; missing selected components remain unknown.
+- [ ] Define a time-based stale-reading policy.
+- [x] Add regression tests for known/missing/invalid component values and global aggregation.
+- [x] Run the Windows Release build and regression tests in CI.
 
 Acceptance: aggregation logic is deterministic, isolated from WinForms, and fully tested.
 
 ## Phase 2 — Versioned JSON configuration and profiles
 - [x] Add schema-versioned global settings and per-device profile models.
-- [x] Add profile load/save, validation, atomic writes, backup recovery, and additive settings defaults.\n- [ ] Add explicit migration handling for future schema changes.
+- [x] Add profile load/save, validation, atomic writes, backup recovery, and additive settings defaults.
+- [ ] Add explicit migration handling for future schema changes.
 - [x] Implement profile matching priority: explicit device assignment, stable Windows container ID, model/category/protocol hints, then default.
 - [x] Avoid depending only on Bluetooth MAC addresses.
 - [x] Add safe declarative custom rules; reject unsupported operations and malformed input.
@@ -52,9 +56,11 @@ Acceptance: old settings load without loss; invalid profiles cannot crash the ap
 
 ## Phase 3 — Device profile editor
 - [x] Add a native WinForms profile editor consistent with the existing app.
-- [x] Edit profile name, matching criteria, and built-in/custom aggregation settings.\n- [ ] Add per-profile tooltip fields, tray presentation, and notification thresholds.
+- [x] Edit profile name, matching criteria, and built-in/custom aggregation settings.
+- [ ] Add per-profile tooltip fields, tray presentation, and notification thresholds.
 - [x] Preview the computed battery value using sample readings.
-- [x] Support create, duplicate, rename, delete, import, and export.\n- [ ] Add reset-to-default.
+- [x] Support create, duplicate, rename, delete, import, and export.
+- [ ] Add reset-to-default.
 - [x] Explain validation failures in plain language.
 
 Acceptance: profiles can be managed without manually editing JSON; preview matches the tested aggregation engine.
@@ -70,8 +76,10 @@ Acceptance: per-device icons do not affect global aggregation, and global rules 
 
 ## Phase 5 — Tray, tooltip, and notifications
 - [x] Make tray percentage use the profile's computed value.
-- [x] Keep tray and per-device tooltips within Windows limits and include component readings.\n- [ ] Add configurable tooltip component/timestamp visibility.
-- [x] Support independent per-device icon styles with global style inheritance;\n  - [ ] Add independent per-device/global labels and warning thresholds.
+- [x] Keep tray and per-device tooltips within Windows limits and include component readings.
+- [ ] Add configurable tooltip component/timestamp visibility.
+- [x] Support independent per-device icon styles with global style inheritance;
+  - [ ] Add independent per-device/global labels and warning thresholds.
 - [x] Ensure low-battery notification triggers use the profile-computed device percentage.
 - [ ] Keep existing icon styles and notification behavior compatible by default.
 

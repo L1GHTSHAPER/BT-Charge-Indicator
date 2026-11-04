@@ -1,3 +1,4 @@
+using System.Text.Json;
 using BTChargeIndicator.Settings;
 using BTChargeIndicator.Services;
 using BTChargeIndicator.Models;
@@ -46,6 +47,40 @@ Assert(BatteryProfileEngine.Resolve(
     "Explicit device profile assignment overrides automatic matching");
 Assert(BatteryProfileEngine.GetBatteryPercent(redmiDevice, caseProfile) == 55,
     "A selected case profile can display the charging case");
+
+var missingLeftDevice = redmiDevice with
+{
+    Components = new BatteryComponents(null, 100, 55)
+};
+var leftOnlyProfile = new BatteryProfile
+{
+    Id = "left-only",
+    Name = "Left only",
+    AggregationMode = BatteryAggregationMode.Left
+};
+Assert(BatteryProfileEngine.GetBatteryPercent(missingLeftDevice, leftOnlyProfile) is null,
+    "A missing explicitly selected component stays unknown instead of falling back to another component");
+
+var containerSpecificProfile = new BatteryProfile
+{
+    Id = "container-specific",
+    Name = "Container-specific",
+    Match = new BatteryProfileMatch
+    {
+        ContainerIds = ["863f1b84-9ff7-508a-aa4a-7126cc525e46"]
+    },
+    AggregationMode = BatteryAggregationMode.Case
+};
+Assert(BatteryProfileEngine.Resolve(
+        redmiDevice, [defaultProfile, redmiProfile, containerSpecificProfile]).Id == "container-specific",
+    "Stable Windows container identity outranks model and protocol hints");
+
+var legacySettings = JsonSerializer.Deserialize<AppSettings>(
+    "{\"Language\":2,\"RefreshIntervalSeconds\":300,\"Devices\":{\"address:AA:BB\":{\"CustomName\":\"My buds\"}}}")!;
+legacySettings.Normalize();
+Assert(legacySettings.GlobalAggregationMode == BatteryAggregationMode.Lowest &&
+       legacySettings.Devices["address:AA:BB"].CustomName == "My buds",
+    "Legacy settings keep their values and receive defaults for new profile settings");
 
 var customRuleProfile = new BatteryProfile
 {

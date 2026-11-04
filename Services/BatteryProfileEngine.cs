@@ -60,20 +60,21 @@ internal static class BatteryProfileEngine
         ArgumentNullException.ThrowIfNull(device);
         ArgumentNullException.ThrowIfNull(profile);
 
-        if (device.Components is null)
-        {
-            return Normalize(device.BatteryPercent);
-        }
+        var snapshot = BatterySnapshot.FromDevice(device);
+        var components = new BatteryComponents(
+            snapshot.GetComponent(BatteryComponentKind.Left),
+            snapshot.GetComponent(BatteryComponentKind.Right),
+            snapshot.GetComponent(BatteryComponentKind.Case));
 
         if (profile.AggregationMode == BatteryAggregationMode.Custom)
         {
-            return AggregateCustom(device, profile.CustomRule);
+            return AggregateCustom(snapshot, profile.CustomRule);
         }
 
         return BatteryAggregationEngine.Aggregate(
-            device.Components,
+            components,
             profile.AggregationMode,
-            device.BatteryPercent);
+            snapshot.DevicePercent);
     }
 
     public static bool IsValidProfile(BatteryProfile? profile)
@@ -159,10 +160,9 @@ internal static class BatteryProfileEngine
         return hasCriteria ? score : 0;
     }
 
-    private static int? AggregateCustom(BluetoothBatteryDevice device, BatteryAggregationRule? rule)
+    private static int? AggregateCustom(BatterySnapshot snapshot, BatteryAggregationRule? rule)
     {
-        var components = device.Components;
-        if (!IsValidRule(rule) || components is null)
+        if (!IsValidRule(rule))
         {
             return null;
         }
@@ -170,10 +170,10 @@ internal static class BatteryProfileEngine
         var values = rule!.Components
             .Select(component => component switch
             {
-                BatteryComponentKind.Left => components.LeftPercent,
-                BatteryComponentKind.Right => components.RightPercent,
-                BatteryComponentKind.Case => components.CasePercent,
-                BatteryComponentKind.Device => device.BatteryPercent,
+                BatteryComponentKind.Left => snapshot.GetComponent(BatteryComponentKind.Left),
+                BatteryComponentKind.Right => snapshot.GetComponent(BatteryComponentKind.Right),
+                BatteryComponentKind.Case => snapshot.GetComponent(BatteryComponentKind.Case),
+                BatteryComponentKind.Device => snapshot.DevicePercent,
                 _ => null
             })
             .Select(Normalize)

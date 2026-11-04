@@ -8,5 +8,6 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\BTChargeIndicator.csproj" />
+    <ProjectReference Include="..\src\BTChargeIndicator.Core\BTChargeIndicator.Core.csproj" />
   </ItemGroup>
 </Project>

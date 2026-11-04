@@ -25,7 +25,7 @@ internal sealed class BatteryProfileEditorForm : Form
     private readonly TextBox _containerIds = new() { Dock = DockStyle.Fill };
     private readonly TextBox _nameContains = new() { Dock = DockStyle.Fill };
     private readonly TextBox _categories = new() { Dock = DockStyle.Fill };
-    private readonly ComboBox _source = new() { Dock = DockStyle.Fill, DropDownStyle = ComboBoxStyle.DropDownList };
+    private readonly TextBox _sources = new() { Dock = DockStyle.Fill };
     private readonly ComboBox _aggregation = new() { Dock = DockStyle.Fill, DropDownStyle = ComboBoxStyle.DropDownList };
     private readonly CheckedListBox _ruleComponents = new()
     {
@@ -119,16 +119,7 @@ internal sealed class BatteryProfileEditorForm : Form
         AddEditorRow(editor, "ProfileNameContains", _nameContains);
         AddEditorRow(editor, "ProfileCategories", _categories);
 
-        _source.Items.Add(AppText.Get("ProfileAnySource"));
-        foreach (var value in Enum.GetValues<BatteryReadingSource>())
-        {
-            if (value != BatteryReadingSource.None)
-            {
-                _source.Items.Add(value.ToString());
-            }
-        }
-        _source.SelectedIndex = 0;
-        AddEditorRow(editor, "ProfileBatterySource", _source);
+        AddEditorRow(editor, "ProfileBatterySource", _sources);
 
         foreach (var value in Enum.GetValues<BatteryAggregationMode>())
         {
@@ -272,7 +263,7 @@ internal sealed class BatteryProfileEditorForm : Form
         var enabled = profile is not null;
         foreach (var control in new Control[]
                  {
-                     _name, _containerIds, _nameContains, _categories, _source,
+                     _name, _containerIds, _nameContains, _categories, _sources,
                      _aggregation, _ruleComponents, _ruleOperation
                  })
         {
@@ -285,7 +276,7 @@ internal sealed class BatteryProfileEditorForm : Form
             _containerIds.Clear();
             _nameContains.Clear();
             _categories.Clear();
-            _source.SelectedIndex = 0;
+            _sources.Clear();
             _aggregation.SelectedItem = BatteryAggregationMode.EarbudsLowest;
             for (var i = 0; i < _ruleComponents.Items.Count; i++)
             {
@@ -299,9 +290,7 @@ internal sealed class BatteryProfileEditorForm : Form
             _containerIds.Text = string.Join("; ", profile.Match.ContainerIds);
             _nameContains.Text = string.Join("; ", profile.Match.NameContains);
             _categories.Text = string.Join("; ", profile.Match.Categories);
-            _source.SelectedItem = profile.Match.Sources.Count == 0
-                ? AppText.Get("ProfileAnySource")
-                : profile.Match.Sources[0].ToString();
+            _sources.Text = string.Join("; ", profile.Match.Sources);
             _aggregation.SelectedItem = profile.AggregationMode;
             var components = profile.CustomRule?.Components ?? [BatteryComponentKind.Left, BatteryComponentKind.Right];
             for (var i = 0; i < _ruleComponents.Items.Count; i++)
@@ -340,16 +329,23 @@ internal sealed class BatteryProfileEditorForm : Form
 
         var profile = _profiles[_selectedIndex];
         profile.Name = name;
+        var sources = new List<BatteryReadingSource>();
+        foreach (var value in SplitValues(_sources.Text))
+        {
+            if (!Enum.TryParse<BatteryReadingSource>(value, true, out var source) ||
+                !Enum.IsDefined(source))
+            {
+                return ShowValidationError("ProfileSourceInvalid", showError);
+            }
+            sources.Add(source);
+        }
+
         profile.Match = new BatteryProfileMatch
         {
             ContainerIds = containerIds,
             NameContains = SplitValues(_nameContains.Text),
             Categories = SplitValues(_categories.Text),
-            Sources = _source.SelectedIndex <= 0
-                ? []
-                : Enum.TryParse<BatteryReadingSource>(_source.SelectedItem?.ToString(), out var source)
-                    ? [source]
-                    : []
+            Sources = sources
         };
         profile.AggregationMode = mode;
 

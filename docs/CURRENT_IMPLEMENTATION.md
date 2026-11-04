@@ -25,6 +25,7 @@
 - Selected devices can have separate tray icons and individual icon styles.
 - Low-battery notifications use the profile-computed primary percentage.
 - Device preferences are keyed by Windows container ID when available; older address-based entries are migrated.
+- `BatteryDeviceIdentity` merges known component values across endpoints sharing a stable container identity, so the same physical device is not counted twice.
 
 ## UI
 - The tray menu retains quick settings and provides access to the tabbed settings window.

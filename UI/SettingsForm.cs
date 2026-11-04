@@ -417,11 +417,7 @@ internal sealed class SettingsForm : Form
     }
 
     private static string GetDeviceKey(BluetoothBatteryDevice device) =>
-        device.ContainerId.HasValue
-            ? $"container:{device.ContainerId.Value:D}"
-            : !string.IsNullOrWhiteSpace(device.Address)
-                ? $"address:{device.Address.Trim()}"
-                : $"id:{device.Id}";
+        BatteryDeviceIdentity.GetKey(device);
 
     private static TableLayoutPanel CreateSettingsLayout() => new()
     {

@@ -1,14 +1,15 @@
 # Architecture notes
 
 ## Current architecture
-The application is a single .NET 9 WinForms executable. Bluetooth acquisition lives primarily in `Services/BluetoothBatteryService.cs`, with protocol-specific services for AirPods, Google Fast Pair, Nothing/CMF, and DualSense. Raw device data is represented by `BluetoothBatteryDevice` and `BatteryComponents`. `TrayApplicationContext` owns scanning, tray menus, notifications, settings interactions, and global tray aggregation. `SettingsStore` serializes `AppSettings` to LocalAppData.
+The application is a single .NET 9 WinForms executable. Bluetooth acquisition lives primarily in `Services/BluetoothBatteryService.cs`, with protocol-specific services for AirPods, Google Fast Pair, Nothing/CMF, and DualSense. Raw device data is represented by `BluetoothBatteryDevice` and `BatteryComponents`. `TrayApplicationContext` owns scanning, global and per-device tray icons, notifications, and menu orchestration. `SettingsForm` and `BatteryProfileEditorForm` own the tabbed settings and profile editing experiences. `SettingsStore` serializes `AppSettings` to LocalAppData.
 
 ## Current battery flow
 1. Windows and protocol-specific services discover/read a device.
 2. Protocol adapters return a scalar percentage and, when available, left/right/case components.
 3. TWS values are represented by `TwsBatteryReading`.
 4. `BluetoothBatteryService.ApplyComponentReading` copies `TwsBatteryReading.LowestPercent` to `BluetoothBatteryDevice.BatteryPercent`.
-5. The tray icon selects the lowest known `BatteryPercent` across connected included devices (or known devices if none are connected).
+5. `BatteryProfileEngine` resolves the active profile and computes each device's display percentage.
+6. The global tray icon aggregates connected, included devices using the selected global minimum, maximum, or average mode; if none are connected, it falls back to known included devices.
 
 The former TWS `LowestPercent` calculation included the charging case. The default now prefers the lowest known left/right earbud value and only falls back to the case when neither earbud value is known. Component values remain intact for tooltips and diagnostics.
 
@@ -39,3 +40,8 @@ Each device can store an explicit `ProfileId` in the existing settings document.
 
 ## Normalized observations
 `BluetoothBatteryDevice` now records the observation timestamp. `BatterySnapshot.FromDevice` creates an immutable normalized view containing typed component readings, the scalar reading, source, connection state, and observation time. Invalid percentages are omitted rather than coerced to zero. The snapshot deliberately excludes Bluetooth addresses; profile matching and saved preferences use the Windows container ID where available.
+
+## Settings UI and per-device tray icons
+The main `NotifyIcon` remains the global aggregate. Optional per-device `NotifyIcon` instances are keyed by the stable device key, use their own icon style (or inherit the global style), and are disposed when disabled, removed, or when the application exits. Each per-device icon has a compact context menu for details, profile management, Bluetooth settings, and hiding that icon.
+
+The tabbed settings form edits a cloned settings object and only applies it after Save. Cancel discards its pending changes. It exposes per-device inclusion/profile/icon controls and global aggregation/style, notifications, language, refresh, update, and startup settings.

@@ -16,6 +16,5 @@
     <Compile Include="..\..\Services\FastPairBatteryService.cs" Link="Services\FastPairBatteryService.cs" />
     <Compile Include="..\..\Services\NothingBatteryService.cs" Link="Services\NothingBatteryService.cs" />
     <Compile Include="..\..\Services\DualSenseBatteryService.cs" Link="Services\DualSenseBatteryService.cs" />
-    <Compile Include="Services\PlatformLogger.cs" />
   </ItemGroup>
 </Project>

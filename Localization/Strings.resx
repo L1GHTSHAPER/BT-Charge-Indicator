@@ -500,4 +500,7 @@ This option appears only if your Bluetooth adapter, its driver, and your headset
   <data name="ProfilePreviewResult" xml:space="preserve">
     <value>Sample reading (L 100%, R 100%, case 55%): {0}</value>
   </data>
+  <data name="ManageProfiles" xml:space="preserve">
+    <value>Manage battery profiles</value>
+  </data>
 </root>

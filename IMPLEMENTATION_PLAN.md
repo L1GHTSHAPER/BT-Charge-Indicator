@@ -33,9 +33,9 @@ Acceptance: the test suite proves L=100/R=100/case=55 produces a primary percent
 ## Phase 1 — Battery domain and aggregation design
 - [ ] Define a normalized battery snapshot with component identity, percentage, source, connection state, and observation time.
 - [ ] Separate raw protocol readings from derived per-device and global display values.
-- [ ] Define aggregation operations: left, right, case, minimum, maximum, average, selected component, and custom declarative rule.
+- [x] Add a pure aggregation engine with left, right, case, all-component min/max/average, and earbud-only min/average modes.\n- [ ] Add safe custom declarative rules and selected-component fallback policy.
 - [ ] Define missing/stale/disconnected behavior; never coerce unknown values to zero.
-- [ ] Add unit tests for each operation and edge case.
+- [x] Add regression tests for known/missing/invalid component values and global aggregation.\n- [ ] Run the Windows CI build/test and extend tests as the profile engine lands.
 
 Acceptance: aggregation logic is deterministic, isolated from WinForms, and fully tested.
 
@@ -113,4 +113,4 @@ Acceptance: runtime decisions are documented and tested on Windows 10/11.
 Acceptance: reproducible build, clear docs, clean diff, and release-ready branch.
 
 ## Current status
-Phase 0 audit is substantially complete. The first regression fix and Windows CI are being added. No Windows build or Bluetooth hardware test has yet been run from this environment.
+Phase 0 audit and initial regression fix are committed on the feature branch. Phase 1 has started with a pure aggregation engine and focused tests. Windows CI runs have been queued by GitHub for the latest commits; no completed Windows build/test result or Bluetooth hardware verification is available yet.

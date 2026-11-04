@@ -35,7 +35,7 @@ internal static class BatteryAggregationEngine
             BatteryAggregationMode.EarbudsLowest => AggregateEarbuds(
                 components.LeftPercent,
                 components.RightPercent,
-                fallback ?? components.CasePercent,
+                Normalize(fallback) ?? Normalize(components.CasePercent),
                 static values => values.Min()),
             BatteryAggregationMode.EarbudsAverage => AggregateEarbuds(
                 components.LeftPercent,

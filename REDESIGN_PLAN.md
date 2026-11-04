@@ -57,7 +57,8 @@ Goal: separate application behavior and lifetime from WinForms presentation with
   - `BTChargeIndicator.Tray` (or a shared host adapter): tray icon rendering, context menus, and lifetime integration, chosen after prototyping the WinUI/unpackaged host constraints.
   - Existing WinForms project retained temporarily as a legacy host or reference during migration.
 - [x] Add UI-independent runtime contracts and an initial single-owner scan scheduler with immutable state publication; cover startup, refresh, state notifications, and shutdown with a fake scanner.
-- [ ] Adapt the existing Windows Bluetooth scanner to the runtime contract and migrate scan scheduling/device state out of `TrayApplicationContext`.
+- [x] Add a Windows-host adapter implementing the runtime scanner contract by delegating to the existing `BluetoothBatteryService`; protocol readers and scan behavior remain unchanged.
+- [ ] Wire the adapter into the runtime and migrate scan scheduling/device state out of `TrayApplicationContext`.
 - [ ] Publish immutable device-state updates to presentation clients; do not let UI pages call Bluetooth protocol readers directly.
 - [ ] Define cancellation, shutdown, single-instance, and resource-disposal ownership.
 - [ ] Keep all Bluetooth I/O asynchronous and bounded by existing timeouts.
@@ -169,4 +170,4 @@ Acceptance: reproducible builds, verified installers/artifacts, complete docs, a
 
 ## Current redesign status
 
-Phase 0 audit and documentation are complete. Phase 1 is in progress: `BTChargeIndicator.Core` now owns the shared battery/domain/settings code and the presentation-independent connection notification tracker. The legacy WinForms host references Core and continues to build against the same internal types; the existing protocol test harness directly references Core and retains the tracker behavior tests. The latest Windows CI run (#246) passed. Next: implement the Windows scanner adapter and migrate scan scheduling/state ownership out of `TrayApplicationContext` incrementally, without rewriting Bluetooth protocol readers. The runtime prototype is not yet wired into the legacy host.
+Phase 0 audit and documentation are complete. Phase 1 is in progress: `BTChargeIndicator.Core` now owns the shared battery/domain/settings code and the presentation-independent connection notification tracker. The legacy WinForms host references Core and continues to build against the same internal types; the existing protocol test harness directly references Core and retains the tracker behavior tests. The latest Windows CI run (#258) passed. A Windows-host `BluetoothBatteryScannerAdapter` now bridges the existing `BluetoothBatteryService` to the Core scanner contract without changing protocol readers. It is not yet wired into `ApplicationRuntime`; the next step is a controlled host migration that removes the duplicate WinForms scan scheduler and makes the runtime the single owner of scan timing and device snapshots.

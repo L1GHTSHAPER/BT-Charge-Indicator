@@ -70,7 +70,7 @@ Acceptance: per-device icons do not affect global aggregation, and global rules 
 
 ## Phase 5 — Tray, tooltip, and notifications
 - [x] Make tray percentage use the profile's computed value.
-- [ ] Make tooltips show configured components and timestamps without exceeding Windows limits.
+- [x] Keep tray and per-device tooltips within Windows limits and include component readings.\n- [ ] Add configurable tooltip component/timestamp visibility.
 - [x] Support independent per-device icon styles with global style inheritance;\n  - [ ] Add independent per-device/global labels and warning thresholds.
 - [x] Ensure low-battery notification triggers use the profile-computed device percentage.
 - [ ] Keep existing icon styles and notification behavior compatible by default.
@@ -79,10 +79,10 @@ Acceptance: the tray icon, tooltip, and notifications agree with the active prof
 
 ## Phase 6 — Settings UI redesign
 - [ ] Audit current menu/dialog interactions and reuse working native components where sensible.
-- [ ] Build a clear settings window with Overview, Devices, Profiles, Tray & Global, Notifications, and Advanced sections.
+- [x] Build a tabbed settings window with Overview, Devices, Profiles, Tray & Global, Notifications, and Advanced sections.
 - [ ] Add search/filter for devices and profiles.
 - [ ] Support keyboard navigation, DPI scaling, and high-contrast/system theme behavior.
-- [ ] Keep localization complete in English and Russian.
+- [x] Keep localization complete in English and Russian.
 
 Acceptance: all new features are reachable through the UI and remain usable at common Windows scaling levels.
 

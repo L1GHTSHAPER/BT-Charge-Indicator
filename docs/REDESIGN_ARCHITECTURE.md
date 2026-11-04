@@ -13,16 +13,16 @@
 
 The current application is one WinForms executable targeting `net10.0-windows10.0.19041.0`. `Program.Main` loads settings, applies localization, creates a named mutex, and starts `TrayApplicationContext`.
 
-`TrayApplicationContext` currently combines several responsibilities:
+`TrayApplicationContext` still hosts several legacy responsibilities:
 - application lifetime and single-instance behavior;
-- Bluetooth scan scheduling and refresh;
-- device list and connection state;
+- device watcher lifecycle and change-event coalescing;
+- notification orchestration;
 - profile resolution and battery aggregation;
 - notification orchestration;
 - global and per-device NotifyIcon lifecycle;
 - tray menus and settings-window activation.
 
-The Bluetooth acquisition implementation is in `BluetoothBatteryService` and protocol-specific services. The pure battery aggregation and profile engines are already isolated enough to preserve and reuse. `BTChargeIndicator.Core` now also contains the presentation-independent connection tracker and an initial `ApplicationRuntime` implementation with a scanner abstraction. The runtime is currently tested with a fake scanner but is not yet wired into the WinForms host; the next extraction step is to adapt `BluetoothBatteryService` and transfer scan/state ownership from `TrayApplicationContext`.
+The Bluetooth acquisition implementation remains in `BluetoothBatteryService` and the existing protocol-specific services. The pure battery aggregation and profile engines are reused through `BTChargeIndicator.Core`. Core also contains the presentation-independent connection tracker and `ApplicationRuntime`. `BluetoothBatteryScannerAdapter` adapts the existing acquisition service to the runtime scanner contract without changing protocol readers. The legacy WinForms tray host is now wired to this runtime: it delegates initial, periodic, manual, and watcher-triggered scans to the runtime and consumes published snapshots on the UI thread. Its old scan timer and scan lock have been removed. The device watcher and 500 ms UI timer remain only to coalesce device-change signals. This integration passed Windows CI and was manually tested from the generated artifact.
 
 ## Target boundaries
 
@@ -59,9 +59,11 @@ A single runtime instance owns:
 - settings and profile persistence;
 - lifecycle, cancellation, and shutdown.
 
-The runtime publishes immutable state snapshots to subscribers. The current Core prototype provides startup, periodic refresh, explicit refresh, and shutdown contracts. It still needs Windows scanner integration and migration of the existing WinForms host before it becomes the production owner. UI surfaces will consume snapshots and issue commands; they will not start their own Bluetooth scan loops.
+The runtime publishes immutable state snapshots to subscribers. The current Core runtime provides startup, periodic refresh, explicit refresh, interval updates, state publication, and shutdown. It is now the scan/state owner for the legacy WinForms host. The next host will be WinUI 3; it must consume the same runtime rather than creating another scan loop. Additional stress testing of concurrent refresh, cancellation, and shutdown during real Bluetooth activity remains part of Phase 1 hardening.
 
 ### WinUI 3 presentation
+
+The new WinUI 3 application will initially be a separate host project referencing Core and the Windows platform adapter. During the transition, the existing WinForms executable remains buildable and serves as the known-good fallback. Do not move or duplicate the protocol readers into the WinUI project.
 
 Owns:
 - navigation and window lifecycle;

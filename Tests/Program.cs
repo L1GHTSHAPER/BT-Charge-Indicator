@@ -2,6 +2,7 @@ using System.Text.Json;
 using BTChargeIndicator.Settings;
 using BTChargeIndicator.Services;
 using BTChargeIndicator.Models;
+using BTChargeIndicator.Runtime;
 using Windows.Devices.Bluetooth;
 
 await LocalizationTests.RunAsync();
@@ -404,6 +405,25 @@ Assert(dualEndpointNotifications.Observe([
 var radioOff = dualEndpointNotifications.Observe([], BluetoothAvailability.TurnedOff);
 Assert(radioOff.Count == 1 && !radioOff[0].IsConnected, "Radio off produces one physical disconnect popup");
 
+var runtimeScanner = new FakeBluetoothBatteryScanner(new BluetoothScanResult(
+    [ConnectionDevice("runtime-headset", true, 91)],
+    BluetoothAvailability.Available));
+await using (var runtime = new ApplicationRuntime(runtimeScanner))
+{
+    var stateChanges = 0;
+    runtime.StateChanged += _ => stateChanges++;
+    await runtime.StartAsync(TimeSpan.FromMinutes(1));
+    Assert(runtime.State.Devices.Count == 1 && runtime.State.Devices[0].BatteryPercent == 91,
+        "Runtime publishes the first scan as its shared device state");
+    Assert(runtime.State.IsScanning == false && runtime.State.LastUpdatedUtc.HasValue,
+        "Runtime publishes completed scan metadata");
+    await runtime.RefreshAsync(refreshGattBattery: true);
+    Assert(runtimeScanner.LastRefreshRequested,
+        "Runtime forwards an explicit GATT refresh request to the platform scanner");
+    Assert(stateChanges >= 4,
+        "Runtime notifies subscribers when scan state and results change");
+    await runtime.StopAsync();
+}
 Console.WriteLine("Protocol parser, Bluetooth device change, and connection notification tests passed.");
 
 if (args.Contains("--watch", StringComparer.OrdinalIgnoreCase))
@@ -469,5 +489,17 @@ static void Assert(bool condition, string name)
     if (!condition)
     {
         throw new InvalidOperationException($"Failed: {name}");
+    }
+}
+
+
+internal sealed class FakeBluetoothBatteryScanner(BluetoothScanResult result) : IBluetoothBatteryScanner
+{
+    public bool LastRefreshRequested { get; private set; }
+
+    public Task<BluetoothScanResult> ScanAsync(bool refreshGattBattery = false)
+    {
+        LastRefreshRequested = refreshGattBattery;
+        return Task.FromResult(result);
     }
 }

@@ -29,20 +29,58 @@ internal static class BatteryDeviceIdentity
 
         return devices
             .GroupBy(GetKey, StringComparer.OrdinalIgnoreCase)
-            .Select(group => group
-                .OrderByDescending(device => HasKnownComponents(device.Components))
-                .ThenByDescending(device => device.BatteryPercent is >= 0 and <= 100)
-                .ThenByDescending(device => device.IsConnected == true)
-                .First())
+            .Select(MergeGroup)
             .OrderByDescending(device => device.IsConnected == true)
             .ThenBy(device => device.BatteryPercent ?? int.MaxValue)
             .ThenBy(device => device.Name, StringComparer.CurrentCultureIgnoreCase)
             .ToArray();
     }
 
+    private static BluetoothBatteryDevice MergeGroup(
+        IGrouping<string, BluetoothBatteryDevice> group)
+    {
+        var candidates = group.ToArray();
+        var preferred = candidates
+            .OrderByDescending(device => HasKnownComponents(device.Components))
+            .ThenByDescending(device => Normalize(device.BatteryPercent).HasValue)
+            .ThenByDescending(device => device.BatterySource != BatteryReadingSource.None)
+            .ThenByDescending(device => device.IsConnected == true)
+            .First();
+
+        var left = FirstKnown(candidates.Select(device => device.Components?.LeftPercent));
+        var right = FirstKnown(candidates.Select(device => device.Components?.RightPercent));
+        var casePercent = FirstKnown(candidates.Select(device => device.Components?.CasePercent));
+        var components = left.HasValue || right.HasValue || casePercent.HasValue
+            ? new BatteryComponents(left, right, casePercent)
+            : null;
+
+        return preferred with
+        {
+            BatteryPercent = Normalize(preferred.BatteryPercent) ??
+                             FirstKnown(candidates.Select(device => device.BatteryPercent)),
+            IsConnected = candidates.Any(device => device.IsConnected == true)
+                ? true
+                : candidates.All(device => device.IsConnected == false) ? false : null,
+            ObservedAtUtc = candidates.Max(device => device.ObservedAtUtc),
+            Components = components,
+            Categories = candidates.SelectMany(device => device.Categories)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray(),
+            BluetoothClassMajor = preferred.BluetoothClassMajor ??
+                                  candidates.Select(device => device.BluetoothClassMajor)
+                                      .FirstOrDefault(value => value.HasValue)
+        };
+    }
+
+    private static int? FirstKnown(IEnumerable<int?> values) =>
+        values.Select(Normalize).FirstOrDefault(value => value.HasValue);
+
+    private static int? Normalize(int? value) =>
+        value is >= 0 and <= 100 ? value : null;
+
     private static bool HasKnownComponents(BatteryComponents? components) =>
         components is not null &&
-        (components.LeftPercent is >= 0 and <= 100 ||
-         components.RightPercent is >= 0 and <= 100 ||
-         components.CasePercent is >= 0 and <= 100);
+        (Normalize(components.LeftPercent).HasValue ||
+         Normalize(components.RightPercent).HasValue ||
+         Normalize(components.CasePercent).HasValue);
 }

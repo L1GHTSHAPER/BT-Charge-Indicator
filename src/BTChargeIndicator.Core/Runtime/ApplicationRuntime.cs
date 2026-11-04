@@ -61,7 +61,7 @@ internal sealed class ApplicationRuntime : IApplicationRuntime, IAsyncDisposable
             {
                 var result = await _scanner.ScanAsync(refreshGattBattery).ConfigureAwait(false);
                 next = new ApplicationRuntimeState(
-                    result.Devices.ToArray(),
+                    Array.AsReadOnly(result.Devices.ToArray()),
                     result.Availability,
                     result.ErrorMessage,
                     DateTimeOffset.UtcNow,

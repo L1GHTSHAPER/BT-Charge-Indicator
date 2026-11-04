@@ -161,7 +161,8 @@ internal static class BatteryProfileEngine
 
     private static int? AggregateCustom(BluetoothBatteryDevice device, BatteryAggregationRule? rule)
     {
-        if (!IsValidRule(rule) || device.Components is null)
+        var components = device.Components;
+        if (!IsValidRule(rule) || components is null)
         {
             return null;
         }
@@ -169,9 +170,9 @@ internal static class BatteryProfileEngine
         var values = rule!.Components
             .Select(component => component switch
             {
-                BatteryComponentKind.Left => device.Components.LeftPercent,
-                BatteryComponentKind.Right => device.Components.RightPercent,
-                BatteryComponentKind.Case => device.Components.CasePercent,
+                BatteryComponentKind.Left => components.LeftPercent,
+                BatteryComponentKind.Right => components.RightPercent,
+                BatteryComponentKind.Case => components.CasePercent,
                 BatteryComponentKind.Device => device.BatteryPercent,
                 _ => null
             })

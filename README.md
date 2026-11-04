@@ -15,7 +15,7 @@ It works natively on Windows 10 and Windows 11 and reads battery levels through 
 
 ## Download
 
-This fork does not have a prebuilt release yet. Build the portable Windows executable from source with the .NET 10 SDK using the instructions below. Published builds will appear on [GitHub Releases](https://github.com/realSamy/BT-Charge-Indicator/releases) when the fork is ready for release.
+This fork does not have a tagged release yet. For a ready-to-run build, open the latest successful [Windows CI run](https://github.com/realSamy/BT-Charge-Indicator/actions/workflows/windows-ci.yml) and download the `BTChargeIndicator-win-x64` artifact. You can also build it locally with the .NET 10 SDK using the instructions below. Tagged releases will appear on [GitHub Releases](https://github.com/realSamy/BT-Charge-Indicator/releases) when the fork is ready.
 
 ## Features
 
@@ -63,7 +63,7 @@ Battery reporting depends on the device firmware and Windows driver. Separate TW
 
 ## Usage
 
-1. Build the executable with `build.ps1` or download a future release.
+1. Download the `BTChargeIndicator-win-x64` artifact from a successful [Windows CI run](https://github.com/realSamy/BT-Charge-Indicator/actions/workflows/windows-ci.yml), or build it with `build.ps1`.
 2. Find the colored percentage icon in the Windows system tray.
 3. Left-click the icon for a quick battery summary.
 4. Right-click it for the device list, quick options, and the tabbed **Settings** window.
@@ -129,7 +129,7 @@ The Fast Pair battery layout follows the official [Google Fast Pair Battery Noti
 
 **BT Charge Indicator** — приложение для отображения заряда Bluetooth-устройств в системном трее Windows 10/11. Поддерживаются беспроводные наушники, TWS-гарнитуры, геймпады, мыши, клавиатуры, колонки и BLE-аксессуары.
 
-Для этой версии форка пока нет готового релиза. Соберите переносимый файл с помощью скрипта `build.ps1` и .NET 10 SDK. Готовые сборки появятся на странице [Releases](https://github.com/realSamy/BT-Charge-Indicator/releases). Установка не требуется.
+Для этой версии форка пока нет отмеченного релиза. Готовую сборку можно скачать как артефакт `BTChargeIndicator-win-x64` из последнего успешного [запуска Windows CI](https://github.com/realSamy/BT-Charge-Indicator/actions/workflows/windows-ci.yml). Также можно собрать файл с помощью `build.ps1` и .NET 10 SDK. Установка не требуется.
 
 В меню **Управление профилями батареи** можно создавать и редактировать JSON-профили, задавать правила сопоставления устройств, выбирать алгоритм расчёта, импортировать и экспортировать профили, а также проверять результат на примере. Для отдельного значка устройства откройте его подменю и включите **Отдельный значок в трее**. Общий значок поддерживает минимальный, максимальный и средний заряд. По умолчанию заряд кейса не снижает основной процент TWS-наушников, если известен заряд хотя бы одного наушника. Подробнее: [профили батареи](docs/PROFILES.md).
 

@@ -1,5 +1,6 @@
 using BTChargeIndicator.Localization;
 using BTChargeIndicator.Models;
+using BTChargeIndicator.Services;
 using BTChargeIndicator.Settings;
 
 namespace BTChargeIndicator.UI;

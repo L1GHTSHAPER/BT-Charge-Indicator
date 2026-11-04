@@ -377,11 +377,11 @@ internal sealed class BatteryProfileEditorForm : Form
             return ShowValidationError("ProfileInvalid", showError);
         }
 
-        _loading = true;
-        _profileList.Items.RemoveAt(_selectedIndex);
-        _profileList.Items.Insert(_selectedIndex, new ProfileListItem(profile.Id, profile.Name));
-        _profileList.SelectedIndex = _selectedIndex;
-        _loading = false;
+        if (_profileList.Items[_selectedIndex] is ProfileListItem item)
+        {
+            item.Name = profile.Name;
+            _profileList.Refresh();
+        }
         return true;
     }
 
@@ -594,8 +594,17 @@ internal sealed class BatteryProfileEditorForm : Form
             }
     };
 
-    private sealed record ProfileListItem(string Id, string Name)
+    private sealed class ProfileListItem
     {
+        public string Id { get; }
+        public string Name { get; set; }
+
+        public ProfileListItem(string id, string name)
+        {
+            Id = id;
+            Name = name;
+        }
+
         public override string ToString() => Name;
     }
 }

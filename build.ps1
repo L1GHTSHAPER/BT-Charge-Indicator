@@ -12,7 +12,7 @@ $dotnetPath = $null
 foreach ($candidate in @($localDotnet, $systemDotnet)) {
     if ($candidate -and (Test-Path $candidate)) {
         $installedSdks = & $candidate --list-sdks 2>$null
-        if ($LASTEXITCODE -eq 0 -and $installedSdks -match '^9\.') {
+        if ($LASTEXITCODE -eq 0 -and $installedSdks -match '^10\.') {
             $dotnetPath = $candidate
             break
         }
@@ -20,7 +20,7 @@ foreach ($candidate in @($localDotnet, $systemDotnet)) {
 }
 
 if (-not $dotnetPath) {
-    throw '.NET 9 SDK was not found. Install it from https://dotnet.microsoft.com/download/dotnet/9.0'
+    throw '.NET 10 SDK was not found. Install it from https://dotnet.microsoft.com/download/dotnet/10.0'
 }
 
 $arguments = @(

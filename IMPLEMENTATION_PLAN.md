@@ -69,8 +69,9 @@ Acceptance: profiles can be managed without manually editing JSON; preview match
 - [x] Give each device an independent computed battery value and presentation configuration.
 - [x] Add per-device tray icon support with lifecycle-safe icon management.
 - [x] Add a global icon with configurable aggregation and existing per-device inclusion controls.
-- [ ] Define behavior for disconnected, stale, unavailable, hidden, and excluded devices.
-- [ ] Ensure one physical device exposed through multiple Windows endpoints is not double-counted.
+- [x] Define disconnected fallback, unknown/unavailable exclusion, hidden-list behavior, and explicit global inclusion/exclusion.
+- [ ] Define a time-based stale-reading policy.
+- [x] Deduplicate endpoints sharing a stable Windows container identity before global aggregation and per-device icon creation.
 
 Acceptance: per-device icons do not affect global aggregation, and global rules are deterministic.
 

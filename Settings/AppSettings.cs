@@ -2,6 +2,8 @@ namespace BTChargeIndicator.Settings;
 
 internal sealed class AppSettings
 {
+    public int SchemaVersion { get; set; } = 1;
+
     public AppLanguage Language { get; set; } = AppLanguage.Auto;
 
     public int RefreshIntervalSeconds { get; set; } = 60;
@@ -14,6 +16,8 @@ internal sealed class AppSettings
 
     public TrayIconStyle IconStyle { get; set; } = TrayIconStyle.Percentage;
 
+    public BatteryAggregationMode GlobalAggregationMode { get; set; } = BatteryAggregationMode.Lowest;
+
     public bool CheckForUpdatesAutomatically { get; set; } = true;
 
     public DateTimeOffset? LastUpdateCheckUtc { get; set; }
@@ -22,6 +26,7 @@ internal sealed class AppSettings
 
     public void Normalize()
     {
+        SchemaVersion = 1;
         Language = Enum.IsDefined(Language) ? Language : AppLanguage.Auto;
         RefreshIntervalSeconds = RefreshIntervalSeconds is 30 or 60 or 300
             ? RefreshIntervalSeconds
@@ -30,6 +35,10 @@ internal sealed class AppSettings
         IconStyle = Enum.IsDefined(IconStyle)
             ? IconStyle
             : TrayIconStyle.Percentage;
+        GlobalAggregationMode = GlobalAggregationMode is BatteryAggregationMode.Lowest
+            or BatteryAggregationMode.Highest or BatteryAggregationMode.Average
+            ? GlobalAggregationMode
+            : BatteryAggregationMode.Lowest;
 
         Devices = new Dictionary<string, DevicePreferences>(
             Devices ?? [],
@@ -50,6 +59,8 @@ internal sealed class DevicePreferences
     public string? LastKnownName { get; set; }
 
     public string? CustomName { get; set; }
+
+    public string? ProfileId { get; set; }
 
     public bool IsHidden { get; set; }
 

@@ -500,4 +500,7 @@ ID устройства:
   <data name="ProfilePreviewResult" xml:space="preserve">
     <value>Пример (L 100%, R 100%, кейс 55%): {0}</value>
   </data>
+  <data name="ManageProfiles" xml:space="preserve">
+    <value>Управление профилями батареи</value>
+  </data>
 </root>

@@ -36,3 +36,6 @@ that integration belongs to later phases.
 `Settings/BatteryProfile.cs` defines profile matching criteria and a declarative aggregation rule. `Settings/BatteryProfileStore.cs` stores a schema-versioned `profiles.json` beside the existing settings file, writes atomically, keeps a previous valid `.bak`, and falls back to that backup if the current document cannot be read. The rule evaluator only accepts known component identifiers and a fixed operation enum; it never evaluates arbitrary user code.
 
 Each device can store an explicit `ProfileId` in the existing settings document. Automatic matching uses Windows container GUIDs, categories, name fragments, and protocol source values. Bluetooth MAC addresses are not used as the only identity.
+
+## Normalized observations
+`BluetoothBatteryDevice` now records the observation timestamp. `BatterySnapshot.FromDevice` creates an immutable normalized view containing typed component readings, the scalar reading, source, connection state, and observation time. Invalid percentages are omitted rather than coerced to zero. The snapshot deliberately excludes Bluetooth addresses; profile matching and saved preferences use the Windows container ID where available.

@@ -13,5 +13,6 @@ internal enum BatteryAggregationMode
     Right = 4,
     Case = 5,
     EarbudsLowest = 6,
-    EarbudsAverage = 7
+    EarbudsAverage = 7,
+    Custom = 8
 }

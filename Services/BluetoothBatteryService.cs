@@ -117,12 +117,12 @@ internal sealed class BluetoothBatteryService : IDisposable
         }
         catch (UnauthorizedAccessException ex)
         {
-            AppLogger.Error("Bluetooth access was denied.", ex);
+            PlatformLogger.Error("Bluetooth access was denied.", ex);
             return new BluetoothScanResult([], BluetoothAvailability.AccessDenied, ex.Message);
         }
         catch (Exception ex)
         {
-            AppLogger.Error("Bluetooth scan failed.", ex);
+            PlatformLogger.Error("Bluetooth scan failed.", ex);
             return new BluetoothScanResult([], BluetoothAvailability.Error, ex.Message);
         }
     }

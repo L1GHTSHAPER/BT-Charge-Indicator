@@ -6,7 +6,7 @@ namespace BTChargeIndicator.Runtime;
 /// Owns the periodic scan loop and the latest immutable application state.
 /// It has no dependency on a UI framework or Windows presentation APIs.
 /// </summary>
-internal sealed class ApplicationRuntime : IApplicationRuntime
+internal sealed class ApplicationRuntime : IApplicationRuntime, IAsyncDisposable
 {
     private readonly IBluetoothBatteryScanner _scanner;
     private readonly SemaphoreSlim _scanLock = new(1, 1);

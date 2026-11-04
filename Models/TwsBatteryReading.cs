@@ -7,14 +7,22 @@ internal sealed record TwsBatteryReading(
 {
     public BatteryComponents Components => new(LeftPercent, RightPercent, CasePercent);
 
+    // The primary TWS value represents the earbuds, not the charging case.
+    // If neither earbud reports a level, retain a useful case-only fallback.
     public int? LowestPercent
     {
         get
         {
-            var known = new[] { LeftPercent, RightPercent, CasePercent }
+            var knownEarbuds = new[] { LeftPercent, RightPercent }
                 .OfType<int>()
                 .ToArray();
-            return known.Length == 0 ? null : known.Min();
+
+            if (knownEarbuds.Length > 0)
+            {
+                return knownEarbuds.Min();
+            }
+
+            return CasePercent;
         }
     }
 

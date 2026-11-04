@@ -14,6 +14,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
     private readonly ConnectionNotificationPresenter _connectionNotifications = new();
     private readonly UpdateService _updateService = new();
     private readonly SettingsStore _settingsStore = new();
+    private readonly BatteryProfileStore _profileStore = new();
     private readonly NotifyIcon _notifyIcon;
     private readonly Bitmap _appLogo = AppBranding.CreateLogoBitmap(24);
     private readonly System.Windows.Forms.Timer _refreshTimer;
@@ -24,6 +25,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
     private readonly Dictionary<(TrayIconStyle Style, int Threshold), Bitmap> _trayIconPreviews = [];
 
     private AppSettings _settings;
+    private IReadOnlyList<BatteryProfile> _profiles = [];
     private IReadOnlyList<BluetoothBatteryDevice> _devices = [];
     private BluetoothAvailability _availability = BluetoothAvailability.Available;
     private string? _lastErrorMessage;
@@ -42,6 +44,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
     public TrayApplicationContext()
     {
         _settings = _settingsStore.Load();
+        _profiles = _profileStore.Load();
         AppText.Apply(_settings.Language);
         DesktopNotificationService.Initialize();
         _currentIcon = TrayIconRenderer.Create(
@@ -181,7 +184,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
         {
             if (GetDevicePreferences(change.Device).IsHidden) continue;
             _connectionNotifications.Show(new ConnectionNotification(GetDeviceKey(change.Device),
-                GetDisplayName(change.Device), change.IsConnected, change.Device.BatteryPercent));
+                GetDisplayName(change.Device), change.IsConnected, GetEffectiveBatteryPercent(change.Device)));
         }
     }
 
@@ -190,7 +193,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
         var device = GetVisibleDevices().FirstOrDefault(item => item.IsConnected is true);
         _connectionNotifications.Show(new ConnectionNotification("preview",
             device is null ? AppText.Get("PreviewDevice") : GetDisplayName(device), connected,
-            device is null ? 76 : device.BatteryPercent));
+            device is null ? 76 : GetEffectiveBatteryPercent(device) ?? 76));
     }
 
     private ContextMenuStrip BuildContextMenu()
@@ -267,6 +270,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
         menu.Items.Add(BuildLanguageMenu());
         menu.Items.Add(BuildRefreshIntervalMenu());
         menu.Items.Add(BuildTrayIconStyleMenu());
+        menu.Items.Add(BuildGlobalAggregationMenu());
         menu.Items.Add(BuildLowBatteryThresholdMenu());
 
         var notificationsItem = new ToolStripMenuItem(AppText.Get("LowBatteryNotifications"))
@@ -424,6 +428,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
         var diagnosticsItem = new ToolStripMenuItem(AppText.Get("DeviceDiagnosticsMenu"));
         diagnosticsItem.Click += (_, _) => ShowDeviceDiagnostics(device);
         item.DropDownItems.Add(diagnosticsItem);
+        item.DropDownItems.Add(BuildDeviceProfileMenu(device, preferences));
 
         var renameItem = new ToolStripMenuItem(AppText.Get("Rename"));
         renameItem.Click += (_, _) =>
@@ -487,6 +492,78 @@ internal sealed class TrayApplicationContext : ApplicationContext
         item.DropDownItems.Add(visibleItem);
 
         return item;
+    }
+
+    private ToolStripMenuItem BuildDeviceProfileMenu(
+        BluetoothBatteryDevice device,
+        DevicePreferences preferences)
+    {
+        var menu = new ToolStripMenuItem(AppText.Get("BatteryProfile"));
+        var defaultItem = new ToolStripMenuItem(AppText.Get("DefaultProfile"))
+        {
+            Checked = string.IsNullOrWhiteSpace(preferences.ProfileId) ||
+                      string.Equals(preferences.ProfileId, BatteryProfileEngine.DefaultProfileId,
+                          StringComparison.OrdinalIgnoreCase)
+        };
+        defaultItem.Click += (_, _) =>
+        {
+            preferences.ProfileId = null;
+            SaveDeviceSettings();
+        };
+        menu.DropDownItems.Add(defaultItem);
+
+        foreach (var profile in _profiles.Where(profile =>
+                     !string.Equals(profile.Id, BatteryProfileEngine.DefaultProfileId,
+                         StringComparison.OrdinalIgnoreCase)))
+        {
+            var item = new ToolStripMenuItem(profile.Name)
+            {
+                Checked = string.Equals(preferences.ProfileId, profile.Id,
+                    StringComparison.OrdinalIgnoreCase)
+            };
+            item.Click += (_, _) =>
+            {
+                preferences.ProfileId = profile.Id;
+                SaveDeviceSettings();
+            };
+            menu.DropDownItems.Add(item);
+        }
+
+        return menu;
+    }
+
+    private ToolStripMenuItem BuildGlobalAggregationMenu()
+    {
+        var menu = new ToolStripMenuItem(AppText.Get("GlobalBatteryAggregation"));
+        foreach (var (mode, key) in new[]
+                 {
+                     (BatteryAggregationMode.Lowest, "AggregationLowest"),
+                     (BatteryAggregationMode.Highest, "AggregationHighest"),
+                     (BatteryAggregationMode.Average, "AggregationAverage")
+                 })
+        {
+            var item = new ToolStripMenuItem(AppText.Get(key))
+            {
+                Checked = _settings.GlobalAggregationMode == mode
+            };
+            item.Click += (_, _) =>
+            {
+                _settings.GlobalAggregationMode = mode;
+                _settingsStore.Save(_settings);
+                UpdateTrayIcon();
+                ReplaceContextMenu();
+            };
+            menu.DropDownItems.Add(item);
+        }
+
+        return menu;
+    }
+
+    private int? GetEffectiveBatteryPercent(BluetoothBatteryDevice device)
+    {
+        var preferences = GetDevicePreferences(device);
+        var profile = BatteryProfileEngine.Resolve(device, _profiles, preferences.ProfileId);
+        return BatteryProfileEngine.GetBatteryPercent(device, profile);
     }
 
     private ToolStripMenuItem? BuildHiddenDevicesMenu()
@@ -655,16 +732,17 @@ internal sealed class TrayApplicationContext : ApplicationContext
     private void UpdateTrayIcon()
     {
         var knownDevices = _devices
-            .Where(device => device.BatteryPercent.HasValue &&
+            .Where(device => GetEffectiveBatteryPercent(device).HasValue &&
                              GetDevicePreferences(device).IncludeInTrayIcon)
             .ToArray();
         var connectedDevices = knownDevices.Where(device => device.IsConnected == true).ToArray();
         var relevantDevices = connectedDevices.Length > 0 ? connectedDevices : knownDevices;
-        var lowestCharge = relevantDevices.Select(device => device.BatteryPercent).Min();
+        var displayedCharge = BatteryAggregationEngine.AggregateValues(
+            relevantDevices.Select(GetEffectiveBatteryPercent), _settings.GlobalAggregationMode);
 
         var previousIcon = _currentIcon;
         _currentIcon = TrayIconRenderer.Create(
-            lowestCharge,
+            displayedCharge,
             _settings.IconStyle,
             _settings.LowBatteryThreshold);
         _notifyIcon.Icon = _currentIcon;
@@ -688,7 +766,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
         var includedDevices = _devices
             .Where(device => GetDevicePreferences(device).IncludeInTrayIcon)
             .ToArray();
-        var first = includedDevices.FirstOrDefault(device => device.BatteryPercent.HasValue);
+        var first = includedDevices.FirstOrDefault(device => GetEffectiveBatteryPercent(device).HasValue);
         return first is null
             ? AppText.Format("TooltipBatteryUnavailable", includedDevices.Length)
             : $"{GetDisplayName(first)}: {FormatBatterySummary(first)}";
@@ -767,7 +845,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
     {
         if (device.Components is null)
         {
-            return device.BatteryPercent is int percentage ? $"{percentage}%" : AppText.Get("NoData");
+            return GetEffectiveBatteryPercent(device) is int percentage ? $"{percentage}%" : AppText.Get("NoData");
         }
 
         var formatted = FormatBatteryComponents(device.Components).Trim();
@@ -939,7 +1017,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
             false => "○",
             null => "◌"
         };
-        var battery = device.BatteryPercent is int percent ? $"{percent,3}%" : "  — ";
+        var battery = GetEffectiveBatteryPercent(device) is int percent ? $"{percent,3}%" : "  — ";
         var components = FormatBatteryComponents(device.Components);
         return $"{connection}  {battery}   {GetDisplayName(device)}{components}";
     }
@@ -964,8 +1042,9 @@ internal sealed class TrayApplicationContext : ApplicationContext
     private void ShowLowBatteryNotificationIfNeeded()
     {
         var currentlyLow = _devices
-            .Where(device => device is { IsConnected: true, BatteryPercent: not null } &&
-                             device.BatteryPercent <= _settings.LowBatteryThreshold &&
+            .Where(device => device.IsConnected == true &&
+                             GetEffectiveBatteryPercent(device) is int percentage &&
+                             percentage <= _settings.LowBatteryThreshold &&
                              GetDevicePreferences(device).LowBatteryNotifications)
             .ToArray();
 
@@ -1030,7 +1109,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
     {
         if (device.Components is null)
         {
-            return $"{GetDisplayName(device)}: {device.BatteryPercent}%";
+            return $"{GetDisplayName(device)}: {GetEffectiveBatteryPercent(device)}%";
         }
 
         var lowComponents = new[]
@@ -1045,7 +1124,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
             .ToArray();
 
         return lowComponents.Length == 0
-            ? $"{GetDisplayName(device)}: {device.BatteryPercent}%"
+            ? $"{GetDisplayName(device)}: {GetEffectiveBatteryPercent(device)}%"
             : $"{GetDisplayName(device)}: {string.Join(" · ", lowComponents)}";
     }
 

@@ -1085,9 +1085,10 @@ internal sealed class TrayApplicationContext : ApplicationContext
             _ => AppText.Get("SourceNotFound")
         };
 
+        var effectiveBatteryPercent = GetEffectiveBatteryPercent(device);
         var text = AppText.Format("DiagnosticsText",
             GetDisplayName(device), device.Name, connection,
-            device.BatteryPercent is int percent ? $"{percent}%" : AppText.Get("NoData"),
+            effectiveBatteryPercent is int percent ? $"{percent}%" : AppText.Get("NoData"),
             source, components, categories,
             device.BluetoothClassMajor?.ToString() ?? AppText.Get("Unspecified"),
             device.Address ?? AppText.Get("Unspecified"),
@@ -1097,7 +1098,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
             text,
             AppText.Get("DeviceDiagnostics"),
             MessageBoxButtons.OK,
-            device.BatteryPercent.HasValue ? MessageBoxIcon.Information : MessageBoxIcon.Warning);
+            effectiveBatteryPercent.HasValue ? MessageBoxIcon.Information : MessageBoxIcon.Warning);
     }
 
     private async Task CheckForUpdatesIfNeededAsync()

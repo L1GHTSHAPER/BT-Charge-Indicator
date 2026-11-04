@@ -11,7 +11,7 @@ dotnet run --project .\Tests\BTChargeIndicator.ProtocolTests.csproj --configurat
 The protocol test executable covers Fast Pair and Nothing/CMF parsing, device change tracking, connection notifications, and localization. New domain/profile tests should be added here or in a dedicated test project if that improves isolation.
 
 ## CI
-The GitHub Actions workflow `.github/workflows/windows-ci.yml` runs a Release build and the protocol test executable on Windows.
+The GitHub Actions workflow `.github/workflows/windows-ci.yml` runs a Release build and the protocol test executable on Windows, then publishes a self-contained x64 executable as the `BTChargeIndicator-win-x64` artifact. Download it from the successful workflow run's **Artifacts** section. Artifacts are retained for 14 days.
 
 ## Manual hardware checks
 1. Pair and connect a supported Bluetooth device.

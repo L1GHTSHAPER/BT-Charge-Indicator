@@ -21,6 +21,8 @@
     <SatelliteResourceLanguages>en;ru</SatelliteResourceLanguages>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="src\BTChargeIndicator.Core\BTChargeIndicator.Core.csproj" />
+    <Compile Remove="Models\BatteryAggregationMode.cs;Models\BatteryAggregationRule.cs;Models\BatterySnapshot.cs;Models\BluetoothBatteryDevice.cs;Models\TwsBatteryReading.cs;Services\BatteryAggregationEngine.cs;Services\BatteryDeviceIdentity.cs;Services\BatteryProfileEngine.cs;Settings\AppSettings.cs;Settings\BatteryProfile.cs;Settings\BatteryProfileStore.cs;Settings\SettingsStore.cs" />
     <EmbeddedResource Include="Assets\app.ico" LogicalName="BTChargeIndicator.AppIcon" />
     <Compile Remove="Tests\**\*.cs" />
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">

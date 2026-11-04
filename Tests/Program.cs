@@ -78,6 +78,12 @@ Assert(resolvedRedmiProfile.Id == "redmi-buds",
     "Device profile matching uses model and protocol hints");
 Assert(BatteryProfileEngine.GetBatteryPercent(redmiDevice, resolvedRedmiProfile) == 100,
     "Default Redmi profile uses earbud battery and ignores the case");
+var leftOnlyProfile = new BatteryProfile
+{
+    Id = "left-only",
+    Name = "Left only",
+    AggregationMode = BatteryAggregationMode.Left
+};
 var invalidScalarCaseDevice = redmiDevice with
 {
     BatteryPercent = 150,
@@ -103,12 +109,6 @@ Assert(BatteryProfileEngine.GetBatteryPercent(redmiDevice, caseProfile) == 55,
 var missingLeftDevice = redmiDevice with
 {
     Components = new BatteryComponents(null, 100, 55)
-};
-var leftOnlyProfile = new BatteryProfile
-{
-    Id = "left-only",
-    Name = "Left only",
-    AggregationMode = BatteryAggregationMode.Left
 };
 Assert(BatteryProfileEngine.GetBatteryPercent(missingLeftDevice, leftOnlyProfile) is null,
     "A missing explicitly selected component stays unknown instead of falling back to another component");

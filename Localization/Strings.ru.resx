@@ -506,4 +506,19 @@ ID устройства:
   <data name="ProfileSourceInvalid" xml:space="preserve">
     <value>Введите допустимые имена источников батареи через точку с запятой.</value>
   </data>
+  <data name="IndividualTrayIcon" xml:space="preserve">
+    <value>Отдельный значок в трее</value>
+  </data>
+  <data name="IndividualTrayIconStyle" xml:space="preserve">
+    <value>Стиль значка устройства</value>
+  </data>
+  <data name="UseGlobalTrayIconStyle" xml:space="preserve">
+    <value>Использовать общий стиль</value>
+  </data>
+  <data name="HideIndividualTrayIcon" xml:space="preserve">
+    <value>Скрыть этот значок</value>
+  </data>
+  <data name="ShowDeviceBatteryDetails" xml:space="preserve">
+    <value>Показать уровень заряда</value>
+  </data>
 </root>

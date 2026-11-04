@@ -107,9 +107,9 @@ Acceptance: all new features are reachable through the UI and remain usable at c
 Acceptance: Windows CI is green and the hardware matrix records actual results rather than assumptions.
 
 ## Phase 8 — Runtime and dependency review
-- [ ] Review .NET support lifecycle and Windows API compatibility.
-- [ ] Consider a move to a supported LTS runtime only after the application and test environment are verified.
-- [ ] Ask before any breaking framework or deployment model change.
+- [x] Review .NET support lifecycle and Windows API compatibility.
+- [x] Move the application and test project to .NET 10 LTS; update CI and the Windows publish script.
+- [x] Runtime migration was authorized by the repository owner; no deployment model change was made.
 
 Acceptance: runtime decisions are documented and tested on Windows 10/11.
 

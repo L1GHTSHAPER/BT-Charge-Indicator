@@ -7,7 +7,7 @@
 4. Work on `feature/configurable-battery-profiles` unless the maintainer explicitly selects another branch.
 
 ## Project
-BT Charge Indicator is a native Windows 10/11 system-tray application written in C# WinForms. It reads Bluetooth battery data through Windows device properties, HFP/PnP, BLE GATT, Apple Continuity, Google Fast Pair, Nothing/CMF RFCOMM, and Sony DualSense HID.
+BT Charge Indicator is a native Windows 10/11 system-tray application written in C# WinForms, targeting `net10.0-windows10.0.19041.0` (.NET 10 LTS). It reads Bluetooth battery data through Windows device properties, HFP/PnP, BLE GATT, Apple Continuity, Google Fast Pair, Nothing/CMF RFCOMM, and Sony DualSense HID.
 
 ## Non-negotiable behavior
 - Preserve existing Bluetooth discovery and protocol support unless a tested replacement is required.

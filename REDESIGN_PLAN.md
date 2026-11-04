@@ -31,9 +31,19 @@ The current tested application remains the behavioral reference while the new ap
 - [x] Identify `TrayApplicationContext` as a major coupling point: it owns scan scheduling, device state, notifications, tray icons, menus, and settings-window orchestration.
 - [x] Confirm the battery aggregation/profile engines are already separated into testable services.
 - [x] Create an isolated redesign branch from the tested Phase 1 commit.
-- [ ] Record Windows App SDK / WinUI 3 deployment constraints for packaged and unpackaged modes before selecting project templates and SDK versions.
+- [x] Review current Microsoft guidance for unpackaged WinUI 3 deployment, Windows App SDK runtime options, and Windows Widgets provider requirements.
 
 Acceptance: redesign scope, branch safety, current boundaries, and migration constraints are documented.
+
+### Phase 0 findings — deployment constraints
+
+- WinUI 3 unpackaged apps require the Windows App SDK runtime. The portable distribution must either bundle the runtime installer or use Windows App SDK self-contained deployment; self-contained output is larger and the publisher must carry runtime servicing with app updates.
+- A single-file EXE is possible only for unpackaged, self-contained WinUI 3 apps (Windows App SDK 1.5+), and it extracts dependencies to a temporary directory at first launch. For this project, a portable ZIP/folder distribution is the safer initial target; do not promise a zero-extraction single binary.
+- Unpackaged apps do not have package identity and cannot register a Win32 Windows Widget provider. Microsoft currently supports desktop Win32 widget providers only as packaged apps, registered through the package manifest.
+- Therefore, MSIX will be the full-featured distribution with Widgets. The portable build will share the same core/runtime and WinUI dashboard/tray features, but Widgets will be explicitly unavailable. This is a supported product split, not a silent runtime failure.
+- Keep the two deployment modes as separate publish configurations from one codebase. Evaluate framework-dependent MSIX versus self-contained MSIX after build-size and installation tests.
+
+References: [Windows App SDK deployment architecture](https://learn.microsoft.com/en-us/windows/apps/windows-app-sdk/deployment-architecture); [Unpackaged WinUI 3 distribution](https://learn.microsoft.com/en-us/windows/apps/package-and-deploy/unpackage-winui-app); [Windows Widget providers](https://learn.microsoft.com/en-us/windows/apps/develop/widgets/widget-service-providers); [C# widget provider walkthrough](https://learn.microsoft.com/en-us/windows/apps/develop/widgets/implement-widget-provider-cs).
 
 ## Phase 1 — Application architecture and shared runtime
 
@@ -109,7 +119,7 @@ Acceptance: the tray remains fully functional independently of the dashboard win
 
 ## Phase 6 — Windows Widgets
 
-- [ ] Review the current Microsoft Widgets provider model and package identity requirements before implementation.
+- [x] Review the current Microsoft Widgets provider model and package identity requirements before implementation.
 - [ ] Implement a widget provider only through supported APIs.
 - [ ] Expose a minimal, privacy-conscious device battery snapshot to the widget without duplicating Bluetooth discovery.
 - [ ] Support multiple widget instances/configuration where the platform allows it.
@@ -121,7 +131,7 @@ Acceptance: widget data matches dashboard/tray state and works only through docu
 
 ## Phase 7 — Portable and MSIX distribution
 
-- [ ] Decide supported portable deployment model after validating Windows App SDK self-contained/framework-dependent deployment requirements.
+- [x] Select a portable ZIP/folder distribution using Windows App SDK self-contained deployment as the initial candidate; confirm size and behavior in the prototype.
 - [ ] Build and test both portable/unpackaged and MSIX variants.
 - [ ] Define app identity, package manifest, capabilities, startup behavior, protocol activation, and upgrade behavior.
 - [ ] Ensure settings/profiles remain in a stable user data location across install modes and upgrades.
@@ -156,4 +166,4 @@ Acceptance: reproducible builds, verified installers/artifacts, complete docs, a
 
 ## Current redesign status
 
-Phase 0 audit is complete. No application code has been changed yet. The next action is to validate current WinUI 3 / Windows App SDK project and deployment constraints, then implement Phase 1 architecture changes in small, buildable steps.
+Phase 0 audit and documentation are complete. The redesign branch contains only the two planning documents so far; no application code has been changed. The deployment decision is now explicit: MSIX is the full-featured package with Widgets, while portable/unpackaged uses a self-contained folder/ZIP build and does not offer Widgets. Next: prototype WinUI 3 startup in both deployment modes, then begin Phase 1 extraction in small, buildable steps.

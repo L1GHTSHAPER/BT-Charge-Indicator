@@ -49,7 +49,8 @@ References: [Windows App SDK deployment architecture](https://learn.microsoft.co
 
 Goal: separate application behavior and lifetime from WinForms presentation without changing user-visible behavior.
 
-- [x] Establish the first project boundary with a platform-independent `BTChargeIndicator.Core` project. The full solution/project split remains incremental. Proposed boundaries:
+- [x] Establish the first project boundary with a platform-independent `BTChargeIndicator.Core` project.
+- [x] Move the presentation-independent `DeviceConnectionTracker` into Core; preserve its existing notification behavior tests and keep the WinForms host as a consumer. The full solution/project split remains incremental. Proposed boundaries:
   - `BTChargeIndicator.Core`: device snapshots, battery components, aggregation, profiles, application settings contracts, and presentation-independent policies.
   - `BTChargeIndicator.Platform.Windows`: Bluetooth/WinRT acquisition, Windows device watchers, notifications/platform integrations, and Windows-specific adapters.
   - `BTChargeIndicator.App`: WinUI 3 desktop application and navigation.
@@ -166,4 +167,4 @@ Acceptance: reproducible builds, verified installers/artifacts, complete docs, a
 
 ## Current redesign status
 
-Phase 0 audit and documentation are complete. The redesign branch contains only the two planning documents so far; no application code has been changed. The deployment decision is now explicit: MSIX is the full-featured package with Widgets, while portable/unpackaged uses a self-contained folder/ZIP build and does not offer Widgets. Next: prototype WinUI 3 startup in both deployment modes, then begin Phase 1 extraction in small, buildable steps.
+Phase 0 audit and documentation are complete. Phase 1 is in progress: `BTChargeIndicator.Core` now owns the shared battery/domain/settings code and the presentation-independent connection notification tracker. The legacy WinForms host references Core and continues to build against the same internal types; the existing protocol test harness directly references Core and retains the tracker behavior tests. The latest Windows CI run (#246) passed. Next: introduce a platform-neutral application runtime contract and move scan scheduling/state ownership out of `TrayApplicationContext` incrementally, without rewriting Bluetooth protocol readers.

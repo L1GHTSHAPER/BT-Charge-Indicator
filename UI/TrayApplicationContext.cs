@@ -180,7 +180,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
 
     private void ShowConnectionNotifications()
     {
-        var changes = _connectionTracker.Observe(_devices, _availability);
+        var changes = _connectionTracker.Observe(BatteryDeviceIdentity.Deduplicate(_devices), _availability);
         if (!_settings.ConnectionNotifications) return;
         foreach (var change in changes)
         {
@@ -690,7 +690,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
         var detailsItem = new ToolStripMenuItem(AppText.Get("ShowDeviceBatteryDetails"));
         detailsItem.Click += (_, _) =>
         {
-            var currentDevice = _devices.FirstOrDefault(candidate =>
+            var currentDevice = BatteryDeviceIdentity.Deduplicate(_devices).FirstOrDefault(candidate =>
                 string.Equals(GetDeviceKey(candidate), deviceKey, StringComparison.OrdinalIgnoreCase)) ?? device;
             var text = $"{GetDisplayName(currentDevice)}: {FormatBatterySummary(currentDevice)}";
             _deviceTrayIcons.GetValueOrDefault(deviceKey)?.NotifyIcon.ShowBalloonTip(

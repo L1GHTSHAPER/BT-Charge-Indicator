@@ -45,6 +45,14 @@ internal sealed class AppSettings
         Devices = new Dictionary<string, DevicePreferences>(
             Devices ?? [],
             StringComparer.OrdinalIgnoreCase);
+        foreach (var preferences in Devices.Values)
+        {
+            if (preferences.IndividualTrayIconStyle.HasValue &&
+                !Enum.IsDefined(preferences.IndividualTrayIconStyle.Value))
+            {
+                preferences.IndividualTrayIconStyle = null;
+            }
+        }
     }
 }
 
@@ -63,6 +71,10 @@ internal sealed class DevicePreferences
     public string? CustomName { get; set; }
 
     public string? ProfileId { get; set; }
+
+    public bool ShowIndividualTrayIcon { get; set; }
+
+    public TrayIconStyle? IndividualTrayIconStyle { get; set; }
 
     public bool IsHidden { get; set; }
 

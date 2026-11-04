@@ -45,7 +45,7 @@ Acceptance: aggregation logic is deterministic, isolated from WinForms, and full
 - [x] Implement profile matching priority: explicit device assignment, stable Windows container ID, model/category/protocol hints, then default.
 - [x] Avoid depending only on Bluetooth MAC addresses.
 - [x] Add safe declarative custom rules; reject unsupported operations and malformed input.
-- [ ] Add import/export with validation and clear errors.
+- [x] Add profile import/export with validation and clear errors.
 - [x] Keep existing settings and device preferences compatible through additive JSON properties and defaults.
 
 Acceptance: old settings load without loss; invalid profiles cannot crash the app or execute code; matching is predictable and tested.
@@ -78,7 +78,7 @@ Acceptance: per-device icons do not affect global aggregation, and global rules 
 Acceptance: the tray icon, tooltip, and notifications agree with the active profile.
 
 ## Phase 6 — Settings UI redesign
-- [ ] Audit current menu/dialog interactions and reuse working native components where sensible.
+- [x] Audit current menu/dialog interactions and reuse working native components where sensible.
 - [x] Build a tabbed settings window with Overview, Devices, Profiles, Tray & Global, Notifications, and Advanced sections.
 - [ ] Add search/filter for devices and profiles.
 - [ ] Support keyboard navigation, DPI scaling, and high-contrast/system theme behavior.
@@ -103,7 +103,8 @@ Acceptance: Windows CI is green and the hardware matrix records actual results r
 Acceptance: runtime decisions are documented and tested on Windows 10/11.
 
 ## Phase 9 — Documentation and release
-- [ ] Update README, configuration/profile examples, screenshots, and troubleshooting.
+- [x] Update README, configuration/profile examples, and testing/troubleshooting documentation.
+- [ ] Update screenshots.
 - [ ] Update changelog and version metadata.
 - [ ] Build and verify self-contained x64 release output.
 - [ ] Review license and upstream attribution.
@@ -113,4 +114,4 @@ Acceptance: runtime decisions are documented and tested on Windows 10/11.
 Acceptance: reproducible build, clear docs, clean diff, and release-ready branch.
 
 ## Current status
-Phase 0 audit and initial regression fix passed Windows CI. Phase 1 now includes the pure aggregation engine, declarative custom rules, strict missing-component handling, and profile-level calculations. Phase 2 includes versioned profile JSON, validation, backup recovery, matching, per-device profile assignment, and global aggregation settings. The tray and low-battery notification paths now consume profile-computed values. The latest profile integration build initially exposed a missing namespace import, which has been fixed; the newest Windows CI run is pending. Live Bluetooth hardware verification remains outstanding.
+Phase 0 audit and the TWS regression fix passed Windows CI. Phase 1 includes normalized snapshots, the pure aggregation engine, safe custom rules, and strict missing-component handling. Phase 2 includes versioned profile JSON, validation, backup recovery, automatic matching, per-device assignment, and import/export. The profile editor and tabbed settings window are implemented. Per-device tray icons/styles and configurable global aggregation are implemented; the tray and low-battery notifications use profile-computed values. Windows CI build and regression tests passed on commit 36a582c4; the latest documentation-only changes have a new workflow queued. Stale-reading policy and live Bluetooth hardware verification remain outstanding.

@@ -97,9 +97,11 @@ Acceptance: all new features are reachable through the UI and remain usable at c
 
 ## Phase 7 — Reliability and regression
 - [ ] Test connect/disconnect/reconnect, delayed advertisements, partial component data, stale values, and Bluetooth radio changes.
-- [ ] Test multiple devices and duplicate Classic/BLE endpoints.
+- [x] Add automated tests for global multi-device aggregation and duplicate Windows endpoint merging.
+- [ ] Verify multiple physical devices and Classic/BLE endpoint behavior on hardware.
 - [ ] Test settings migration, malformed files, import/export, and profile matching.
-- [ ] Add a hardware verification matrix for Fast Pair, Nothing/CMF, AirPods, GATT, and DualSense.
+- [x] Add a hardware verification matrix for Fast Pair, Nothing/CMF, AirPods, GATT, HFP/PnP, and DualSense.
+- [ ] Execute the matrix on physical Windows Bluetooth hardware.
 - [ ] Review resource disposal and background task cancellation.
 
 Acceptance: Windows CI is green and the hardware matrix records actual results rather than assumptions.
@@ -114,7 +116,8 @@ Acceptance: runtime decisions are documented and tested on Windows 10/11.
 ## Phase 9 — Documentation and release
 - [x] Update README, configuration/profile examples, and testing/troubleshooting documentation.
 - [ ] Update screenshots.
-- [ ] Update changelog and version metadata.
+- [x] Update the Unreleased changelog.
+- [ ] Bump version metadata for a release.
 - [ ] Build and verify self-contained x64 release output.
 - [ ] Review license and upstream attribution.
 - [ ] Commit and push coherent changes to the feature branch.

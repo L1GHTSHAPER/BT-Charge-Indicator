@@ -19,6 +19,7 @@
     <Compile Include="..\..\Services\BatteryAggregationEngine.cs" Link="Services\BatteryAggregationEngine.cs" />
     <Compile Include="..\..\Services\BatteryDeviceIdentity.cs" Link="Services\BatteryDeviceIdentity.cs" />
     <Compile Include="..\..\Services\BatteryProfileEngine.cs" Link="Services\BatteryProfileEngine.cs" />
+    <Compile Include="..\..\Services\DeviceConnectionTracker.cs" Link="Services\DeviceConnectionTracker.cs" />
 
     <Compile Include="..\..\Settings\AppSettings.cs" Link="Settings\AppSettings.cs" />
     <Compile Include="..\..\Settings\BatteryProfile.cs" Link="Settings\BatteryProfile.cs" />

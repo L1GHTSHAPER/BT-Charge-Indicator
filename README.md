@@ -4,10 +4,10 @@
 
 # Bluetooth Battery Indicator for Windows
 
-[![Windows](https://img.shields.io/badge/Windows-10%20%7C%2011-0078D4?logo=windows)](https://github.com/L1GHTSHAPER/BT-Charge-Indicator)
+[![Windows](https://img.shields.io/badge/Windows-10%20%7C%2011-0078D4?logo=windows)](https://github.com/realSamy/BT-Charge-Indicator)
 [![.NET](https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com/)
-[![Release](https://img.shields.io/github/v/release/L1GHTSHAPER/BT-Charge-Indicator)](https://github.com/L1GHTSHAPER/BT-Charge-Indicator/releases/latest)
-[![License](https://img.shields.io/github/license/L1GHTSHAPER/BT-Charge-Indicator)](LICENSE)
+[![Release](https://img.shields.io/github/v/release/realSamy/BT-Charge-Indicator)](https://github.com/realSamy/BT-Charge-Indicator/releases/latest)
+[![License](https://img.shields.io/github/license/realSamy/BT-Charge-Indicator)](LICENSE)
 
 **BT Charge Indicator** is a lightweight Windows system tray app that displays the battery percentage of connected Bluetooth devices: wireless headphones, earbuds, headsets, game controllers, keyboards, mice, speakers, and other accessories.
 
@@ -15,7 +15,7 @@ It works natively on Windows 10 and Windows 11 and reads battery levels through 
 
 ## Download
 
-Download the latest ready-to-run Windows executable from [GitHub Releases](https://github.com/L1GHTSHAPER/BT-Charge-Indicator/releases/latest). The app is portable and does not require installation.
+Download the latest ready-to-run Windows executable from [GitHub Releases](https://github.com/realSamy/BT-Charge-Indicator/releases/latest). The app is portable and does not require installation.
 
 ## Features
 
@@ -129,7 +129,7 @@ The Fast Pair battery layout follows the official [Google Fast Pair Battery Noti
 
 **BT Charge Indicator** — приложение для отображения заряда Bluetooth-устройств в системном трее Windows 10/11. Поддерживаются беспроводные наушники, TWS-гарнитуры, геймпады, мыши, клавиатуры, колонки и BLE-аксессуары.
 
-Скачайте готовый файл на странице [последнего релиза](https://github.com/L1GHTSHAPER/BT-Charge-Indicator/releases/latest), запустите его и откройте меню правым щелчком по значку в трее. Установка не требуется.
+Скачайте готовый файл на странице [последнего релиза](https://github.com/realSamy/BT-Charge-Indicator/releases/latest), запустите его и откройте меню правым щелчком по значку в трее. Установка не требуется.
 
 В меню **Управление профилями батареи** можно создавать и редактировать JSON-профили, задавать правила сопоставления устройств, выбирать алгоритм расчёта, импортировать и экспортировать профили, а также проверять результат на примере. Для отдельного значка устройства откройте его подменю и включите **Отдельный значок в трее**. Общий значок поддерживает минимальный, максимальный и средний заряд. По умолчанию заряд кейса не снижает основной процент TWS-наушников, если известен заряд хотя бы одного наушника. Подробнее: [профили батареи](docs/PROFILES.md).
 

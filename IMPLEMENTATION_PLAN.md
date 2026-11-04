@@ -51,11 +51,11 @@ Acceptance: aggregation logic is deterministic, isolated from WinForms, and full
 Acceptance: old settings load without loss; invalid profiles cannot crash the app or execute code; matching is predictable and tested.
 
 ## Phase 3 — Device profile editor
-- [ ] Design a native WinForms editor consistent with the redesigned app.
-- [ ] Edit profile name, matching criteria, included components, aggregation, fallback, tooltip fields, tray presentation, and notification thresholds.
-- [ ] Preview the computed battery value using sample readings.
-- [ ] Support create, duplicate, rename, delete, import, export, and reset-to-default.
-- [ ] Explain validation failures in plain language.
+- [x] Add a native WinForms profile editor consistent with the existing app.
+- [x] Edit profile name, matching criteria, and built-in/custom aggregation settings.\n- [ ] Add per-profile tooltip fields, tray presentation, and notification thresholds.
+- [x] Preview the computed battery value using sample readings.
+- [x] Support create, duplicate, rename, delete, import, and export.\n- [ ] Add reset-to-default.
+- [x] Explain validation failures in plain language.
 
 Acceptance: profiles can be managed without manually editing JSON; preview matches the tested aggregation engine.
 

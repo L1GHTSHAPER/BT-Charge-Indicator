@@ -521,4 +521,40 @@ ID устройства:
   <data name="ShowDeviceBatteryDetails" xml:space="preserve">
     <value>Показать уровень заряда</value>
   </data>
+  <data name="SettingsTitle" xml:space="preserve">
+    <value>Настройки</value>
+  </data>
+  <data name="SettingsTabOverview" xml:space="preserve">
+    <value>Обзор</value>
+  </data>
+  <data name="SettingsTabDevices" xml:space="preserve">
+    <value>Устройства</value>
+  </data>
+  <data name="SettingsTabProfiles" xml:space="preserve">
+    <value>Профили</value>
+  </data>
+  <data name="SettingsTabTray" xml:space="preserve">
+    <value>Трей и общий заряд</value>
+  </data>
+  <data name="SettingsTabNotifications" xml:space="preserve">
+    <value>Уведомления</value>
+  </data>
+  <data name="SettingsTabAdvanced" xml:space="preserve">
+    <value>Дополнительно</value>
+  </data>
+  <data name="SettingsOverviewText" xml:space="preserve">
+    <value>Отслеживается устройств: {0}, подключено сейчас: {2}. Пользовательских профилей батареи: {1}. Настройте устройства, значки и расчёт заряда на вкладках.</value>
+  </data>
+  <data name="SettingsProfileHelp" xml:space="preserve">
+    <value>Профили определяют способ расчёта заряда каждого устройства. Устройства можно сопоставлять автоматически или назначать профиль вручную. Пользовательские правила используют только известные компоненты и безопасные встроенные операции.</value>
+  </data>
+  <data name="SettingsNotificationsHelp" xml:space="preserve">
+    <value>Уведомления о низком заряде используют основной процент, рассчитанный профилем устройства. Подробности по компонентам доступны в сводке устройства.</value>
+  </data>
+  <data name="SettingsSave" xml:space="preserve">
+    <value>Сохранить изменения</value>
+  </data>
+  <data name="SettingsCancel" xml:space="preserve">
+    <value>Отмена</value>
+  </data>
 </root>

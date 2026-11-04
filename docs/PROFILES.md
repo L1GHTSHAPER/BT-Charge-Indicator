@@ -48,4 +48,4 @@ The accompanying `examples/profiles.json` contains:
 1. A Redmi Buds profile that matches the model name and Fast Pair source, then uses the lowest earbud battery.
 2. A custom profile that compares the right earbud with the case.
 
-To edit a profile manually, close the application first, back up `profiles.json`, edit the JSON, and restart the application. A graphical profile editor is planned for a later phase.
+Open the tray menu and select **Manage battery profiles** to create, duplicate, rename, delete, import, export, and preview profiles. The editor validates container GUIDs, protocol source names, aggregation settings, and custom component selections before saving. The JSON file remains available for advanced users; close the application before editing it manually.

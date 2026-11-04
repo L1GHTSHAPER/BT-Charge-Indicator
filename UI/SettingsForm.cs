@@ -289,6 +289,10 @@ internal sealed class SettingsForm : Form
         {
             _threshold.Items.Add(value);
         }
+        if (!_threshold.Items.Contains(_settings.LowBatteryThreshold))
+        {
+            _threshold.Items.Add(_settings.LowBatteryThreshold);
+        }
         _threshold.SelectedItem = _settings.LowBatteryThreshold;
 
         _lowBatteryNotifications.Checked = _settings.LowBatteryNotifications;

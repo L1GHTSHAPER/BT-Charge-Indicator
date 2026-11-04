@@ -85,6 +85,15 @@ var invalidScalarCaseDevice = redmiDevice with
 };
 Assert(BatteryProfileEngine.GetBatteryPercent(invalidScalarCaseDevice, defaultProfile) == 45,
     "Earbud profiles fall back to a valid case reading when the scalar value is invalid");
+var scalarOnlyDevice = redmiDevice with
+{
+    BatteryPercent = 78,
+    Components = null
+};
+Assert(BatteryProfileEngine.GetBatteryPercent(scalarOnlyDevice, defaultProfile) == 78,
+    "Default aggregation retains scalar battery support for non-component devices");
+Assert(BatteryProfileEngine.GetBatteryPercent(scalarOnlyDevice, leftOnlyProfile) is null,
+    "A left-only profile does not invent a left reading for scalar-only devices");
 Assert(BatteryProfileEngine.Resolve(
         redmiDevice, [defaultProfile, redmiProfile, caseProfile], "case-priority").Id == "case-priority",
     "Explicit device profile assignment overrides automatic matching");

@@ -40,7 +40,7 @@ internal static class BatteryAggregationEngine
             BatteryAggregationMode.EarbudsAverage => AggregateEarbuds(
                 components.LeftPercent,
                 components.RightPercent,
-                fallback ?? components.CasePercent,
+                Normalize(fallback) ?? Normalize(components.CasePercent),
                 static values => (int)Math.Round(values.Average(), MidpointRounding.AwayFromZero)),
             _ => Normalize(fallback)
         };

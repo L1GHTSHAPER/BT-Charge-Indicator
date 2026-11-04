@@ -4,6 +4,33 @@ using Windows.Devices.Bluetooth;
 
 await LocalizationTests.RunAsync();
 
+var aggregationComponents = new BatteryComponents(100, 80, 15);
+Assert(BatteryAggregationEngine.Aggregate(aggregationComponents, BatteryAggregationMode.EarbudsLowest) == 80,
+    "Earbuds minimum excludes the case");
+Assert(BatteryAggregationEngine.Aggregate(aggregationComponents, BatteryAggregationMode.EarbudsAverage) == 90,
+    "Earbuds average excludes the case");
+Assert(BatteryAggregationEngine.Aggregate(aggregationComponents, BatteryAggregationMode.Lowest) == 15,
+    "All-components minimum includes the case when explicitly selected");
+Assert(BatteryAggregationEngine.Aggregate(aggregationComponents, BatteryAggregationMode.Highest) == 100,
+    "All-components maximum includes all known components");
+Assert(BatteryAggregationEngine.Aggregate(aggregationComponents, BatteryAggregationMode.Case) == 15,
+    "Case-only aggregation selects the case");
+Assert(BatteryAggregationEngine.Aggregate(new BatteryComponents(null, 72, 25), BatteryAggregationMode.EarbudsLowest) == 72,
+    "Earbuds aggregation uses the one known earbud");
+Assert(BatteryAggregationEngine.Aggregate(new BatteryComponents(null, null, 42), BatteryAggregationMode.EarbudsLowest) == 42,
+    "Earbuds aggregation falls back to case-only readings");
+Assert(BatteryAggregationEngine.Aggregate(new BatteryComponents(null, null, null), BatteryAggregationMode.EarbudsLowest) is null,
+    "Unknown components remain unavailable");
+Assert(BatteryAggregationEngine.Aggregate(new BatteryComponents(150, -1, 45), BatteryAggregationMode.EarbudsLowest) == 45,
+    "Invalid component values are ignored and case fallback is used");
+Assert(BatteryAggregationEngine.AggregateValues([90, null, 60, 80], BatteryAggregationMode.Lowest) == 60,
+    "Global minimum ignores missing values");
+Assert(BatteryAggregationEngine.AggregateValues([90, null, 60, 80], BatteryAggregationMode.Average) == 77,
+    "Global average ignores missing values and rounds predictably");
+Assert(BatteryAggregationEngine.AggregateValues([null, null], BatteryAggregationMode.Lowest) is null,
+    "Global aggregation returns unknown when every device is unknown");
+
+
 var earbudsWithCase = new TwsBatteryReading(100, 100, 55);
 Assert(earbudsWithCase.LowestPercent == 100,
     "TWS primary percentage ignores a lower charging-case value");

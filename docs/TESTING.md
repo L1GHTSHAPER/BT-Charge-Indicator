@@ -1,7 +1,7 @@
 # Testing guide
 
 ## Automated tests
-Run from a Windows machine with the .NET 9 SDK:
+Run from a Windows machine with the .NET 10 SDK:
 
 ```powershell
 dotnet build .\BTChargeIndicator.csproj --configuration Release

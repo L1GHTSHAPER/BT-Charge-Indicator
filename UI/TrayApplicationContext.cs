@@ -3,12 +3,14 @@ using BTChargeIndicator.Localization;
 using BTChargeIndicator.Models;
 using BTChargeIndicator.Services;
 using BTChargeIndicator.Settings;
+using BTChargeIndicator.Runtime;
 
 namespace BTChargeIndicator.UI;
 
 internal sealed class TrayApplicationContext : ApplicationContext
 {
-    private readonly BluetoothBatteryService _bluetoothService = new();
+    private readonly BluetoothBatteryScannerAdapter _scanner = new();
+    private readonly ApplicationRuntime _runtime;
     private readonly BluetoothDeviceWatcher _deviceWatcher = new();
     private readonly DeviceConnectionTracker _connectionTracker = new(GetDeviceKey);
     private readonly ConnectionNotificationPresenter _connectionNotifications = new();
@@ -17,9 +19,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
     private readonly BatteryProfileStore _profileStore = new();
     private readonly NotifyIcon _notifyIcon;
     private readonly Bitmap _appLogo = AppBranding.CreateLogoBitmap(24);
-    private readonly System.Windows.Forms.Timer _refreshTimer;
     private readonly System.Windows.Forms.Timer _deviceChangeTimer;
-    private readonly SemaphoreSlim _refreshLock = new(1, 1);
     private readonly HashSet<string> _lowBatteryNotifications = new(StringComparer.OrdinalIgnoreCase);
     // Images are shared across rebuilt menus and owned by this context.
     private readonly Dictionary<(TrayIconStyle Style, int Threshold), Bitmap> _trayIconPreviews = [];
@@ -41,12 +41,15 @@ internal sealed class TrayApplicationContext : ApplicationContext
     private bool _processingDeviceChanges;
     private bool _deviceChangeRefreshPending;
     private bool _connectionRefreshPending;
+    private ApplicationRuntimeState? _pendingRuntimeState;
     private DateTime? _connectionRetryAt;
 
     public TrayApplicationContext()
     {
         _settings = _settingsStore.Load();
         _profiles = _profileStore.Load();
+        _runtime = new ApplicationRuntime(_scanner);
+        _runtime.StateChanged += Runtime_StateChanged;
         AppText.Apply(_settings.Language);
         DesktopNotificationService.Initialize();
         _currentIcon = TrayIconRenderer.Create(
@@ -64,13 +67,6 @@ internal sealed class TrayApplicationContext : ApplicationContext
         _notifyIcon.DoubleClick += (_, _) => OpenBluetoothSettings();
         _connectionNotifications.Idle += ConnectionNotifications_Idle;
 
-        _refreshTimer = new System.Windows.Forms.Timer
-        {
-            Interval = _settings.RefreshIntervalSeconds * 1000,
-            Enabled = true
-        };
-        _refreshTimer.Tick += async (_, _) => await RefreshAsync();
-
         _deviceChangeTimer = new System.Windows.Forms.Timer
         {
             Interval = 500,
@@ -80,7 +76,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
         _deviceWatcher.Changed += DeviceWatcher_Changed;
         _deviceWatcher.Start();
 
-        _ = RefreshAsync();
+        _ = StartRuntimeAsync();
     }
 
     private void DeviceWatcher_Changed(BluetoothDeviceChangeKind change)
@@ -92,6 +88,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
 
     private async Task ProcessDeviceChangesAsync()
     {
+        ApplyPendingRuntimeState();
         if (_isExiting || _processingDeviceChanges)
         {
             return;
@@ -134,47 +131,103 @@ internal sealed class TrayApplicationContext : ApplicationContext
         }
     }
 
+    private async Task StartRuntimeAsync()
+    {
+        try
+        {
+            await _runtime.StartAsync(TimeSpan.FromSeconds(_settings.RefreshIntervalSeconds));
+        }
+        catch (Exception ex)
+        {
+            AppLogger.Error("Application runtime could not be started.", ex);
+        }
+    }
+
+    private void Runtime_StateChanged(ApplicationRuntimeState state)
+    {
+        if (!_isExiting)
+        {
+            // The runtime can publish from a worker thread. The existing WinForms
+            // timer consumes the latest snapshot on the UI thread.
+            Volatile.Write(ref _pendingRuntimeState, state);
+        }
+    }
+
+    private void ApplyPendingRuntimeState()
+    {
+        var state = Interlocked.Exchange(ref _pendingRuntimeState, null);
+        if (state is null || state.IsScanning || _isExiting)
+        {
+            return;
+        }
+
+        _devices = state.Devices;
+        _availability = state.Availability;
+        _lastErrorMessage = state.ErrorMessage;
+        _lastUpdated = state.LastUpdatedUtc?.LocalDateTime;
+
+        ShowConnectionNotifications();
+        UpdateTrayIcon();
+        ReplaceContextMenu();
+        ShowLowBatteryNotificationIfNeeded();
+
+        if (!_automaticUpdateCheckStarted)
+        {
+            _automaticUpdateCheckStarted = true;
+            _ = CheckForUpdatesIfNeededAsync();
+        }
+    }
+
     private async Task<bool> RefreshAsync(bool refreshGattBattery = false)
     {
-        if (_isExiting || !await _refreshLock.WaitAsync(0))
+        if (_isExiting)
         {
             return false;
         }
 
         try
         {
-            SetTrayText(AppText.Get("Refreshing"));
-            var result = await _bluetoothService.ScanAsync(refreshGattBattery);
-            if (_isExiting)
+            await _runtime.RefreshAsync(refreshGattBattery);
+            return !_isExiting;
+        }
+        catch (Exception ex)
+        {
+            if (!_isExiting)
             {
-                return true;
+                AppLogger.Error("Bluetooth refresh request failed.", ex);
             }
-            _devices = result.Devices;
-            _availability = result.Availability;
-            _lastErrorMessage = result.ErrorMessage;
-            _lastUpdated = DateTime.Now;
+            return false;
+        }
+    }
 
-            ShowConnectionNotifications();
-
-            UpdateTrayIcon();
-            ReplaceContextMenu();
-            ShowLowBatteryNotificationIfNeeded();
-
-            if (!_automaticUpdateCheckStarted)
+    private async Task UpdateRuntimeRefreshIntervalAsync(int seconds)
+    {
+        try
+        {
+            await _runtime.UpdateRefreshIntervalAsync(TimeSpan.FromSeconds(seconds));
+        }
+        catch (Exception ex)
+        {
+            if (!_isExiting)
             {
-                _automaticUpdateCheckStarted = true;
-                _ = CheckForUpdatesIfNeededAsync();
+                AppLogger.Error("Bluetooth refresh interval could not be updated.", ex);
             }
-            return true;
+        }
+    }
+
+    private async Task ShutdownRuntimeAsync()
+    {
+        try
+        {
+            await _runtime.DisposeAsync();
+        }
+        catch (Exception ex)
+        {
+            AppLogger.Error("Application runtime shutdown failed.", ex);
         }
         finally
         {
-            _refreshLock.Release();
-            if (_isExiting)
-            {
-                _bluetoothService.Dispose();
-                _refreshLock.Dispose();
-            }
+            _scanner.Dispose();
         }
     }
 
@@ -410,7 +463,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
         _settings = settings.DeepClone();
         _settingsStore.Save(_settings);
         AppText.Apply(_settings.Language);
-        _refreshTimer.Interval = _settings.RefreshIntervalSeconds * 1000;
+        _ = UpdateRuntimeRefreshIntervalAsync(_settings.RefreshIntervalSeconds);
         _lowBatteryNotifications.Clear();
         UpdateTrayIcon();
         ReplaceContextMenu();
@@ -855,7 +908,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
         {
             _settings.RefreshIntervalSeconds = seconds;
             _settingsStore.Save(_settings);
-            _refreshTimer.Interval = seconds * 1000;
+            _ = UpdateRuntimeRefreshIntervalAsync(seconds);
             ReplaceContextMenu();
         };
         parent.DropDownItems.Add(item);
@@ -1398,9 +1451,10 @@ internal sealed class TrayApplicationContext : ApplicationContext
         }
 
         _isExiting = true;
-        _refreshTimer.Stop();
         _deviceChangeTimer.Stop();
         _deviceWatcher.Changed -= DeviceWatcher_Changed;
+        _runtime.StateChanged -= Runtime_StateChanged;
+        _ = ShutdownRuntimeAsync();
         _deviceWatcher.Dispose();
         _connectionNotifications.Idle -= ConnectionNotifications_Idle;
         _connectionNotifications.Dispose();
@@ -1419,13 +1473,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
         _deviceTrayIcons.Clear();
         _appLogo.Dispose();
         _currentIcon?.Dispose();
-        _refreshTimer.Dispose();
         _deviceChangeTimer.Dispose();
-        if (_refreshLock.CurrentCount > 0)
-        {
-            _bluetoothService.Dispose();
-            _refreshLock.Dispose();
-        }
         _updateService.Dispose();
         base.ExitThreadCore();
     }

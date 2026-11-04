@@ -378,7 +378,8 @@ internal sealed class BatteryProfileEditorForm : Form
         }
 
         _loading = true;
-        _profileList.Items[_selectedIndex] = new ProfileListItem(profile.Id, profile.Name);
+        _profileList.Items.RemoveAt(_selectedIndex);
+        _profileList.Items.Insert(_selectedIndex, new ProfileListItem(profile.Id, profile.Name));
         _profileList.SelectedIndex = _selectedIndex;
         _loading = false;
         return true;

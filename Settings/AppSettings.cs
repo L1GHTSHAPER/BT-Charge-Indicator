@@ -45,8 +45,15 @@ internal sealed class AppSettings
         Devices = new Dictionary<string, DevicePreferences>(
             Devices ?? [],
             StringComparer.OrdinalIgnoreCase);
-        foreach (var preferences in Devices.Values)
+        foreach (var key in Devices.Keys.ToArray())
         {
+            var preferences = Devices[key];
+            if (preferences is null)
+            {
+                Devices[key] = new DevicePreferences();
+                continue;
+            }
+
             if (preferences.IndividualTrayIconStyle.HasValue &&
                 !Enum.IsDefined(preferences.IndividualTrayIconStyle.Value))
             {

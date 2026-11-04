@@ -48,6 +48,56 @@ internal sealed class ApplicationRuntime : IApplicationRuntime, IAsyncDisposable
         }
     }
 
+    public async Task UpdateRefreshIntervalAsync(TimeSpan refreshInterval)
+    {
+        if (refreshInterval < TimeSpan.FromSeconds(1))
+            throw new ArgumentOutOfRangeException(nameof(refreshInterval), "Refresh interval must be at least one second.");
+
+        await _lifecycleLock.WaitAsync().ConfigureAwait(false);
+        Task? previousLoop;
+        CancellationTokenSource? previousCancellation;
+        var wasRunning = false;
+        try
+        {
+            ThrowIfDisposed();
+            wasRunning = _loopTask is not null;
+            previousLoop = _loopTask;
+            previousCancellation = _loopCancellation;
+            _loopTask = null;
+            _loopCancellation = null;
+            previousCancellation?.Cancel();
+        }
+        finally
+        {
+            _lifecycleLock.Release();
+        }
+
+        if (previousLoop is not null)
+        {
+            try { await previousLoop.ConfigureAwait(false); }
+            catch (OperationCanceledException) { }
+        }
+        previousCancellation?.Dispose();
+
+        if (!wasRunning)
+            return;
+
+        await _lifecycleLock.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            ThrowIfDisposed();
+            if (_loopTask is null)
+            {
+                _loopCancellation = new CancellationTokenSource();
+                _loopTask = RunRefreshLoopAsync(refreshInterval, _loopCancellation.Token);
+            }
+        }
+        finally
+        {
+            _lifecycleLock.Release();
+        }
+    }
+
     public async Task RefreshAsync(bool refreshGattBattery = false)
     {
         ThrowIfDisposed();

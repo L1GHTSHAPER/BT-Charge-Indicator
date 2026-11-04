@@ -34,17 +34,19 @@ var classicEndpoint = redmiDevice with
     Id = "classic-endpoint",
     Address = "AA:BB:CC:DD:EE:01",
     BatteryPercent = 55,
-    Components = null
+    Components = new BatteryComponents(100, null, 55)
 };
 var bleEndpoint = redmiDevice with
 {
     Id = "ble-endpoint",
     Address = "AA:BB:CC:DD:EE:02",
-    BatteryPercent = 100
+    BatteryPercent = 100,
+    Components = new BatteryComponents(null, 100, null)
 };
 var physicalDevices = BatteryDeviceIdentity.Deduplicate([classicEndpoint, bleEndpoint]);
-Assert(physicalDevices.Count == 1 && physicalDevices[0].Id == "ble-endpoint",
-    "Endpoints with the same Windows container are counted once and prefer component readings");
+Assert(physicalDevices.Count == 1 &&
+       physicalDevices[0].Components is { LeftPercent: 100, RightPercent: 100, CasePercent: 55 },
+    "Endpoints with the same Windows container are merged once with all known components preserved");
 var invalidSnapshot = BatterySnapshot.FromDevice(redmiDevice with
 {
     BatteryPercent = 150,

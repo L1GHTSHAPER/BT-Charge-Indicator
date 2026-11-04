@@ -30,30 +30,47 @@ internal sealed class BatteryProfileStore
 
     public IReadOnlyList<BatteryProfile> Load()
     {
-        if (!File.Exists(_profilesPath))
+        var loaded = TryLoad(_profilesPath);
+        if (loaded is not null)
         {
-            return [BatteryProfileEngine.CreateDefaultProfile()];
+            return loaded;
+        }
+
+        // Save() keeps the last valid document here before replacing the main file.
+        var recovered = TryLoad(_profilesPath + ".bak");
+        return recovered ?? [BatteryProfileEngine.CreateDefaultProfile()];
+    }
+
+    private static IReadOnlyList<BatteryProfile>? TryLoad(string path)
+    {
+        if (!File.Exists(path))
+        {
+            return null;
         }
 
         try
         {
             var document = JsonSerializer.Deserialize<BatteryProfileDocument>(
-                File.ReadAllText(_profilesPath), JsonOptions);
+                File.ReadAllText(path), JsonOptions);
 
             if (document is null || document.SchemaVersion != CurrentSchemaVersion ||
                 document.Profiles is null || document.Profiles.Count > 100)
             {
-                return [BatteryProfileEngine.CreateDefaultProfile()];
+                return null;
             }
 
             var profiles = new List<BatteryProfile> { BatteryProfileEngine.CreateDefaultProfile() };
-            var ids = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { BatteryProfileEngine.DefaultProfileId };
+            var ids = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                BatteryProfileEngine.DefaultProfileId
+            };
 
             foreach (var profile in document.Profiles)
             {
                 if (!BatteryProfileEngine.IsValidProfile(profile) ||
                     !ids.Add(profile.Id) ||
-                    string.Equals(profile.Id, BatteryProfileEngine.DefaultProfileId, StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(profile.Id, BatteryProfileEngine.DefaultProfileId,
+                        StringComparison.OrdinalIgnoreCase) ||
                     !IsValidMatch(profile.Match))
                 {
                     continue;
@@ -66,8 +83,7 @@ internal sealed class BatteryProfileStore
         }
         catch
         {
-            // Keep the original file intact so a user can repair or recover it.
-            return [BatteryProfileEngine.CreateDefaultProfile()];
+            return null;
         }
     }
 

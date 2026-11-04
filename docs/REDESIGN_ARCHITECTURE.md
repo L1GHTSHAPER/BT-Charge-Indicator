@@ -22,7 +22,7 @@ The current application is one WinForms executable targeting `net10.0-windows10.
 - global and per-device NotifyIcon lifecycle;
 - tray menus and settings-window activation.
 
-The Bluetooth acquisition implementation is in `BluetoothBatteryService` and protocol-specific services. The pure battery aggregation and profile engines are already isolated enough to preserve and reuse.
+The Bluetooth acquisition implementation is in `BluetoothBatteryService` and protocol-specific services. The pure battery aggregation and profile engines are already isolated enough to preserve and reuse. `BTChargeIndicator.Core` now also contains the presentation-independent connection tracker and an initial `ApplicationRuntime` implementation with a scanner abstraction. The runtime is currently tested with a fake scanner but is not yet wired into the WinForms host; the next extraction step is to adapt `BluetoothBatteryService` and transfer scan/state ownership from `TrayApplicationContext`.
 
 ## Target boundaries
 
@@ -59,7 +59,7 @@ A single runtime instance owns:
 - settings and profile persistence;
 - lifecycle, cancellation, and shutdown.
 
-The runtime publishes state changes to subscribers. UI surfaces consume snapshots and issue commands; they never start their own Bluetooth scan loops.
+The runtime publishes immutable state snapshots to subscribers. The current Core prototype provides startup, periodic refresh, explicit refresh, and shutdown contracts. It still needs Windows scanner integration and migration of the existing WinForms host before it becomes the production owner. UI surfaces will consume snapshots and issue commands; they will not start their own Bluetooth scan loops.
 
 ### WinUI 3 presentation
 

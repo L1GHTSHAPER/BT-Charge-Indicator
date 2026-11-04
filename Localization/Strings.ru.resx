@@ -388,4 +388,23 @@ ID устройства:
   <data name="LanguageEnglish" xml:space="preserve">
     <value>English</value>
   </data>
+
+  <data name="BatteryProfile" xml:space="preserve">
+    <value>Профиль батареи</value>
+  </data>
+  <data name="DefaultProfile" xml:space="preserve">
+    <value>Профиль по умолчанию</value>
+  </data>
+  <data name="GlobalBatteryAggregation" xml:space="preserve">
+    <value>Общий уровень заряда</value>
+  </data>
+  <data name="AggregationLowest" xml:space="preserve">
+    <value>Минимальный заряд</value>
+  </data>
+  <data name="AggregationHighest" xml:space="preserve">
+    <value>Максимальный заряд</value>
+  </data>
+  <data name="AggregationAverage" xml:space="preserve">
+    <value>Средний заряд</value>
+  </data>
 </root>

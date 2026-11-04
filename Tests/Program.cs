@@ -4,6 +4,20 @@ using Windows.Devices.Bluetooth;
 
 await LocalizationTests.RunAsync();
 
+var earbudsWithCase = new TwsBatteryReading(100, 100, 55);
+Assert(earbudsWithCase.LowestPercent == 100,
+    "TWS primary percentage ignores a lower charging-case value");
+Assert(earbudsWithCase.Components.CasePercent == 55,
+    "TWS case percentage remains available as a separate component");
+
+var oneEarbudWithCase = new TwsBatteryReading(null, 72, 25);
+Assert(oneEarbudWithCase.LowestPercent == 72,
+    "TWS primary percentage uses the known earbud when the other is unavailable");
+
+var caseOnly = new TwsBatteryReading(null, null, 42);
+Assert(caseOnly.LowestPercent == 42,
+    "TWS case-only reading remains a fallback when no earbud level is known");
+
 var fastPairShow = FastPairBatteryService.ParseServiceData(
     [0x2C, 0xFE, 0x00, 0xAA, 0xBB, 0x33, 0x57, 0x41, 0x7F]);
 Assert(fastPairShow is not null && fastPairShow.ShouldShow, "Fast Pair show packet");

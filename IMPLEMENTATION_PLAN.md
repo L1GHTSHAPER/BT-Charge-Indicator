@@ -31,8 +31,8 @@ The user-selected direction is:
 Acceptance: the test suite proves L=100/R=100/case=55 produces a primary percentage of 100 while preserving case=55 as a separate component. Build and tests must pass in Windows CI before continuing.
 
 ## Phase 1 — Battery domain and aggregation design
-- [ ] Define a normalized battery snapshot with component identity, percentage, source, connection state, and observation time.
-- [ ] Separate raw protocol readings from derived per-device and global display values.
+- [x] Define a normalized battery snapshot with typed components, percentage, source, connection state, and observation time.
+- [x] Keep protocol readings raw and calculate per-device/global display values in separate aggregation/profile engines.
 - [x] Add a pure aggregation engine with left, right, case, all-component min/max/average, and earbud-only min/average modes.\n- [ ] Add safe custom declarative rules and selected-component fallback policy.
 - [ ] Define missing/stale/disconnected behavior; never coerce unknown values to zero.
 - [x] Add regression tests for known/missing/invalid component values and global aggregation.\n- [ ] Run the Windows CI build/test and extend tests as the profile engine lands.

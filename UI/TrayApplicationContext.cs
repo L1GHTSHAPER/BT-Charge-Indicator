@@ -789,8 +789,23 @@ internal sealed class TrayApplicationContext : ApplicationContext
         var key = GetDeviceKey(device);
         if (!_settings.Devices.TryGetValue(key, out var preferences))
         {
-            preferences = new DevicePreferences();
-            _settings.Devices[key] = preferences;
+            // Migrate the previous address-based key to the stable Windows container ID.
+            var legacyAddressKey = string.IsNullOrWhiteSpace(device.Address)
+                ? null
+                : $"address:{device.Address.Trim()}";
+            if (key.StartsWith("container:", StringComparison.OrdinalIgnoreCase) &&
+                legacyAddressKey is not null &&
+                _settings.Devices.Remove(legacyAddressKey, out var legacyPreferences))
+            {
+                preferences = legacyPreferences;
+                _settings.Devices[key] = preferences;
+                _settingsStore.Save(_settings);
+            }
+            else
+            {
+                preferences = new DevicePreferences();
+                _settings.Devices[key] = preferences;
+            }
         }
 
         preferences.LastKnownName = device.Name;
@@ -799,14 +814,14 @@ internal sealed class TrayApplicationContext : ApplicationContext
 
     private static string GetDeviceKey(BluetoothBatteryDevice device)
     {
-        if (!string.IsNullOrWhiteSpace(device.Address))
-        {
-            return $"address:{device.Address.Trim()}";
-        }
-
         if (device.ContainerId.HasValue)
         {
             return $"container:{device.ContainerId.Value:D}";
+        }
+
+        if (!string.IsNullOrWhiteSpace(device.Address))
+        {
+            return $"address:{device.Address.Trim()}";
         }
 
         return $"id:{device.Id}";

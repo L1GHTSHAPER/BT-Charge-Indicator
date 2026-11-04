@@ -15,6 +15,7 @@ internal sealed class ApplicationRuntime : IApplicationRuntime, IAsyncDisposable
     private CancellationTokenSource? _loopCancellation;
     private Task? _loopTask;
     private bool _disposed;
+    private bool _isStopped = true;
 
     public ApplicationRuntime(IBluetoothBatteryScanner scanner)
     {
@@ -37,6 +38,7 @@ internal sealed class ApplicationRuntime : IApplicationRuntime, IAsyncDisposable
             if (_loopTask is not null)
                 return;
 
+            _isStopped = false;
             await RefreshAsync().ConfigureAwait(false);
 
             _loopCancellation = new CancellationTokenSource();
@@ -86,7 +88,7 @@ internal sealed class ApplicationRuntime : IApplicationRuntime, IAsyncDisposable
         try
         {
             ThrowIfDisposed();
-            if (_loopTask is null)
+            if (!_isStopped && _loopTask is null)
             {
                 _loopCancellation = new CancellationTokenSource();
                 _loopTask = RunRefreshLoopAsync(refreshInterval, _loopCancellation.Token);
@@ -149,6 +151,7 @@ internal sealed class ApplicationRuntime : IApplicationRuntime, IAsyncDisposable
             cancellation = _loopCancellation;
             _loopTask = null;
             _loopCancellation = null;
+            _isStopped = true;
             cancellation?.Cancel();
         }
         finally

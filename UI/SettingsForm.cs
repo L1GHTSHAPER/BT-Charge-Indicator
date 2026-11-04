@@ -75,9 +75,9 @@ internal sealed class SettingsForm : Form
             AutoSize = true,
             MaximumSize = new Size(780, 0),
             Padding = new Padding(14),
-            Text = AppText.Format("SettingsOverviewText", _devices.Count,
+            Text = AppText.Format("SettingsOverviewText", BatteryDeviceIdentity.Deduplicate(_devices).Count,
                 _profiles.Count(profile => profile.Id != BatteryProfileEngine.DefaultProfileId),
-                _devices.Count(device => device.IsConnected == true))
+                BatteryDeviceIdentity.Deduplicate(_devices).Count(device => device.IsConnected == true))
         };
         overview.Controls.Add(overviewText);
         tabs.TabPages.Add(overview);
@@ -189,7 +189,8 @@ internal sealed class SettingsForm : Form
 
     private void BuildDeviceRows(FlowLayoutPanel panel)
     {
-        foreach (var device in _devices.OrderBy(device => device.Name, StringComparer.CurrentCultureIgnoreCase))
+        foreach (var device in BatteryDeviceIdentity.Deduplicate(_devices)
+                     .OrderBy(device => device.Name, StringComparer.CurrentCultureIgnoreCase))
         {
             var preferences = GetDevicePreferences(device);
             var row = new TableLayoutPanel

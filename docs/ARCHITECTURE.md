@@ -1,7 +1,7 @@
 # Architecture notes
 
 ## Current architecture
-The application is a single .NET 9 WinForms executable. Bluetooth acquisition lives primarily in `Services/BluetoothBatteryService.cs`, with protocol-specific services for AirPods, Google Fast Pair, Nothing/CMF, and DualSense. Raw device data is represented by `BluetoothBatteryDevice` and `BatteryComponents`. `TrayApplicationContext` owns scanning, global and per-device tray icons, notifications, and menu orchestration. `SettingsForm` and `BatteryProfileEditorForm` own the tabbed settings and profile editing experiences. `SettingsStore` serializes `AppSettings` to LocalAppData.
+The application is a single .NET 10 WinForms executable targeting `net10.0-windows10.0.19041.0`. Bluetooth acquisition lives primarily in `Services/BluetoothBatteryService.cs`, with protocol-specific services for AirPods, Google Fast Pair, Nothing/CMF, and DualSense. Raw device data is represented by `BluetoothBatteryDevice` and `BatteryComponents`. `TrayApplicationContext` owns scanning, global and per-device tray icons, notifications, and menu orchestration. `SettingsForm` and `BatteryProfileEditorForm` own the tabbed settings and profile editing experiences. `SettingsStore` serializes `AppSettings` to LocalAppData.
 
 ## Current battery flow
 1. Windows and protocol-specific services discover/read a device.
@@ -48,3 +48,6 @@ The tabbed settings form edits a cloned settings object and only applies it afte
 
 ## Physical device deduplication
 `BatteryDeviceIdentity` uses the Windows container GUID first, then the Bluetooth address, then the Windows device ID. The tray, settings window, notifications, and global aggregation use this shared key. If multiple endpoints share a key, their known left/right/case readings are merged and one representative supplies the remaining device metadata. The representative prefers valid component readings, then a known scalar reading, then a connected endpoint. This prevents a Classic/BLE pair for the same container from being counted twice without discarding partial component data.
+
+## Runtime support
+The project targets .NET 10 LTS. .NET 9 reaches end of support on November 10, 2026, while .NET 10 LTS is supported through November 14, 2028. The Windows CI workflow, test project, and publish script all target the .NET 10 SDK. See the [official .NET support policy](https://dotnet.microsoft.com/en-us/platform/support/policy).

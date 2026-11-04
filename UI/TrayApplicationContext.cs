@@ -23,6 +23,8 @@ internal sealed class TrayApplicationContext : ApplicationContext
     private readonly HashSet<string> _lowBatteryNotifications = new(StringComparer.OrdinalIgnoreCase);
     // Images are shared across rebuilt menus and owned by this context.
     private readonly Dictionary<(TrayIconStyle Style, int Threshold), Bitmap> _trayIconPreviews = [];
+    private readonly Dictionary<string, DeviceTrayIconState> _deviceTrayIcons =
+        new(StringComparer.OrdinalIgnoreCase);
 
     private AppSettings _settings;
     private IReadOnlyList<BatteryProfile> _profiles = [];
@@ -479,6 +481,19 @@ internal sealed class TrayApplicationContext : ApplicationContext
         };
         item.DropDownItems.Add(trayItem);
 
+        var individualTrayItem = new ToolStripMenuItem(AppText.Get("IndividualTrayIcon"))
+        {
+            CheckOnClick = true,
+            Checked = preferences.ShowIndividualTrayIcon
+        };
+        individualTrayItem.CheckedChanged += (_, _) =>
+        {
+            preferences.ShowIndividualTrayIcon = individualTrayItem.Checked;
+            SaveDeviceSettings();
+        };
+        item.DropDownItems.Add(individualTrayItem);
+        item.DropDownItems.Add(BuildDeviceTrayIconStyleMenu(preferences));
+
         var notificationItem = new ToolStripMenuItem(AppText.Get("DeviceLowBatteryNotifications"))
         {
             CheckOnClick = true,
@@ -546,6 +561,143 @@ internal sealed class TrayApplicationContext : ApplicationContext
         }
 
         return menu;
+    }
+
+    private ToolStripMenuItem BuildDeviceTrayIconStyleMenu(DevicePreferences preferences)
+    {
+        var menu = new ToolStripMenuItem(AppText.Get("IndividualTrayIconStyle"));
+        var inheritItem = new ToolStripMenuItem(AppText.Get("UseGlobalTrayIconStyle"))
+        {
+            Checked = !preferences.IndividualTrayIconStyle.HasValue
+        };
+        inheritItem.Click += (_, _) =>
+        {
+            preferences.IndividualTrayIconStyle = null;
+            SaveDeviceSettings();
+        };
+        menu.DropDownItems.Add(inheritItem);
+
+        foreach (var (style, key) in GetTrayIconStyleLabels())
+        {
+            var item = new ToolStripMenuItem(AppText.Get(key))
+            {
+                Checked = preferences.IndividualTrayIconStyle == style
+            };
+            item.Click += (_, _) =>
+            {
+                preferences.IndividualTrayIconStyle = style;
+                SaveDeviceSettings();
+            };
+            menu.DropDownItems.Add(item);
+        }
+
+        return menu;
+    }
+
+    private static (TrayIconStyle Style, string Key)[] GetTrayIconStyleLabels() =>
+    [
+        (TrayIconStyle.Percentage, "StylePercentage"),
+        (TrayIconStyle.Battery, "StyleBattery"),
+        (TrayIconStyle.Ring, "StyleRing"),
+        (TrayIconStyle.SegmentedRing, "StyleSegmentedRing"),
+        (TrayIconStyle.Bars, "StyleBars"),
+        (TrayIconStyle.VerticalBattery, "StyleVerticalBattery"),
+        (TrayIconStyle.Minimal, "StyleMinimal"),
+        (TrayIconStyle.Capsule, "StyleCapsule"),
+        (TrayIconStyle.Gradient, "StyleGradient"),
+        (TrayIconStyle.Gauge, "StyleGauge")
+    ];
+
+    private void UpdateIndividualTrayIcons()
+    {
+        var activeKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var device in _devices)
+        {
+            var preferences = GetDevicePreferences(device);
+            if (!preferences.ShowIndividualTrayIcon)
+            {
+                continue;
+            }
+
+            var key = GetDeviceKey(device);
+            if (!activeKeys.Add(key))
+            {
+                continue;
+            }
+
+            var style = preferences.IndividualTrayIconStyle ?? _settings.IconStyle;
+            var icon = TrayIconRenderer.Create(
+                GetEffectiveBatteryPercent(device),
+                style,
+                _settings.LowBatteryThreshold);
+
+            if (_deviceTrayIcons.TryGetValue(key, out var existing))
+            {
+                var previous = existing.Icon;
+                existing.Icon = icon;
+                existing.NotifyIcon.Icon = icon;
+                existing.NotifyIcon.Text = BuildDeviceTrayTooltip(device);
+                previous.Dispose();
+            }
+            else
+            {
+                var notifyIcon = new NotifyIcon
+                {
+                    Icon = icon,
+                    Visible = true,
+                    Text = BuildDeviceTrayTooltip(device),
+                    ContextMenuStrip = BuildDeviceTrayContextMenu(device)
+                };
+                notifyIcon.DoubleClick += (_, _) => OpenBluetoothSettings();
+                _deviceTrayIcons.Add(key, new DeviceTrayIconState(notifyIcon, icon));
+            }
+        }
+
+        foreach (var key in _deviceTrayIcons.Keys.Where(key => !activeKeys.Contains(key)).ToArray())
+        {
+            _deviceTrayIcons[key].Dispose();
+            _deviceTrayIcons.Remove(key);
+        }
+    }
+
+    private ContextMenuStrip BuildDeviceTrayContextMenu(BluetoothBatteryDevice device)
+    {
+        var menu = new ContextMenuStrip { ShowCheckMargin = true };
+        var detailsItem = new ToolStripMenuItem(AppText.Get("ShowDeviceBatteryDetails"));
+        detailsItem.Click += (_, _) =>
+        {
+            var text = $"{GetDisplayName(device)}: {FormatBatterySummary(device)}";
+            _deviceTrayIcons.GetValueOrDefault(GetDeviceKey(device))?.NotifyIcon.ShowBalloonTip(
+                3500, "BT Charge Indicator", text, ToolTipIcon.Info);
+        };
+        menu.Items.Add(detailsItem);
+
+        var profilesItem = new ToolStripMenuItem(AppText.Get("ManageProfiles"));
+        profilesItem.Click += (_, _) => OpenBatteryProfileEditor();
+        menu.Items.Add(profilesItem);
+
+        var bluetoothItem = new ToolStripMenuItem(AppText.Get("BluetoothSettings"));
+        bluetoothItem.Click += (_, _) => OpenBluetoothSettings();
+        menu.Items.Add(bluetoothItem);
+
+        var hideItem = new ToolStripMenuItem(AppText.Get("HideIndividualTrayIcon"));
+        hideItem.Click += (_, _) =>
+        {
+            GetDevicePreferences(device).ShowIndividualTrayIcon = false;
+            SaveDeviceSettings();
+        };
+        menu.Items.Add(hideItem);
+        return menu;
+    }
+
+    private string BuildDeviceTrayTooltip(BluetoothBatteryDevice device)
+    {
+        var percentage = GetEffectiveBatteryPercent(device);
+        var components = FormatBatteryComponents(device.Components).Trim();
+        var text = components.Length == 0
+            ? $"{GetDisplayName(device)}: {(percentage.HasValue ? $"{percentage}%" : AppText.Get("NoData"))}"
+            : $"{GetDisplayName(device)}: {(percentage.HasValue ? $"{percentage}%" : AppText.Get("NoData"))} {components}";
+        return text.Length <= 63 ? text : text[..60] + "…";
     }
 
     private ToolStripMenuItem BuildGlobalAggregationMenu()
@@ -695,16 +847,10 @@ internal sealed class TrayApplicationContext : ApplicationContext
             dropDown.ShowCheckMargin = true;
             dropDown.ImageScalingSize = new Size(20, 20);
         }
-        AddTrayIconStyleItem(styleMenu, AppText.Get("StylePercentage"), TrayIconStyle.Percentage);
-        AddTrayIconStyleItem(styleMenu, AppText.Get("StyleBattery"), TrayIconStyle.Battery);
-        AddTrayIconStyleItem(styleMenu, AppText.Get("StyleRing"), TrayIconStyle.Ring);
-        AddTrayIconStyleItem(styleMenu, AppText.Get("StyleSegmentedRing"), TrayIconStyle.SegmentedRing);
-        AddTrayIconStyleItem(styleMenu, AppText.Get("StyleBars"), TrayIconStyle.Bars);
-        AddTrayIconStyleItem(styleMenu, AppText.Get("StyleVerticalBattery"), TrayIconStyle.VerticalBattery);
-        AddTrayIconStyleItem(styleMenu, AppText.Get("StyleMinimal"), TrayIconStyle.Minimal);
-        AddTrayIconStyleItem(styleMenu, AppText.Get("StyleCapsule"), TrayIconStyle.Capsule);
-        AddTrayIconStyleItem(styleMenu, AppText.Get("StyleGradient"), TrayIconStyle.Gradient);
-        AddTrayIconStyleItem(styleMenu, AppText.Get("StyleGauge"), TrayIconStyle.Gauge);
+        foreach (var (style, key) in GetTrayIconStyleLabels())
+        {
+            AddTrayIconStyleItem(styleMenu, AppText.Get(key), style);
+        }
         return styleMenu;
     }
 
@@ -765,6 +911,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
         previousIcon?.Dispose();
 
         SetTrayText(BuildToolTip());
+        UpdateIndividualTrayIcons();
     }
 
     private string BuildToolTip()
@@ -1189,6 +1336,26 @@ internal sealed class TrayApplicationContext : ApplicationContext
         }
     }
 
+    private sealed class DeviceTrayIconState : IDisposable
+    {
+        public NotifyIcon NotifyIcon { get; }
+        public Icon Icon { get; set; }
+
+        public DeviceTrayIconState(NotifyIcon notifyIcon, Icon icon)
+        {
+            NotifyIcon = notifyIcon;
+            Icon = icon;
+        }
+
+        public void Dispose()
+        {
+            NotifyIcon.Visible = false;
+            NotifyIcon.ContextMenuStrip?.Dispose();
+            NotifyIcon.Dispose();
+            Icon.Dispose();
+        }
+    }
+
     protected override void ExitThreadCore()
     {
         if (_isExiting)
@@ -1211,6 +1378,11 @@ internal sealed class TrayApplicationContext : ApplicationContext
             preview.Dispose();
         }
         _trayIconPreviews.Clear();
+        foreach (var deviceTrayIcon in _deviceTrayIcons.Values)
+        {
+            deviceTrayIcon.Dispose();
+        }
+        _deviceTrayIcons.Clear();
         _appLogo.Dispose();
         _currentIcon?.Dispose();
         _refreshTimer.Dispose();

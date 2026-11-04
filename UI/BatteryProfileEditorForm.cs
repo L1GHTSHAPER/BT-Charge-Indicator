@@ -15,6 +15,7 @@ internal sealed class BatteryProfileEditorForm : Form
     private static readonly JsonSerializerOptions ProfileJsonOptions = new()
     {
         WriteIndented = true,
+        PropertyNameCaseInsensitive = true,
         Converters = { new JsonStringEnumConverter() }
     };
 

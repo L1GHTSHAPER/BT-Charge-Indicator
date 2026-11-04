@@ -407,4 +407,97 @@ This option appears only if your Bluetooth adapter, its driver, and your headset
   <data name="AggregationAverage" xml:space="preserve">
     <value>Average battery</value>
   </data>
+  <data name="ProfileEditorTitle" xml:space="preserve">
+    <value>Battery profile editor</value>
+  </data>
+  <data name="ProfileNew" xml:space="preserve">
+    <value>New</value>
+  </data>
+  <data name="ProfileDuplicate" xml:space="preserve">
+    <value>Duplicate</value>
+  </data>
+  <data name="ProfileDelete" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="ProfileName" xml:space="preserve">
+    <value>Profile name</value>
+  </data>
+  <data name="ProfileContainerIds" xml:space="preserve">
+    <value>Windows container IDs</value>
+  </data>
+  <data name="ProfileNameContains" xml:space="preserve">
+    <value>Device name contains</value>
+  </data>
+  <data name="ProfileCategories" xml:space="preserve">
+    <value>Device categories</value>
+  </data>
+  <data name="ProfileAnySource" xml:space="preserve">
+    <value>Any source</value>
+  </data>
+  <data name="ProfileBatterySource" xml:space="preserve">
+    <value>Battery source</value>
+  </data>
+  <data name="ProfileAggregation" xml:space="preserve">
+    <value>Battery calculation</value>
+  </data>
+  <data name="ProfileRuleComponents" xml:space="preserve">
+    <value>Custom rule components</value>
+  </data>
+  <data name="ProfileRuleOperation" xml:space="preserve">
+    <value>Custom rule operation</value>
+  </data>
+  <data name="ProfileMatchHelp" xml:space="preserve">
+    <value>Matching: all configured groups must match; values within a group use OR. Container IDs are strongest. Separate multiple values with semicolons. Custom rules only use the listed components and operations.</value>
+  </data>
+  <data name="ProfilePreview" xml:space="preserve">
+    <value>Preview sample</value>
+  </data>
+  <data name="ProfileSave" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="ProfileCancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="ProfileImport" xml:space="preserve">
+    <value>Import JSON</value>
+  </data>
+  <data name="ProfileExport" xml:space="preserve">
+    <value>Export JSON</value>
+  </data>
+  <data name="ProfileNameInvalid" xml:space="preserve">
+    <value>Enter a profile name between 1 and 80 characters.</value>
+  </data>
+  <data name="ProfileContainerInvalid" xml:space="preserve">
+    <value>Every container ID must be a valid Windows GUID.</value>
+  </data>
+  <data name="ProfileRuleComponentsInvalid" xml:space="preserve">
+    <value>Select at least one component for the custom rule.</value>
+  </data>
+  <data name="ProfileInvalid" xml:space="preserve">
+    <value>The profile contains invalid or unsupported settings.</value>
+  </data>
+  <data name="ProfileNewName" xml:space="preserve">
+    <value>New profile</value>
+  </data>
+  <data name="ProfileCopyName" xml:space="preserve">
+    <value>{0} copy</value>
+  </data>
+  <data name="ProfileDeleteConfirm" xml:space="preserve">
+    <value>Delete profile '{0}'?</value>
+  </data>
+  <data name="ProfileSaveError" xml:space="preserve">
+    <value>Could not save profiles: {0}</value>
+  </data>
+  <data name="ProfileImportError" xml:space="preserve">
+    <value>Could not import profile: {0}</value>
+  </data>
+  <data name="ProfileExportError" xml:space="preserve">
+    <value>Could not export profile: {0}</value>
+  </data>
+  <data name="ProfilePreviewUnavailable" xml:space="preserve">
+    <value>Select a profile to preview it.</value>
+  </data>
+  <data name="ProfilePreviewResult" xml:space="preserve">
+    <value>Sample reading (L 100%, R 100%, case 55%): {0}</value>
+  </data>
 </root>

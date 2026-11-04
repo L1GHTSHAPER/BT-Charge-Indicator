@@ -6,7 +6,7 @@ namespace BTChargeIndicator.Services;
 internal sealed class UpdateService : IDisposable
 {
     private const string LatestReleaseApiUrl =
-        "https://api.github.com/repos/L1GHTSHAPER/BT-Charge-Indicator/releases/latest";
+        "https://api.github.com/repos/realSamy/BT-Charge-Indicator/releases/latest";
 
     private readonly HttpClient _httpClient = new()
     {

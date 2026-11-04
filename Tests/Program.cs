@@ -78,6 +78,13 @@ Assert(resolvedRedmiProfile.Id == "redmi-buds",
     "Device profile matching uses model and protocol hints");
 Assert(BatteryProfileEngine.GetBatteryPercent(redmiDevice, resolvedRedmiProfile) == 100,
     "Default Redmi profile uses earbud battery and ignores the case");
+var invalidScalarCaseDevice = redmiDevice with
+{
+    BatteryPercent = 150,
+    Components = new BatteryComponents(null, null, 45)
+};
+Assert(BatteryProfileEngine.GetBatteryPercent(invalidScalarCaseDevice, defaultProfile) == 45,
+    "Earbud profiles fall back to a valid case reading when the scalar value is invalid");
 Assert(BatteryProfileEngine.Resolve(
         redmiDevice, [defaultProfile, redmiProfile, caseProfile], "case-priority").Id == "case-priority",
     "Explicit device profile assignment overrides automatic matching");

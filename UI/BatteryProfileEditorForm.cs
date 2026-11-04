@@ -292,7 +292,8 @@ internal sealed class BatteryProfileEditorForm : Form
             _categories.Text = string.Join("; ", profile.Match.Categories);
             _sources.Text = string.Join("; ", profile.Match.Sources);
             _aggregation.SelectedItem = profile.AggregationMode;
-            var components = profile.CustomRule?.Components ?? [BatteryComponentKind.Left, BatteryComponentKind.Right];
+            IReadOnlyCollection<BatteryComponentKind> components = profile.CustomRule?.Components ??
+                new List<BatteryComponentKind> { BatteryComponentKind.Left, BatteryComponentKind.Right };
             for (var i = 0; i < _ruleComponents.Items.Count; i++)
             {
                 _ruleComponents.SetItemChecked(i, components.Contains((BatteryComponentKind)_ruleComponents.Items[i]!));
@@ -569,7 +570,7 @@ internal sealed class BatteryProfileEditorForm : Form
     }
 
     private static List<string> SplitValues(string value) =>
-        value.Split([';', '\r', '\n'], StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+        value.Split(new[] { ';', '\r', '\n' }, StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
 

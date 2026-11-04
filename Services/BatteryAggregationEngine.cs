@@ -15,7 +15,10 @@ internal static class BatteryAggregationEngine
     {
         if (components is null)
         {
-            return Normalize(fallback);
+            return mode is BatteryAggregationMode.Left or BatteryAggregationMode.Right
+                or BatteryAggregationMode.Case or BatteryAggregationMode.Custom
+                ? null
+                : Normalize(fallback);
         }
 
         return mode switch
@@ -25,13 +28,13 @@ internal static class BatteryAggregationEngine
             BatteryAggregationMode.Case => Normalize(components.CasePercent),
             BatteryAggregationMode.Lowest => AggregateKnown(
                 [components.LeftPercent, components.RightPercent, components.CasePercent],
-                static values => values.Min()),
+                static values => values.Min(), fallback),
             BatteryAggregationMode.Highest => AggregateKnown(
                 [components.LeftPercent, components.RightPercent, components.CasePercent],
-                static values => values.Max()),
+                static values => values.Max(), fallback),
             BatteryAggregationMode.Average => AggregateKnown(
                 [components.LeftPercent, components.RightPercent, components.CasePercent],
-                static values => (int)Math.Round(values.Average(), MidpointRounding.AwayFromZero)),
+                static values => (int)Math.Round(values.Average(), MidpointRounding.AwayFromZero), fallback),
             BatteryAggregationMode.EarbudsLowest => AggregateEarbuds(
                 components.LeftPercent,
                 components.RightPercent,
@@ -89,7 +92,8 @@ internal static class BatteryAggregationEngine
 
     private static int? AggregateKnown(
         IEnumerable<int?> values,
-        Func<int[], int> aggregate)
+        Func<int[], int> aggregate,
+        int? fallback)
     {
         var known = values
             .Select(Normalize)
@@ -97,7 +101,7 @@ internal static class BatteryAggregationEngine
             .Select(value => value!.Value)
             .ToArray();
 
-        return known.Length == 0 ? null : aggregate(known);
+        return known.Length == 0 ? Normalize(fallback) : aggregate(known);
     }
 
 

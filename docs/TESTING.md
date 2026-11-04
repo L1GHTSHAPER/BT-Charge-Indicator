@@ -27,3 +27,15 @@ Expected input: left=100, right=100, case=55.
 Expected default primary percentage: 100.
 Expected component display: L 100%, R 100%, case 55%.
 The case must remain visible as a separate component.
+
+## Profile and tray regression checks
+1. Open **Manage battery profiles** from the tray menu.
+2. Create a profile, set name/category/source match criteria, and choose an aggregation mode.
+3. Preview the sample values (left=100, right=100, case=55).
+4. Create a custom rule, select components and an operation, and confirm the preview.
+5. Export the profile, import it under a different ID, and save.
+6. Assign the profile to a device through its device submenu.
+7. Enable that device's separate tray icon and select an individual icon style.
+8. Change the global aggregation mode and verify the main tray icon updates independently.
+9. Verify the separate icon disappears when disabled and that exiting the application disposes all tray icons.
+10. Corrupt `profiles.json` while a valid `.bak` exists; verify the application recovers the backup without overwriting the malformed file.

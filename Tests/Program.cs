@@ -16,8 +16,25 @@ var redmiDevice = new BluetoothBatteryDevice(
 {
     BatterySource = BatteryReadingSource.GoogleFastPairAdvertisement,
     Categories = ["Communication.Headset.Bluetooth"],
-    Components = new BatteryComponents(100, 100, 55)
+    Components = new BatteryComponents(100, 100, 55),
+    ObservedAtUtc = new DateTimeOffset(2026, 11, 4, 12, 30, 0, TimeSpan.Zero)
 };
+var normalizedSnapshot = BatterySnapshot.FromDevice(redmiDevice);
+Assert(normalizedSnapshot.DevicePercent == 55 &&
+       normalizedSnapshot.GetComponent(BatteryComponentKind.Left) == 100 &&
+       normalizedSnapshot.GetComponent(BatteryComponentKind.Case) == 55,
+    "Normalized snapshots preserve the scalar and typed component values");
+Assert(normalizedSnapshot.ObservedAtUtc == redmiDevice.ObservedAtUtc &&
+       normalizedSnapshot.Source == BatteryReadingSource.GoogleFastPairAdvertisement &&
+       normalizedSnapshot.IsConnected == true,
+    "Normalized snapshots preserve observation time, source, and connection state");
+var invalidSnapshot = BatterySnapshot.FromDevice(redmiDevice with
+{
+    BatteryPercent = 150,
+    Components = new BatteryComponents(-1, 101, null)
+});
+Assert(invalidSnapshot.DevicePercent is null && invalidSnapshot.Components.Count == 0,
+    "Normalized snapshots discard invalid percentages instead of treating them as valid readings");
 var defaultProfile = BatteryProfileEngine.CreateDefaultProfile();
 var redmiProfile = new BatteryProfile
 {

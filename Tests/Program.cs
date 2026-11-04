@@ -1,8 +1,109 @@
+using BTChargeIndicator.Settings;
 using BTChargeIndicator.Services;
 using BTChargeIndicator.Models;
 using Windows.Devices.Bluetooth;
 
 await LocalizationTests.RunAsync();
+
+var redmiDevice = new BluetoothBatteryDevice(
+    "windows-device-id",
+    "Redmi Buds 6 Pro",
+    55,
+    true,
+    null,
+    Guid.Parse("863f1b84-9ff7-508a-aa4a-7126cc525e46"))
+{
+    BatterySource = BatteryReadingSource.GoogleFastPairAdvertisement,
+    Categories = ["Communication.Headset.Bluetooth"],
+    Components = new BatteryComponents(100, 100, 55)
+};
+var defaultProfile = BatteryProfileEngine.CreateDefaultProfile();
+var redmiProfile = new BatteryProfile
+{
+    Id = "redmi-buds",
+    Name = "Redmi Buds",
+    Match = new BatteryProfileMatch
+    {
+        NameContains = ["Redmi Buds"],
+        Sources = [BatteryReadingSource.GoogleFastPairAdvertisement]
+    },
+    AggregationMode = BatteryAggregationMode.EarbudsLowest
+};
+var caseProfile = new BatteryProfile
+{
+    Id = "case-priority",
+    Name = "Case priority",
+    AggregationMode = BatteryAggregationMode.Case
+};
+var resolvedRedmiProfile = BatteryProfileEngine.Resolve(
+    redmiDevice, [defaultProfile, redmiProfile]);
+Assert(resolvedRedmiProfile.Id == "redmi-buds",
+    "Device profile matching uses model and protocol hints");
+Assert(BatteryProfileEngine.GetBatteryPercent(redmiDevice, resolvedRedmiProfile) == 100,
+    "Default Redmi profile uses earbud battery and ignores the case");
+Assert(BatteryProfileEngine.Resolve(
+        redmiDevice, [defaultProfile, redmiProfile, caseProfile], "case-priority").Id == "case-priority",
+    "Explicit device profile assignment overrides automatic matching");
+Assert(BatteryProfileEngine.GetBatteryPercent(redmiDevice, caseProfile) == 55,
+    "A selected case profile can display the charging case");
+
+var customRuleProfile = new BatteryProfile
+{
+    Id = "custom-earbud-case",
+    Name = "Custom earbud and case",
+    AggregationMode = BatteryAggregationMode.Custom,
+    CustomRule = new BatteryAggregationRule
+    {
+        Components = [BatteryComponentKind.Left, BatteryComponentKind.Case],
+        Operation = BatteryAggregationOperation.Minimum
+    }
+};
+Assert(BatteryProfileEngine.IsValidProfile(customRuleProfile),
+    "Safe custom aggregation rule validates");
+Assert(BatteryProfileEngine.GetBatteryPercent(redmiDevice, customRuleProfile) == 55,
+    "Custom aggregation selects only configured components");
+customRuleProfile.CustomRule!.Components.Add(BatteryComponentKind.Left);
+Assert(!BatteryProfileEngine.IsValidProfile(customRuleProfile),
+    "Custom aggregation rejects duplicate components");
+
+var profileTempDirectory = Path.Combine(Path.GetTempPath(), "BTChargeIndicatorTests", Guid.NewGuid().ToString("N"));
+Directory.CreateDirectory(profileTempDirectory);
+try
+{
+    var profilePath = Path.Combine(profileTempDirectory, "profiles.json");
+    var profileStore = new BatteryProfileStore(profilePath);
+    profileStore.Save([redmiProfile, caseProfile, new BatteryProfile
+    {
+        Id = "custom-test",
+        Name = "Custom test",
+        AggregationMode = BatteryAggregationMode.Custom,
+        CustomRule = new BatteryAggregationRule
+        {
+            Components = [BatteryComponentKind.Right, BatteryComponentKind.Case],
+            Operation = BatteryAggregationOperation.Maximum
+        }
+    }]);
+    var loadedProfiles = profileStore.Load();
+    Assert(loadedProfiles.Count == 4,
+        "Profile store round-trips custom profiles and supplies the built-in default");
+    Assert(loadedProfiles.Any(profile => profile.Id == "redmi-buds"),
+        "Profile store preserves matching criteria");
+    Assert(loadedProfiles.Any(profile => profile.Id == "custom-test" &&
+        profile.CustomRule?.Components.SequenceEqual(
+            [BatteryComponentKind.Right, BatteryComponentKind.Case]) == true),
+        "Profile store round-trips declarative custom rules");
+
+    File.WriteAllText(profilePath, "{ invalid json");
+    Assert(profileStore.Load().Count == 1,
+        "Malformed profile JSON falls back safely to the built-in profile");
+    Assert(File.ReadAllText(profilePath) == "{ invalid json",
+        "Malformed profile JSON is preserved for manual recovery");
+}
+finally
+{
+    Directory.Delete(profileTempDirectory, true);
+}
+
 
 var aggregationComponents = new BatteryComponents(100, 80, 15);
 Assert(BatteryAggregationEngine.Aggregate(aggregationComponents, BatteryAggregationMode.EarbudsLowest) == 80,

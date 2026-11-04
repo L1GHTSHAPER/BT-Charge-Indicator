@@ -527,7 +527,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
             preferences.LowBatteryNotifications = notificationItem.Checked;
             if (!notificationItem.Checked)
             {
-                _lowBatteryNotifications.Remove(device.Id);
+                _lowBatteryNotifications.Remove(GetDeviceKey(device));
             }
             SaveDeviceSettings(updateIcon: false);
         };
@@ -634,7 +634,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
     private void UpdateIndividualTrayIcons()
     {
         var activeKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var device in _devices)
+        foreach (var device in BatteryDeviceIdentity.Deduplicate(_devices))
         {
             var preferences = GetDevicePreferences(device);
             if (!preferences.ShowIndividualTrayIcon)
@@ -919,7 +919,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
 
     private void UpdateTrayIcon()
     {
-        var knownDevices = _devices
+        var knownDevices = BatteryDeviceIdentity.Deduplicate(_devices)
             .Where(device => GetEffectiveBatteryPercent(device).HasValue &&
                              GetDevicePreferences(device).IncludeInTrayIcon)
             .ToArray();
@@ -952,7 +952,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
             return AppText.Get("TooltipNoDevices");
         }
 
-        var includedDevices = _devices
+        var includedDevices = BatteryDeviceIdentity.Deduplicate(_devices)
             .Where(device => GetDevicePreferences(device).IncludeInTrayIcon)
             .ToArray();
         var first = includedDevices.FirstOrDefault(device => GetEffectiveBatteryPercent(device).HasValue);
@@ -968,7 +968,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
 
     private IReadOnlyList<BluetoothBatteryDevice> GetVisibleDevices()
     {
-        return _devices
+        return BatteryDeviceIdentity.Deduplicate(_devices)
             .Where(device => !GetDevicePreferences(device).IsHidden)
             .ToArray();
     }
@@ -1002,20 +1002,8 @@ internal sealed class TrayApplicationContext : ApplicationContext
         return preferences;
     }
 
-    private static string GetDeviceKey(BluetoothBatteryDevice device)
-    {
-        if (device.ContainerId.HasValue)
-        {
-            return $"container:{device.ContainerId.Value:D}";
-        }
-
-        if (!string.IsNullOrWhiteSpace(device.Address))
-        {
-            return $"address:{device.Address.Trim()}";
-        }
-
-        return $"id:{device.Id}";
-    }
+    private static string GetDeviceKey(BluetoothBatteryDevice device) =>
+        BatteryDeviceIdentity.GetKey(device);
 
     private string GetDisplayName(BluetoothBatteryDevice device)
     {
@@ -1246,7 +1234,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
 
     private void ShowLowBatteryNotificationIfNeeded()
     {
-        var currentlyLow = _devices
+        var currentlyLow = BatteryDeviceIdentity.Deduplicate(_devices)
             .Where(device => device.IsConnected == true &&
                              GetEffectiveBatteryPercent(device) is int percentage &&
                              percentage <= _settings.LowBatteryThreshold &&
@@ -1269,7 +1257,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
         }
 
         var newLowDevices = currentlyLow
-            .Where(device => _lowBatteryNotifications.Add(device.Id))
+            .Where(device => _lowBatteryNotifications.Add(GetDeviceKey(device)))
             .ToArray();
         if (newLowDevices.Length == 0)
         {

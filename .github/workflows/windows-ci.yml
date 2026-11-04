@@ -35,3 +35,21 @@ jobs:
 
       - name: Run protocol and regression tests
         run: dotnet run --project .\Tests\BTChargeIndicator.ProtocolTests.csproj --configuration Release --no-build
+
+      - name: Publish self-contained Windows x64 application
+        run: >-
+          dotnet publish .\BTChargeIndicator.csproj
+          --configuration Release
+          --runtime win-x64
+          --self-contained true
+          --output .\artifacts\BTChargeIndicator-win-x64
+          -p:PublishSingleFile=true
+          -p:EnableCompressionInSingleFile=true
+
+      - name: Upload Windows x64 application
+        uses: actions/upload-artifact@v4
+        with:
+          name: BTChargeIndicator-win-x64
+          path: .\artifacts\BTChargeIndicator-win-x64\
+          if-no-files-found: error
+          retention-days: 14

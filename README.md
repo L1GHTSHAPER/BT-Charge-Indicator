@@ -66,8 +66,9 @@ Battery reporting depends on the device firmware and Windows driver. Separate TW
 1. Download and run `BTChargeIndicator.exe`.
 2. Find the colored percentage icon in the Windows system tray.
 3. Left-click the icon for a quick battery summary.
-4. Right-click it for the full device list and settings.
-5. Double-click it to open Windows Bluetooth settings.
+4. Right-click it for the device list, quick options, and the tabbed **Settings** window.
+5. Open **Settings** to manage devices, profiles, global aggregation, tray styles, notifications, and advanced options.
+6. Double-click it to open Windows Bluetooth settings.
 
 By default, the global tray icon shows the lowest known battery percentage among currently connected devices. Change it to the highest or average value from **Global battery aggregation**. Each device can use its own battery profile and optional separate tray icon. For TWS earbuds, the default primary percentage uses the lowest known left/right earbud level; the charging case remains visible in the details but does not lower the primary percentage while an earbud reading is available.
 

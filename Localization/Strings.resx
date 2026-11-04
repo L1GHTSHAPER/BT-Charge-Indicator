@@ -521,4 +521,40 @@ This option appears only if your Bluetooth adapter, its driver, and your headset
   <data name="ShowDeviceBatteryDetails" xml:space="preserve">
     <value>Show battery details</value>
   </data>
+  <data name="SettingsTitle" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="SettingsTabOverview" xml:space="preserve">
+    <value>Overview</value>
+  </data>
+  <data name="SettingsTabDevices" xml:space="preserve">
+    <value>Devices</value>
+  </data>
+  <data name="SettingsTabProfiles" xml:space="preserve">
+    <value>Profiles</value>
+  </data>
+  <data name="SettingsTabTray" xml:space="preserve">
+    <value>Tray and global battery</value>
+  </data>
+  <data name="SettingsTabNotifications" xml:space="preserve">
+    <value>Notifications</value>
+  </data>
+  <data name="SettingsTabAdvanced" xml:space="preserve">
+    <value>Advanced</value>
+  </data>
+  <data name="SettingsOverviewText" xml:space="preserve">
+    <value>Monitoring {0} paired devices, including {2} currently connected. You have {1} custom battery profiles. Configure each device, tray icons, and battery calculations in the tabs.</value>
+  </data>
+  <data name="SettingsProfileHelp" xml:space="preserve">
+    <value>Profiles control how each device's battery is calculated. You can match devices automatically or assign a profile manually. Custom rules only use known battery components and safe built-in operations.</value>
+  </data>
+  <data name="SettingsNotificationsHelp" xml:space="preserve">
+    <value>Low-battery notifications use each device's profile-calculated primary percentage. Component details remain available in the device summary.</value>
+  </data>
+  <data name="SettingsSave" xml:space="preserve">
+    <value>Save changes</value>
+  </data>
+  <data name="SettingsCancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
 </root>

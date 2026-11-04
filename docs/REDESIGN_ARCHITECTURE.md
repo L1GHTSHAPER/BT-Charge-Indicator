@@ -5,7 +5,8 @@
 - Modern WinUI 3 desktop experience.
 - Preserve the current Bluetooth protocol support and battery/profile behavior.
 - Keep tray operation independent of whether the dashboard window is open.
-- Support portable/unpackaged and packaged MSIX distribution, subject to verified Windows App SDK constraints.
+- Support portable/unpackaged and packaged MSIX distribution with clearly documented feature differences.
+- MSIX is required for the Windows desktop Widgets provider; portable mode must not claim Widgets support.
 - Keep Windows Widgets as an optional supported integration; do not use private Quick Settings APIs.
 
 ## Current state
@@ -77,7 +78,9 @@ The tray surface is a separate presentation client of the runtime. It must keep 
 
 ### Widget provider
 
-The Widgets provider consumes a minimal read-only state projection from the runtime. It must not duplicate Bluetooth scanning or hold Bluetooth device handles. Package identity and activation constraints must be validated before choosing the transport and project layout.
+The Widgets provider consumes a minimal read-only state projection from the runtime. It must not duplicate Bluetooth scanning or hold Bluetooth device handles.
+
+Microsoft's current Win32 widget provider model requires a packaged desktop app registered through the package manifest. The portable/unpackaged distribution therefore cannot register the widget provider. The MSIX variant will include the provider; the portable variant will omit it and show a clear capability explanation in settings. Use the documented C# provider path unless a technical limitation requires a separate native host.
 
 ## State flow
 
@@ -108,11 +111,30 @@ The final project split is subject to a small Windows App SDK deployment prototy
 
 Avoid creating assemblies only for naming purity. A project boundary is justified when it enforces a real dependency boundary or enables a deployment target.
 
+## Deployment model
+
+### MSIX distribution
+
+- Full-featured WinUI 3 app with package identity.
+- Includes the registered Windows Widgets provider.
+- Choose framework-dependent or self-contained Windows App SDK deployment after measuring package size, installation behavior, and servicing.
+- Package identity-dependent integrations must be declared and tested in the manifest.
+
+### Portable/unpackaged distribution
+
+- Same WinUI dashboard and shared runtime, delivered as a folder/ZIP.
+- Initial candidate: Windows App SDK self-contained deployment so users do not need a separate runtime installation.
+- Output will be larger; publisher must include runtime servicing in application updates.
+- No package identity, so no Win32 Windows Widgets provider. Do not attempt registry/COM hacks to bypass this restriction.
+- Do not advertise a zero-extraction single EXE. Microsoft's supported single-file mode extracts dependencies at first launch and is limited to unpackaged self-contained deployment.
+
+The two distributions must use the same application data location and migration logic where possible. Verify settings/profile persistence across switching between portable and MSIX editions.
+
 ## Key architectural decisions still open
 
-1. Whether the tray host lives in the WinUI process or a small companion process. Decide after a prototype verifies tray lifetime when the window is closed and unpackaged deployment behavior.
-2. Whether Windows App SDK runtime is framework-dependent or self-contained for each artifact. Decide after testing installer size, update behavior, and portable extraction.
-3. Whether Widgets share the app process or use a provider/companion activation model. Decide from current Microsoft provider requirements.
+1. Whether the tray host lives in the WinUI process or a small companion process. Decide after a prototype verifies tray lifetime when the window is closed in both package modes.
+2. Whether the MSIX uses framework-dependent or self-contained Windows App SDK deployment. Decide after testing package size, installation, and servicing.
+3. Whether the widget provider can run in-process with the shared runtime or needs a small out-of-process provider host. Decide from the documented C# provider activation model and a prototype.
 4. Whether to keep WinForms as a buildable legacy host or extract its tray host temporarily. Do not delete it until parity is demonstrated.
 
 ## Non-goals

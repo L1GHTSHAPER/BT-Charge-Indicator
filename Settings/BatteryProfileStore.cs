@@ -134,7 +134,7 @@ internal sealed class BatteryProfileStore
         try
         {
             File.WriteAllText(temporaryPath, JsonSerializer.Serialize(document, JsonOptions));
-            if (File.Exists(_profilesPath))
+            if (TryLoad(_profilesPath) is not null)
             {
                 File.Copy(_profilesPath, backupPath, true);
             }

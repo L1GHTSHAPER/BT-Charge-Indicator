@@ -8,6 +8,8 @@ internal sealed record BluetoothBatteryDevice(
     string? Address,
     Guid? ContainerId)
 {
+    public DateTimeOffset ObservedAtUtc { get; init; } = DateTimeOffset.UtcNow;
+
     public BatteryReadingSource BatterySource { get; init; }
 
     public BatteryComponents? Components { get; init; }

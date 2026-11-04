@@ -28,6 +28,23 @@ Assert(normalizedSnapshot.ObservedAtUtc == redmiDevice.ObservedAtUtc &&
        normalizedSnapshot.Source == BatteryReadingSource.GoogleFastPairAdvertisement &&
        normalizedSnapshot.IsConnected == true,
     "Normalized snapshots preserve observation time, source, and connection state");
+
+var classicEndpoint = redmiDevice with
+{
+    Id = "classic-endpoint",
+    Address = "AA:BB:CC:DD:EE:01",
+    BatteryPercent = 55,
+    Components = null
+};
+var bleEndpoint = redmiDevice with
+{
+    Id = "ble-endpoint",
+    Address = "AA:BB:CC:DD:EE:02",
+    BatteryPercent = 100
+};
+var physicalDevices = BatteryDeviceIdentity.Deduplicate([classicEndpoint, bleEndpoint]);
+Assert(physicalDevices.Count == 1 && physicalDevices[0].Id == "ble-endpoint",
+    "Endpoints with the same Windows container are counted once and prefer component readings");
 var invalidSnapshot = BatterySnapshot.FromDevice(redmiDevice with
 {
     BatteryPercent = 150,

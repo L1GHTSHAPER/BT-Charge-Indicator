@@ -258,6 +258,10 @@ internal sealed class TrayApplicationContext : ApplicationContext
         refreshItem.Click += async (_, _) => await RefreshAsync();
         menu.Items.Add(refreshItem);
 
+        var settingsItem = new ToolStripMenuItem(AppText.Get("SettingsTitle"));
+        settingsItem.Click += (_, _) => OpenSettings();
+        menu.Items.Add(settingsItem);
+
         var bluetoothSettingsItem = new ToolStripMenuItem(AppText.Get("BluetoothSettings"));
         bluetoothSettingsItem.Click += (_, _) => OpenBluetoothSettings();
         menu.Items.Add(bluetoothSettingsItem);
@@ -392,6 +396,25 @@ internal sealed class TrayApplicationContext : ApplicationContext
         menu.Items.Add(exitItem);
 
         return menu;
+    }
+
+    private void OpenSettings()
+    {
+        using var settingsForm = new SettingsForm(_settings, _devices, _profileStore, _profiles);
+        if (settingsForm.ShowDialog() != DialogResult.OK)
+        {
+            return;
+        }
+
+        _settings = settingsForm.UpdatedSettings;
+        _settingsStore.Save(_settings);
+        AppText.Apply(_settings.Language);
+        _refreshTimer.Interval = _settings.RefreshIntervalSeconds * 1000;
+        _lowBatteryNotifications.Clear();
+        UpdateTrayIcon();
+        ReplaceContextMenu();
+        _connectionNotifications.RefreshLanguage();
+        ShowLowBatteryNotificationIfNeeded();
     }
 
     private void OpenBatteryProfileEditor()

@@ -50,3 +50,6 @@ The case must remain visible as a separate component.
 7. Cancel after changing values; confirm the original settings remain unchanged.
 8. Open the profile editor from the Profiles tab, create a profile, return, and confirm device profile selectors refresh.
 9. Test the window at 100%, 150%, and 200% display scaling and with keyboard-only navigation.
+
+## Hardware matrix
+Use [HARDWARE_VERIFICATION.md](HARDWARE_VERIFICATION.md) to record physical device checks. Do not mark a protocol or device verified based only on parser fixtures or CI.

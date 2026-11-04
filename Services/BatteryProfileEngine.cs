@@ -67,7 +67,7 @@ internal static class BatteryProfileEngine
 
         if (profile.AggregationMode == BatteryAggregationMode.Custom)
         {
-            return AggregateCustom(device, profile.CustomRule) ?? Normalize(device.BatteryPercent);
+            return AggregateCustom(device, profile.CustomRule);
         }
 
         return BatteryAggregationEngine.Aggregate(

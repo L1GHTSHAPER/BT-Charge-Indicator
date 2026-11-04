@@ -557,6 +557,9 @@ This option appears only if your Bluetooth adapter, its driver, and your headset
   <data name="SettingsApply" xml:space="preserve">
     <value>Apply</value>
   </data>
+  <data name="SettingsApplyError" xml:space="preserve">
+    <value>Could not apply settings.</value>
+  </data>
   <data name="SettingsCancel" xml:space="preserve">
     <value>Cancel</value>
   </data>

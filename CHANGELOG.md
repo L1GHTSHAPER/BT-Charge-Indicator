@@ -9,6 +9,8 @@ All notable changes to BT Charge Indicator are documented here.
 - Added versioned JSON battery profiles, stable Windows container matching, automatic and explicit profile selection, safe custom aggregation rules, backup recovery, and profile import/export.
 - Added a native profile editor with sample preview and a tabbed settings window.
 - Added configurable global minimum/maximum/average aggregation and optional per-device tray icons with independent styles.
+- Added matching device actions to individual tray icon context menus and image previews for individual tray styles.
+- Added an Apply button to Settings; applied changes update the running app without closing the window, while Cancel discards only unapplied edits.
 - Updated tray percentages and low-battery notifications to use profile-computed values.
 - Added regression coverage and a Windows CI build/test workflow.
 

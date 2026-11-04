@@ -79,7 +79,7 @@ Acceptance: per-device icons do not affect global aggregation, and global rules 
 - [x] Make tray percentage use the profile's computed value.
 - [x] Keep tray and per-device tooltips within Windows limits and include component readings.
 - [ ] Add configurable tooltip component/timestamp visibility.
-- [x] Support independent per-device icon styles with global style inheritance;
+- [x] Support independent per-device icon styles with global style inheritance and matching preview images in global and individual tray menus;
   - [ ] Add independent per-device/global labels and warning thresholds.
 - [x] Ensure low-battery notification triggers use the profile-computed device percentage.
 - [ ] Keep existing icon styles and notification behavior compatible by default.
@@ -92,6 +92,7 @@ Acceptance: the tray icon, tooltip, and notifications agree with the active prof
 - [ ] Add search/filter for devices and profiles.
 - [ ] Support keyboard navigation, DPI scaling, and high-contrast/system theme behavior.
 - [x] Keep localization complete in English and Russian.
+- [x] Add Apply / Save / Cancel behavior with isolated settings snapshots and immediate application updates.
 
 Acceptance: all new features are reachable through the UI and remain usable at common Windows scaling levels.
 
@@ -127,4 +128,4 @@ Acceptance: runtime decisions are documented and tested on Windows 10/11.
 Acceptance: reproducible build, clear docs, clean diff, and release-ready branch.
 
 ## Current status
-Phase 0 audit and the TWS regression fix passed Windows CI. Phase 1 includes normalized snapshots, the pure aggregation engine, safe custom rules, and strict missing-component handling. Phase 2 includes versioned profile JSON, validation, backup recovery, automatic matching, per-device assignment, and import/export. The profile editor and tabbed settings window are implemented. Per-device tray icons/styles and configurable global aggregation are implemented; the tray and low-battery notifications use profile-computed values. Windows CI build and regression tests passed on commit ad0a75b3, including settings, snapshots, profile matching, and endpoint component merging. The app and test projects are retargeted to .NET 10 LTS. Windows CI passed on commit a1a05732 using .NET 10: restore, Release build, regression tests, self-contained win-x64 publish, and artifact upload all succeeded. Stale-reading policy and live Bluetooth hardware verification remain outstanding.
+The original battery-profile implementation phases are complete except for the explicitly listed follow-up items. The app and test projects are retargeted to .NET 10 LTS. The tray usability follow-up is implemented: individual tray icons now expose the same device actions as the main tray device submenu, individual style choices use the shared preview renderer, and Settings supports Apply without closing while keeping unapplied edits isolated from the running app. Windows CI passed on commit 3864be68: restore, Release build, regression tests, self-contained win-x64 publish, and artifact upload all succeeded. Stale-reading policy and live Bluetooth hardware verification remain outstanding.

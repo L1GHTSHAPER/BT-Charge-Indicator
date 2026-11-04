@@ -365,13 +365,23 @@ internal sealed class SettingsForm : Form
         try
         {
             AutoStartManager.SetEnabled(_startWithWindows.Checked);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(this, AppText.Format("AutoStartError", ex.Message),
+                Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
+            return false;
+        }
+
+        try
+        {
             UpdatedSettings = _settings.DeepClone();
             _applySettings(UpdatedSettings.DeepClone());
             return true;
         }
         catch (Exception ex)
         {
-            MessageBox.Show(this, AppText.Format("AutoStartError", ex.Message),
+            MessageBox.Show(this, AppText.Format("SettingsApplyError", ex.Message),
                 Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
             return false;
         }

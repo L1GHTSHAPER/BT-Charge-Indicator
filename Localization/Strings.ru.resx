@@ -557,6 +557,9 @@ ID устройства:
   <data name="SettingsApply" xml:space="preserve">
     <value>Применить</value>
   </data>
+  <data name="SettingsApplyError" xml:space="preserve">
+    <value>Не удалось применить настройки.</value>
+  </data>
   <data name="SettingsCancel" xml:space="preserve">
     <value>Отмена</value>
   </data>

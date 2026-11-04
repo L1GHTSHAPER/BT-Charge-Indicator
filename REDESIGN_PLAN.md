@@ -49,7 +49,7 @@ References: [Windows App SDK deployment architecture](https://learn.microsoft.co
 
 Goal: separate application behavior and lifetime from WinForms presentation without changing user-visible behavior.
 
-- [ ] Define the new solution/project structure. Proposed boundaries:
+- [x] Establish the first project boundary with a platform-independent `BTChargeIndicator.Core` project. The full solution/project split remains incremental. Proposed boundaries:
   - `BTChargeIndicator.Core`: device snapshots, battery components, aggregation, profiles, application settings contracts, and presentation-independent policies.
   - `BTChargeIndicator.Platform.Windows`: Bluetooth/WinRT acquisition, Windows device watchers, notifications/platform integrations, and Windows-specific adapters.
   - `BTChargeIndicator.App`: WinUI 3 desktop application and navigation.

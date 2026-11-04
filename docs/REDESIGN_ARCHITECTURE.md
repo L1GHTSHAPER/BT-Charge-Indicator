@@ -63,7 +63,7 @@ The runtime publishes immutable state snapshots to subscribers. The current Core
 
 ### WinUI 3 presentation
 
-The new WinUI 3 application will initially be a separate host project referencing Core and the Windows platform adapter. During the transition, the existing WinForms executable remains buildable and serves as the known-good fallback. Do not move or duplicate the protocol readers into the WinUI project.
+The new WinUI 3 application now exists at `src/BTChargeIndicator.WinUI` as a separate unpackaged host referencing Core. Its initial NavigationView shell and Dashboard/Settings placeholders are buildable, but it is not yet connected to Bluetooth acquisition. The Windows scanner adapter is still compiled into the legacy WinForms host; the next extraction will move the acquisition implementation behind a reusable Windows platform project. During the transition, the existing WinForms executable remains buildable and serves as the known-good fallback. Do not move or duplicate protocol readers into the WinUI project.
 
 Owns:
 - navigation and window lifecycle;
@@ -105,8 +105,8 @@ The final project split is subject to a small Windows App SDK deployment prototy
 
 - `src/BTChargeIndicator.Core`
 - `src/BTChargeIndicator.Platform.Windows`
-- `src/BTChargeIndicator.Runtime`
-- `src/BTChargeIndicator.WinUI`
+- `src/BTChargeIndicator.Runtime` (only if a real dependency boundary emerges)
+- `src/BTChargeIndicator.WinUI` (created; initial shell only)
 - `src/BTChargeIndicator.Tray` (only if a separate tray host/assembly is technically justified)
 - `legacy/BTChargeIndicator.WinForms` (temporary during migration)
 - `Tests/BTChargeIndicator.Tests`

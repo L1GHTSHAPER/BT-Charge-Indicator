@@ -36,6 +36,9 @@ jobs:
       - name: Run protocol and regression tests
         run: dotnet run --project .\Tests\BTChargeIndicator.ProtocolTests.csproj --configuration Release --no-build
 
+      - name: Build WinUI 3 host
+        run: dotnet build .\\src\\BTChargeIndicator.WinUI\\BTChargeIndicator.WinUI.csproj --configuration Release
+
       - name: Publish self-contained Windows x64 application
         run: >-
           dotnet publish .\BTChargeIndicator.csproj

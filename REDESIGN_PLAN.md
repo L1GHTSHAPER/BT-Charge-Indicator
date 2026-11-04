@@ -76,13 +76,15 @@ Acceptance:
 
 ## Phase 2 — WinUI 3 application foundation
 
-- [ ] Add a WinUI 3 desktop project using a supported Windows App SDK version selected after current Microsoft documentation review.
-- [ ] Implement application startup, shutdown, single-instance activation, dependency setup, and navigation shell.
-- [ ] Create Fluent Design theme resources, system/light/dark theme switching, typography, spacing, icons, and reusable controls.
+- [x] Add a separate unpackaged WinUI 3 desktop project using stable Windows App SDK 2.6.5.
+- [x] Add the initial WinUI application entry point, window, Fluent NavigationView shell, and Dashboard/Settings page placeholders.
+- [ ] Implement single-instance activation, explicit shutdown ownership, and shared-runtime dependency setup.
+- [ ] Add app-level Fluent theme resources, system/light/dark theme switching, typography, spacing, icons, and reusable controls.
 - [ ] Build sidebar navigation and window layout with responsive behavior.
 - [ ] Add localization infrastructure and migrate English/Russian resources without breaking persisted language selection.
 - [ ] Add accessible keyboard navigation, high-contrast behavior, and DPI/display scaling support.
 - [ ] Establish UI automation or view-model tests where practical.
+- [x] Add the WinUI host to Windows CI so the shell is restored and Release-built alongside the legacy app.
 
 Acceptance: a stable WinUI shell launches in the intended deployment modes and consumes the shared runtime without duplicating Bluetooth scanning.
 
@@ -170,4 +172,4 @@ Acceptance: reproducible builds, verified installers/artifacts, complete docs, a
 
 ## Current redesign status
 
-Phase 0 is complete. The Phase 1 runtime extraction and legacy-host integration are implemented and verified: Windows CI passed, and the user manually tested the latest Windows artifact and confirmed that the application behavior is working. `BTChargeIndicator.Core` owns the shared battery/domain/settings code, connection tracker, and UI-independent runtime. `BluetoothBatteryScannerAdapter` bridges the existing `BluetoothBatteryService` without changing protocol readers. The legacy tray host consumes runtime snapshots on its UI thread, delegates manual and watcher-triggered refreshes to the runtime, and updates the periodic interval through it. The old WinForms scan timer and scan lock are removed; the device watcher and its 500 ms UI-thread coalescing timer remain only for change detection. Remaining Phase 1 work is deeper stress testing of cancellation, concurrent refresh requests, and shutdown during real Bluetooth scan timing. Phase 2 can now begin with the WinUI 3 application foundation.
+Phase 0 is complete. The Phase 1 runtime extraction and legacy-host integration are implemented and verified: Windows CI passed, and the user manually tested the latest Windows artifact and confirmed that the application behavior is working. `BTChargeIndicator.Core` owns the shared battery/domain/settings code, connection tracker, and UI-independent runtime. `BluetoothBatteryScannerAdapter` bridges the existing `BluetoothBatteryService` without changing protocol readers. The legacy tray host consumes runtime snapshots on its UI thread, delegates manual and watcher-triggered refreshes to the runtime, and updates the periodic interval through it. The old WinForms scan timer and scan lock are removed; the device watcher and its 500 ms UI-thread coalescing timer remain only for change detection. Remaining Phase 1 work is deeper stress testing of cancellation, concurrent refresh requests, and shutdown during real Bluetooth scan timing. Phase 2 has started: the separate WinUI 3 host, initial NavigationView shell, Dashboard/Settings placeholders, and Windows CI build step are in place. The shell deliberately shows no fabricated device data and does not yet start Bluetooth scanning. The next work is to extract the Windows acquisition adapter into a reusable platform project, then connect one shared runtime to the WinUI host while preserving the legacy host.

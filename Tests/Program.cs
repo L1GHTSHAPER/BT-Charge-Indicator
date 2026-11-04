@@ -417,6 +417,9 @@ await using (var runtime = new ApplicationRuntime(runtimeScanner))
         "Runtime publishes the first scan as its shared device state");
     Assert(runtime.State.IsScanning == false && runtime.State.LastUpdatedUtc.HasValue,
         "Runtime publishes completed scan metadata");
+    await runtime.UpdateRefreshIntervalAsync(TimeSpan.FromSeconds(30));
+    Assert(runtime.State.Devices.Count == 1,
+        "Changing the refresh interval preserves the current published device state");
     await runtime.RefreshAsync(refreshGattBattery: true);
     Assert(runtimeScanner.LastRefreshRequested,
         "Runtime forwards an explicit GATT refresh request to the platform scanner");

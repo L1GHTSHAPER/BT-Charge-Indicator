@@ -22,7 +22,7 @@ The user-selected direction is:
 - [x] Inspect repository structure, project settings, models, protocol adapters, tray aggregation, settings persistence, and tests.
 - [x] Identify the TWS aggregate path: protocol reading -> `TwsBatteryReading.LowestPercent` -> `BluetoothBatteryDevice.BatteryPercent` -> tray aggregation.
 - [x] Confirm the current `LowestPercent` includes the case and the tray icon uses `BatteryPercent`.
-- [ ] Establish a Windows .NET 9 baseline build and run the existing protocol tests in CI.
+- [x] Establish a Windows .NET 9 baseline build and run the existing protocol tests in CI (the initial implementation branch passed; later profile changes are being validated separately).
 - [x] Add repository instructions and this implementation plan.
 - [x] Add architecture/current implementation/testing notes.
 - [x] Add Windows CI for Release build and protocol tests.
@@ -40,13 +40,13 @@ Acceptance: the test suite proves L=100/R=100/case=55 produces a primary percent
 Acceptance: aggregation logic is deterministic, isolated from WinForms, and fully tested.
 
 ## Phase 2 — Versioned JSON configuration and profiles
-- [ ] Add schema-versioned global settings and per-device profile models.
-- [ ] Add robust load/save, validation, atomic writes, backup/recovery, and migrations from the current settings format.
-- [ ] Implement profile matching priority: explicit device assignment, stable Windows identity/container, vendor/model/protocol hints, then default.
-- [ ] Avoid depending only on Bluetooth MAC addresses.
-- [ ] Add safe declarative custom rules; reject unsupported operations and malformed input.
+- [x] Add schema-versioned global settings and per-device profile models.
+- [x] Add profile load/save, validation, atomic writes, backup recovery, and additive settings defaults.\n- [ ] Add explicit migration handling for future schema changes.
+- [x] Implement profile matching priority: explicit device assignment, stable Windows container ID, model/category/protocol hints, then default.
+- [x] Avoid depending only on Bluetooth MAC addresses.
+- [x] Add safe declarative custom rules; reject unsupported operations and malformed input.
 - [ ] Add import/export with validation and clear errors.
-- [ ] Keep existing settings and device preferences compatible.
+- [x] Keep existing settings and device preferences compatible through additive JSON properties and defaults.
 
 Acceptance: old settings load without loss; invalid profiles cannot crash the app or execute code; matching is predictable and tested.
 
@@ -69,10 +69,10 @@ Acceptance: profiles can be managed without manually editing JSON; preview match
 Acceptance: per-device icons do not affect global aggregation, and global rules are deterministic.
 
 ## Phase 5 — Tray, tooltip, and notifications
-- [ ] Make tray percentage use the profile's computed value.
+- [x] Make tray percentage use the profile's computed value.
 - [ ] Make tooltips show configured components and timestamps without exceeding Windows limits.
 - [ ] Support independent per-device/global styles, labels, and warning thresholds.
-- [ ] Ensure notification triggers use the configured relevant components, not a stale/raw aggregate.
+- [x] Ensure low-battery notification triggers use the profile-computed device percentage.
 - [ ] Keep existing icon styles and notification behavior compatible by default.
 
 Acceptance: the tray icon, tooltip, and notifications agree with the active profile.
@@ -113,4 +113,4 @@ Acceptance: runtime decisions are documented and tested on Windows 10/11.
 Acceptance: reproducible build, clear docs, clean diff, and release-ready branch.
 
 ## Current status
-Phase 0 audit and initial regression fix are committed on the feature branch. Phase 1 has started with a pure aggregation engine and focused tests. Windows CI runs have been queued by GitHub for the latest commits; no completed Windows build/test result or Bluetooth hardware verification is available yet.
+Phase 0 audit and initial regression fix passed Windows CI. Phase 1 now includes the pure aggregation engine, declarative custom rules, strict missing-component handling, and profile-level calculations. Phase 2 includes versioned profile JSON, validation, backup recovery, matching, per-device profile assignment, and global aggregation settings. The tray and low-battery notification paths now consume profile-computed values. The latest profile integration build initially exposed a missing namespace import, which has been fixed; the newest Windows CI run is pending. Live Bluetooth hardware verification remains outstanding.

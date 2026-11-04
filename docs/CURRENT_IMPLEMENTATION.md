@@ -1,7 +1,7 @@
 # Current implementation audit
 
 ## Repository snapshot
-- Application: C# WinForms, `net9.0-windows10.0.19041.0`.
+- Application: C# WinForms, `net10.0-windows10.0.19041.0`.
 - Nullable reference types and implicit usings are enabled.
 - Automated tests: `Tests/BTChargeIndicator.ProtocolTests.csproj`, executable test harness in `Tests/Program.cs`.
 - Global settings: `%LOCALAPPDATA%/BT Charge Indicator/settings.json`.

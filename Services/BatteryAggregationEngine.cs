@@ -20,9 +20,9 @@ internal static class BatteryAggregationEngine
 
         return mode switch
         {
-            BatteryAggregationMode.Left => FirstValid(components.LeftPercent, fallback),
-            BatteryAggregationMode.Right => FirstValid(components.RightPercent, fallback),
-            BatteryAggregationMode.Case => FirstValid(components.CasePercent, fallback),
+            BatteryAggregationMode.Left => Normalize(components.LeftPercent),
+            BatteryAggregationMode.Right => Normalize(components.RightPercent),
+            BatteryAggregationMode.Case => Normalize(components.CasePercent),
             BatteryAggregationMode.Lowest => AggregateKnown(
                 [components.LeftPercent, components.RightPercent, components.CasePercent],
                 static values => values.Min()),
@@ -100,8 +100,6 @@ internal static class BatteryAggregationEngine
         return known.Length == 0 ? null : aggregate(known);
     }
 
-    private static int? FirstValid(int? value, int? fallback) =>
-        Normalize(value) ?? Normalize(fallback);
 
     private static int? Normalize(int? value) =>
         value is >= 0 and <= 100 ? value : null;

@@ -503,4 +503,7 @@ This option appears only if your Bluetooth adapter, its driver, and your headset
   <data name="ManageProfiles" xml:space="preserve">
     <value>Manage battery profiles</value>
   </data>
+  <data name="ProfileSourceInvalid" xml:space="preserve">
+    <value>Enter valid battery source enum names separated by semicolons.</value>
+  </data>
 </root>

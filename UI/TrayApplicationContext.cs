@@ -950,7 +950,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
     private DevicePreferences GetDevicePreferences(BluetoothBatteryDevice device)
     {
         var key = GetDeviceKey(device);
-        if (!_settings.Devices.TryGetValue(key, out var preferences))
+        if (!_settings.Devices.TryGetValue(key, out var preferences) || preferences is null)
         {
             // Migrate the previous address-based key to the stable Windows container ID.
             var legacyAddressKey = string.IsNullOrWhiteSpace(device.Address)
@@ -958,7 +958,8 @@ internal sealed class TrayApplicationContext : ApplicationContext
                 : $"address:{device.Address.Trim()}";
             if (key.StartsWith("container:", StringComparison.OrdinalIgnoreCase) &&
                 legacyAddressKey is not null &&
-                _settings.Devices.Remove(legacyAddressKey, out var legacyPreferences))
+                _settings.Devices.Remove(legacyAddressKey, out var legacyPreferences) &&
+                legacyPreferences is not null)
             {
                 preferences = legacyPreferences;
                 _settings.Devices[key] = preferences;

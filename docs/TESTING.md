@@ -39,3 +39,14 @@ The case must remain visible as a separate component.
 8. Change the global aggregation mode and verify the main tray icon updates independently.
 9. Verify the separate icon disappears when disabled and that exiting the application disposes all tray icons.
 10. Corrupt `profiles.json` while a valid `.bak` exists; verify the application recovers the backup without overwriting the malformed file.
+
+## Settings window checks
+1. Open **Settings** from the main tray menu.
+2. Confirm Overview reports paired, connected, and custom-profile counts.
+3. Change a device's global inclusion, individual tray icon, profile, and icon style.
+4. Change global aggregation, global icon style, and low-battery threshold.
+5. Change language, refresh interval, automatic updates, and startup option.
+6. Save and restart; confirm every selection persists.
+7. Cancel after changing values; confirm the original settings remain unchanged.
+8. Open the profile editor from the Profiles tab, create a profile, return, and confirm device profile selectors refresh.
+9. Test the window at 100%, 150%, and 200% display scaling and with keyboard-only navigation.

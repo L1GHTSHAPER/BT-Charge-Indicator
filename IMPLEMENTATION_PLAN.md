@@ -60,9 +60,9 @@ Acceptance: old settings load without loss; invalid profiles cannot crash the ap
 Acceptance: profiles can be managed without manually editing JSON; preview matches the tested aggregation engine.
 
 ## Phase 4 — Multi-device and global aggregation
-- [ ] Give each device an independent computed battery value and presentation configuration.
-- [ ] Add per-device tray icon support with lifecycle-safe icon management.
-- [ ] Add a global icon with configurable included devices and aggregation.
+- [x] Give each device an independent computed battery value and presentation configuration.
+- [x] Add per-device tray icon support with lifecycle-safe icon management.
+- [x] Add a global icon with configurable aggregation and existing per-device inclusion controls.
 - [ ] Define behavior for disconnected, stale, unavailable, hidden, and excluded devices.
 - [ ] Ensure one physical device exposed through multiple Windows endpoints is not double-counted.
 
@@ -71,7 +71,7 @@ Acceptance: per-device icons do not affect global aggregation, and global rules 
 ## Phase 5 — Tray, tooltip, and notifications
 - [x] Make tray percentage use the profile's computed value.
 - [ ] Make tooltips show configured components and timestamps without exceeding Windows limits.
-- [ ] Support independent per-device/global styles, labels, and warning thresholds.
+- [x] Support independent per-device icon styles with global style inheritance;\n  - [ ] Add independent per-device/global labels and warning thresholds.
 - [x] Ensure low-battery notification triggers use the profile-computed device percentage.
 - [ ] Keep existing icon styles and notification behavior compatible by default.
 

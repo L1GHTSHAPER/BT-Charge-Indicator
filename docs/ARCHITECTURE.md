@@ -22,3 +22,12 @@ Keep acquisition separate from policy:
 - **Persistence:** versioned settings/profile store with migration and atomic writes.
 
 Do not move protocol decoding into UI code. Do not let a protocol adapter choose a user's preferred aggregation rule.
+
+## Aggregation engine (initial implementation)
+`Models/BatteryAggregationMode.cs` defines stable aggregation modes and
+`Services/BatteryAggregationEngine.cs` contains pure per-device and global
+aggregation helpers. Earbud-only modes use left/right values and only fall back
+to the case when no earbud value is available. All-component modes intentionally
+include the case. Invalid percentages and unknown values are ignored rather than
+being treated as zero. The engine is not yet wired to the profile or tray UI;
+that integration belongs to later phases.

@@ -251,7 +251,18 @@ internal sealed class BatteryProfileEditorForm : Form
             return;
         }
 
-        _selectedIndex = _profileList.SelectedIndex;
+        var nextIndex = _profileList.SelectedIndex;
+        if (_selectedIndex >= 0 && _selectedIndex != nextIndex && !TryCommitEditor(false))
+        {
+            _loading = true;
+            _profileList.SelectedIndex = _selectedIndex;
+            _loading = false;
+            MessageBox.Show(this, AppText.Get("ProfileInvalid"), Text,
+                MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return;
+        }
+
+        _selectedIndex = nextIndex;
         LoadEditor(_selectedIndex >= 0 ? _profiles[_selectedIndex] : null);
     }
 
@@ -370,7 +381,10 @@ internal sealed class BatteryProfileEditorForm : Form
             return ShowValidationError("ProfileInvalid", showError);
         }
 
-        RefreshProfileList(profile.Id);
+        _loading = true;
+        _profileList.Items[_selectedIndex] = new ProfileListItem(profile.Id, profile.Name);
+        _profileList.SelectedIndex = _selectedIndex;
+        _loading = false;
         return true;
     }
 
@@ -407,7 +421,7 @@ internal sealed class BatteryProfileEditorForm : Form
 
     private void DeleteProfile()
     {
-        if (_selectedIndex < 0 || _selectedIndex >= _profiles.Count)
+        if (_selectedIndex < 0 || _selectedIndex >= _profiles.Count || !TryCommitEditor(true))
         {
             return;
         }
@@ -467,6 +481,11 @@ internal sealed class BatteryProfileEditorForm : Form
                 File.ReadAllText(dialog.FileName), ProfileJsonOptions)
                 ?? throw new InvalidDataException("The profile file is empty.");
             if (!BatteryProfileEngine.IsValidProfile(imported) ||
+                imported.Match is null ||
+                imported.Match.ContainerIds is null ||
+                imported.Match.NameContains is null ||
+                imported.Match.Categories is null ||
+                imported.Match.Sources is null ||
                 imported.Match.ContainerIds.Any(value => !Guid.TryParse(value, out _)) ||
                 imported.Match.NameContains.Any(value => string.IsNullOrWhiteSpace(value) || value.Length > 256) ||
                 imported.Match.Categories.Any(value => string.IsNullOrWhiteSpace(value) || value.Length > 256))
@@ -526,6 +545,12 @@ internal sealed class BatteryProfileEditorForm : Form
         if (_selectedIndex < 0 || _selectedIndex >= _profiles.Count)
         {
             _preview.Text = AppText.Get("ProfilePreviewUnavailable");
+            return;
+        }
+
+        if (!TryCommitEditor(false))
+        {
+            _preview.Text = AppText.Get("ProfileInvalid");
             return;
         }
 

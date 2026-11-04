@@ -37,6 +37,8 @@ internal interface IApplicationRuntime
 
     Task StartAsync(TimeSpan refreshInterval);
 
+    Task UpdateRefreshIntervalAsync(TimeSpan refreshInterval);
+
     Task RefreshAsync(bool refreshGattBattery = false);
 
     Task StopAsync();

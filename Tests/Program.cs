@@ -134,6 +134,26 @@ Assert(legacySettings.GlobalAggregationMode == BatteryAggregationMode.Lowest &&
        legacySettings.Devices["address:AA:BB"].CustomName == "My buds",
     "Legacy settings keep their values and receive defaults for new profile settings");
 
+var settingsForClone = new AppSettings
+{
+    Language = AppLanguage.Russian,
+    Devices =
+    {
+        ["container:test"] = new DevicePreferences
+        {
+            CustomName = "My device",
+            ShowIndividualTrayIcon = true,
+            IndividualTrayIconStyle = TrayIconStyle.Ring
+        }
+    }
+};
+var clonedSettings = settingsForClone.DeepClone();
+clonedSettings.Language = AppLanguage.English;
+clonedSettings.Devices["container:test"].CustomName = "Changed name";
+Assert(settingsForClone.Language == AppLanguage.Russian &&
+       settingsForClone.Devices["container:test"].CustomName == "My device",
+    "Settings snapshots deeply clone device preferences so unapplied edits cannot affect applied settings");
+
 var customRuleProfile = new BatteryProfile
 {
     Id = "custom-earbud-case",

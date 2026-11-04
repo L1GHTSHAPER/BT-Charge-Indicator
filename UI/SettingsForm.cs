@@ -11,6 +11,7 @@ namespace BTChargeIndicator.UI;
 internal sealed class SettingsForm : Form
 {
     private readonly AppSettings _settings;
+    private readonly Action<AppSettings> _applySettings;
     private readonly IReadOnlyList<BluetoothBatteryDevice> _devices;
     private readonly BatteryProfileStore _profileStore;
     private IReadOnlyList<BatteryProfile> _profiles;
@@ -32,10 +33,12 @@ internal sealed class SettingsForm : Form
         AppSettings settings,
         IReadOnlyList<BluetoothBatteryDevice> devices,
         BatteryProfileStore profileStore,
-        IReadOnlyList<BatteryProfile> profiles)
+        IReadOnlyList<BatteryProfile> profiles,
+        Action<AppSettings> applySettings)
     {
-        _settings = CloneSettings(settings);
-        UpdatedSettings = _settings;
+        _settings = settings.DeepClone();
+        _applySettings = applySettings;
+        UpdatedSettings = _settings.DeepClone();
         _devices = devices;
         _profileStore = profileStore;
         _profiles = profiles;
@@ -176,13 +179,18 @@ internal sealed class SettingsForm : Form
         };
         var save = new Button { Text = AppText.Get("SettingsSave"), AutoSize = true, MinimumSize = new Size(100, 32) };
         save.Click += (_, _) => SaveAndClose();
+        var apply = new Button { Text = AppText.Get("SettingsApply"), AutoSize = true, MinimumSize = new Size(100, 32) };
+        apply.Click += (_, _) => ApplyChanges();
         var cancel = new Button { Text = AppText.Get("SettingsCancel"), AutoSize = true, MinimumSize = new Size(100, 32) };
         cancel.Click += (_, _) =>
         {
             DialogResult = DialogResult.Cancel;
             Close();
         };
+        AcceptButton = save;
+        CancelButton = cancel;
         buttons.Controls.Add(save);
+        buttons.Controls.Add(apply);
         buttons.Controls.Add(cancel);
         root.Controls.Add(buttons, 0, 1);
     }
@@ -330,6 +338,13 @@ internal sealed class SettingsForm : Form
 
     private void SaveAndClose()
     {
+        if (!ApplyChanges()) return;
+        DialogResult = DialogResult.OK;
+        Close();
+    }
+
+    private bool ApplyChanges()
+    {
         _settings.GlobalAggregationMode =
             ((EnumChoice<BatteryAggregationMode>)_globalAggregation.SelectedItem!).Value;
         _settings.IconStyle = ((EnumChoice<TrayIconStyle>)_globalIconStyle.SelectedItem!).Value;
@@ -339,7 +354,6 @@ internal sealed class SettingsForm : Form
         _settings.Language = ((EnumChoice<AppLanguage>)_language.SelectedItem!).Value;
         _settings.RefreshIntervalSeconds = ((EnumChoice<int>)_refreshInterval.SelectedItem!).Value;
         _settings.CheckForUpdatesAutomatically = _automaticUpdates.Checked;
-
         foreach (var row in _deviceRows)
         {
             row.Preferences.IncludeInTrayIcon = row.IncludeInGlobal.Checked;
@@ -351,17 +365,16 @@ internal sealed class SettingsForm : Form
         try
         {
             AutoStartManager.SetEnabled(_startWithWindows.Checked);
+            UpdatedSettings = _settings.DeepClone();
+            _applySettings(UpdatedSettings.DeepClone());
+            return true;
         }
         catch (Exception ex)
         {
             MessageBox.Show(this, AppText.Format("AutoStartError", ex.Message),
                 Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
-            return;
+            return false;
         }
-
-        UpdatedSettings = _settings;
-        DialogResult = DialogResult.OK;
-        Close();
     }
 
     private void OpenProfileEditor()
@@ -465,39 +478,6 @@ internal sealed class SettingsForm : Form
         (TrayIconStyle.Gradient, "StyleGradient"),
         (TrayIconStyle.Gauge, "StyleGauge")
     ];
-
-    private static AppSettings CloneSettings(AppSettings source)
-    {
-        var clone = new AppSettings
-        {
-            SchemaVersion = source.SchemaVersion,
-            Language = source.Language,
-            RefreshIntervalSeconds = source.RefreshIntervalSeconds,
-            LowBatteryThreshold = source.LowBatteryThreshold,
-            LowBatteryNotifications = source.LowBatteryNotifications,
-            ConnectionNotifications = source.ConnectionNotifications,
-            IconStyle = source.IconStyle,
-            GlobalAggregationMode = source.GlobalAggregationMode,
-            CheckForUpdatesAutomatically = source.CheckForUpdatesAutomatically,
-            LastUpdateCheckUtc = source.LastUpdateCheckUtc
-        };
-        foreach (var (key, value) in source.Devices)
-        {
-            if (value is null) continue;
-            clone.Devices[key] = new DevicePreferences
-            {
-                LastKnownName = value.LastKnownName,
-                CustomName = value.CustomName,
-                ProfileId = value.ProfileId,
-                ShowIndividualTrayIcon = value.ShowIndividualTrayIcon,
-                IndividualTrayIconStyle = value.IndividualTrayIconStyle,
-                IsHidden = value.IsHidden,
-                IncludeInTrayIcon = value.IncludeInTrayIcon,
-                LowBatteryNotifications = value.LowBatteryNotifications
-            };
-        }
-        return clone;
-    }
 
     private sealed record DeviceEditorRow(
         BluetoothBatteryDevice Device,

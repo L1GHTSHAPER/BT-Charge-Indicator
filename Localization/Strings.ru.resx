@@ -554,6 +554,9 @@ ID устройства:
   <data name="SettingsSave" xml:space="preserve">
     <value>Сохранить изменения</value>
   </data>
+  <data name="SettingsApply" xml:space="preserve">
+    <value>Применить</value>
+  </data>
   <data name="SettingsCancel" xml:space="preserve">
     <value>Отмена</value>
   </data>

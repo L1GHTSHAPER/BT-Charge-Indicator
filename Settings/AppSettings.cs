@@ -26,6 +26,39 @@ internal sealed class AppSettings
 
     public Dictionary<string, DevicePreferences> Devices { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 
+    public AppSettings DeepClone()
+    {
+        var clone = new AppSettings
+        {
+            SchemaVersion = SchemaVersion,
+            Language = Language,
+            RefreshIntervalSeconds = RefreshIntervalSeconds,
+            LowBatteryThreshold = LowBatteryThreshold,
+            LowBatteryNotifications = LowBatteryNotifications,
+            ConnectionNotifications = ConnectionNotifications,
+            IconStyle = IconStyle,
+            GlobalAggregationMode = GlobalAggregationMode,
+            CheckForUpdatesAutomatically = CheckForUpdatesAutomatically,
+            LastUpdateCheckUtc = LastUpdateCheckUtc
+        };
+        foreach (var (key, value) in Devices)
+        {
+            if (value is null) continue;
+            clone.Devices[key] = new DevicePreferences
+            {
+                LastKnownName = value.LastKnownName,
+                CustomName = value.CustomName,
+                ProfileId = value.ProfileId,
+                ShowIndividualTrayIcon = value.ShowIndividualTrayIcon,
+                IndividualTrayIconStyle = value.IndividualTrayIconStyle,
+                IsHidden = value.IsHidden,
+                IncludeInTrayIcon = value.IncludeInTrayIcon,
+                LowBatteryNotifications = value.LowBatteryNotifications
+            };
+        }
+        return clone;
+    }
+
     public void Normalize()
     {
         SchemaVersion = 1;

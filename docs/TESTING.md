@@ -46,10 +46,19 @@ The case must remain visible as a separate component.
 3. Change a device's global inclusion, individual tray icon, profile, and icon style.
 4. Change global aggregation, global icon style, and low-battery threshold.
 5. Change language, refresh interval, automatic updates, and startup option.
-6. Save and restart; confirm every selection persists.
-7. Cancel after changing values; confirm the original settings remain unchanged.
-8. Open the profile editor from the Profiles tab, create a profile, return, and confirm device profile selectors refresh.
-9. Test the window at 100%, 150%, and 200% display scaling and with keyboard-only navigation.
+6. Press **Apply** and confirm the running tray icon, menus, notifications, and refresh interval update without closing Settings.
+7. Make another change, press **Cancel**, and confirm the last applied values remain active while newer edits are discarded.
+8. Reopen Settings, make changes, and press **Save changes**; confirm they are applied and the window closes.
+9. Reopen Settings, make changes, and close with **Cancel** or the window close button; confirm unapplied edits are discarded.
+10. Open the profile editor from the Profiles tab, create a profile, return, and confirm device profile selectors refresh.
+11. Test the window at 100%, 150%, and 200% display scaling and with keyboard-only navigation.
+
+## Individual tray context menu checks
+1. Enable a separate tray icon for a Bluetooth device.
+2. Right-click that icon and verify it exposes the same device-specific actions as the main tray icon's device submenu, including diagnostics and individual tray style.
+3. Open **Individual tray icon style** and verify every style has the same image preview as the global style menu.
+4. Select a style, reopen the menu, and confirm the selected style is checked.
+5. Select **Use global style** and confirm the global style is inherited and the device-specific override is cleared.
 
 ## Hardware matrix
 Use [HARDWARE_VERIFICATION.md](HARDWARE_VERIFICATION.md) to record physical device checks. Do not mark a protocol or device verified based only on parser fixtures or CI.

@@ -271,6 +271,9 @@ internal sealed class TrayApplicationContext : ApplicationContext
         menu.Items.Add(BuildRefreshIntervalMenu());
         menu.Items.Add(BuildTrayIconStyleMenu());
         menu.Items.Add(BuildGlobalAggregationMenu());
+        var manageProfilesItem = new ToolStripMenuItem(AppText.Get("ManageProfiles"));
+        manageProfilesItem.Click += (_, _) => OpenBatteryProfileEditor();
+        menu.Items.Add(manageProfilesItem);
         menu.Items.Add(BuildLowBatteryThresholdMenu());
 
         var notificationsItem = new ToolStripMenuItem(AppText.Get("LowBatteryNotifications"))
@@ -387,6 +390,19 @@ internal sealed class TrayApplicationContext : ApplicationContext
         menu.Items.Add(exitItem);
 
         return menu;
+    }
+
+    private void OpenBatteryProfileEditor()
+    {
+        using var editor = new BatteryProfileEditorForm(_profiles, _profileStore);
+        if (editor.ShowDialog() != DialogResult.OK)
+        {
+            return;
+        }
+
+        _profiles = _profileStore.Load();
+        UpdateTrayIcon();
+        ReplaceContextMenu();
     }
 
     private ToolStripMenuItem BuildStatusItem()

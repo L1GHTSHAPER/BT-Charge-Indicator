@@ -364,6 +364,26 @@ internal sealed class SettingsForm : Form
         if (editor.ShowDialog(this) == DialogResult.OK)
         {
             _profiles = _profileStore.Load();
+            RefreshProfileChoices();
+        }
+    }
+
+    private void RefreshProfileChoices()
+    {
+        foreach (var row in _deviceRows)
+        {
+            var selectedId = row.Preferences.ProfileId;
+            row.Profile.Items.Clear();
+            row.Profile.Items.Add(new ProfileChoice(AppText.Get("DefaultProfile"), null));
+            foreach (var profile in _profiles.Where(profile =>
+                         !string.Equals(profile.Id, BatteryProfileEngine.DefaultProfileId,
+                             StringComparison.OrdinalIgnoreCase)))
+            {
+                row.Profile.Items.Add(new ProfileChoice(profile.Name, profile.Id));
+            }
+            row.Profile.SelectedItem = row.Profile.Items.Cast<ProfileChoice>()
+                .FirstOrDefault(item => string.Equals(item.Id, selectedId,
+                    StringComparison.OrdinalIgnoreCase)) ?? row.Profile.Items[0];
         }
     }
 

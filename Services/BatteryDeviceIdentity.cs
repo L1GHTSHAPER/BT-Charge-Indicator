@@ -30,8 +30,8 @@ internal static class BatteryDeviceIdentity
         return devices
             .GroupBy(GetKey, StringComparer.OrdinalIgnoreCase)
             .Select(group => group
-                .OrderByDescending(device => device.Components is not null)
-                .ThenByDescending(device => device.BatteryPercent.HasValue)
+                .OrderByDescending(device => HasKnownComponents(device.Components))
+                .ThenByDescending(device => device.BatteryPercent is >= 0 and <= 100)
                 .ThenByDescending(device => device.IsConnected == true)
                 .First())
             .OrderByDescending(device => device.IsConnected == true)
@@ -39,4 +39,10 @@ internal static class BatteryDeviceIdentity
             .ThenBy(device => device.Name, StringComparer.CurrentCultureIgnoreCase)
             .ToArray();
     }
+
+    private static bool HasKnownComponents(BatteryComponents? components) =>
+        components is not null &&
+        (components.LeftPercent is >= 0 and <= 100 ||
+         components.RightPercent is >= 0 and <= 100 ||
+         components.CasePercent is >= 0 and <= 100);
 }

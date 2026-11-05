@@ -4,3 +4,8 @@ dist/
 .vs/
 *.user
 *.suo
+
+# Build and test artifacts
+artifacts/
+WinDbg_logs/
+*.log

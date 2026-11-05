@@ -8,9 +8,13 @@ internal sealed record BluetoothBatteryDevice(
     string? Address,
     Guid? ContainerId)
 {
+    public DateTimeOffset ObservedAtUtc { get; init; } = DateTimeOffset.UtcNow;
+
     public BatteryReadingSource BatterySource { get; init; }
 
     public BatteryComponents? Components { get; init; }
+
+    public bool? IsCharging { get; init; }
 
     public IReadOnlyList<string> Categories { get; init; } = [];
 
@@ -20,7 +24,10 @@ internal sealed record BluetoothBatteryDevice(
 internal sealed record BatteryComponents(
     int? LeftPercent,
     int? RightPercent,
-    int? CasePercent);
+    int? CasePercent,
+    bool? LeftCharging = null,
+    bool? RightCharging = null,
+    bool? CaseCharging = null);
 
 internal enum BatteryReadingSource
 {

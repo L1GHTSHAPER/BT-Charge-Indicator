@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net9.0-windows10.0.19041.0</TargetFramework>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
@@ -13,7 +13,7 @@
     <Description>Windows system tray Bluetooth battery monitor for headphones, earbuds, game controllers, keyboards, mice, and BLE devices.</Description>
     <Authors>L1GHTSHAPER</Authors>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <RepositoryUrl>https://github.com/L1GHTSHAPER/BT-Charge-Indicator</RepositoryUrl>
+    <RepositoryUrl>https://github.com/realSamy/BT-Charge-Indicator</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
@@ -21,6 +21,11 @@
     <SatelliteResourceLanguages>en;ru</SatelliteResourceLanguages>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="src\BTChargeIndicator.Core\BTChargeIndicator.Core.csproj" />
+    <ProjectReference Include="src\BTChargeIndicator.Platform.Windows\BTChargeIndicator.Platform.Windows.csproj" />
+    <Compile Remove="src\BTChargeIndicator.Core\**\*.cs;src\BTChargeIndicator.WinUI\**\*.cs;src\BTChargeIndicator.Platform.Windows\**\*.cs" />
+    <Compile Remove="Services\BluetoothBatteryService.cs;Services\AirPodsBatteryService.cs;Services\FastPairBatteryService.cs;Services\NothingBatteryService.cs;Services\DualSenseBatteryService.cs;Services\BluetoothBatteryScannerAdapter.cs" />
+    <Compile Remove="Models\BatteryAggregationMode.cs;Models\BatteryAggregationRule.cs;Models\BatterySnapshot.cs;Models\BluetoothBatteryDevice.cs;Models\TwsBatteryReading.cs;Services\BatteryAggregationEngine.cs;Services\BatteryDeviceIdentity.cs;Services\BatteryProfileEngine.cs;Services\DeviceConnectionTracker.cs;Settings\AppSettings.cs;Settings\BatteryProfile.cs;Settings\BatteryProfileStore.cs;Settings\SettingsStore.cs" />
     <EmbeddedResource Include="Assets\app.ico" LogicalName="BTChargeIndicator.AppIcon" />
     <Compile Remove="Tests\**\*.cs" />
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">

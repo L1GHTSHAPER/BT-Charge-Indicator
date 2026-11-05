@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>BTChargeIndicator.Platform.Windows</AssemblyName>
+    <RootNamespace>BTChargeIndicator</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\BTChargeIndicator.Core\BTChargeIndicator.Core.csproj" />
+    <Compile Include="..\..\Services\BluetoothBatteryService.cs" Link="Services\BluetoothBatteryService.cs" />
+    <Compile Include="..\..\Services\BluetoothBatteryScannerAdapter.cs" Link="Services\BluetoothBatteryScannerAdapter.cs" />
+    <Compile Include="..\..\Services\AirPodsBatteryService.cs" Link="Services\AirPodsBatteryService.cs" />
+    <Compile Include="..\..\Services\FastPairBatteryService.cs" Link="Services\FastPairBatteryService.cs" />
+    <Compile Include="..\..\Services\NothingBatteryService.cs" Link="Services\NothingBatteryService.cs" />
+    <Compile Include="..\..\Services\DualSenseBatteryService.cs" Link="Services\DualSenseBatteryService.cs" />
+  </ItemGroup>
+</Project>

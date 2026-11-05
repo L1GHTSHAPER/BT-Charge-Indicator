@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "profiles": [
+    {
+      "id": "redmi-buds-6-pro",
+      "name": "Redmi Buds 6 Pro",
+      "match": {
+        "containerIds": [],
+        "nameContains": ["Redmi Buds 6 Pro"],
+        "categories": ["Communication.Headset.Bluetooth"],
+        "sources": ["GoogleFastPairAdvertisement"]
+      },
+      "aggregationMode": "EarbudsLowest",
+      "customRule": null
+    },
+    {
+      "id": "right-or-case",
+      "name": "Right earbud or case",
+      "match": {
+        "containerIds": [],
+        "nameContains": [],
+        "categories": [],
+        "sources": []
+      },
+      "aggregationMode": "Custom",
+      "customRule": {
+        "components": ["Right", "Case"],
+        "operation": "Minimum"
+      }
+    }
+  ]
+}

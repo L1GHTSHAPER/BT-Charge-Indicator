@@ -122,13 +122,17 @@ internal sealed class FastPairBatteryService : IDisposable
         var left = DecodeBatteryValue(payload[batteryHeaderOffset + 1]);
         var right = DecodeBatteryValue(payload[batteryHeaderOffset + 2]);
         var chargingCase = DecodeBatteryValue(payload[batteryHeaderOffset + 3]);
-        if (!left.HasValue && !right.HasValue && !chargingCase.HasValue)
+        var leftCharging = DecodeCharging(payload[batteryHeaderOffset + 1]);
+        var rightCharging = DecodeCharging(payload[batteryHeaderOffset + 2]);
+        var caseCharging = DecodeCharging(payload[batteryHeaderOffset + 3]);
+        if (!left.HasValue && !right.HasValue && !chargingCase.HasValue &&
+            !leftCharging && !rightCharging && !caseCharging)
         {
             return null;
         }
 
         return new FastPairBatteryReading(
-            new TwsBatteryReading(left, right, chargingCase),
+            new TwsBatteryReading(left, right, chargingCase, leftCharging, rightCharging, caseCharging),
             type == ShowBatteryType);
     }
 
@@ -137,6 +141,8 @@ internal sealed class FastPairBatteryService : IDisposable
         var percentage = value & 0x7F;
         return percentage <= 100 ? percentage : null;
     }
+
+    private static bool DecodeCharging(byte value) => (value & 0x80) != 0;
 
     private void Watcher_Received(
         BluetoothLEAdvertisementWatcher sender,

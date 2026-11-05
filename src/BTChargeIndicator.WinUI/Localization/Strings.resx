@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
+  <data name="NavDashboard" xml:space="preserve"><value>Dashboard</value></data>
+  <data name="NavSettings" xml:space="preserve"><value>Settings</value></data>
+  <data name="DashboardTitle" xml:space="preserve"><value>Dashboard</value></data>
+  <data name="DashboardDescription" xml:space="preserve"><value>Your Bluetooth devices and battery status in one place.</value></data>
+  <data name="Refresh" xml:space="preserve"><value>Refresh</value></data>
+  <data name="SettingsTitle" xml:space="preserve"><value>Settings</value></data>
+  <data name="SettingsDescription" xml:space="preserve"><value>Application preferences and device behavior.</value></data>
+  <data name="Monitoring" xml:space="preserve"><value>Monitoring</value></data>
+  <data name="General" xml:space="preserve"><value>General</value></data>
+  <data name="Notifications" xml:space="preserve"><value>Notifications</value></data>
+  <data name="LowBatteryNotifications" xml:space="preserve"><value>Low battery alerts</value></data>
+  <data name="LowBatteryNotificationsHelp" xml:space="preserve"><value>Notify when a connected device reaches the low battery threshold.</value></data>
+  <data name="ConnectionNotifications" xml:space="preserve"><value>Device connections</value></data>
+  <data name="ConnectionNotificationsHelp" xml:space="preserve"><value>Notify when a device connects or disconnects.</value></data>
+  <data name="On" xml:space="preserve"><value>On</value></data>
+  <data name="Off" xml:space="preserve"><value>Off</value></data>
+  <data name="DeviceNotificationSettings" xml:space="preserve"><value>Notifications…</value></data>
+  <data name="DeviceNotificationSettingsTitle" xml:space="preserve"><value>Device notifications</value></data>
+  <data name="DeviceConnectionNotifications" xml:space="preserve"><value>Connection and disconnection</value></data>
+  <data name="DeviceLowBatteryNotifications" xml:space="preserve"><value>Low battery</value></data>
+  <data name="DeviceConnectedTitle" xml:space="preserve"><value>Device connected</value></data>
+  <data name="DeviceDisconnectedTitle" xml:space="preserve"><value>Device disconnected</value></data>
+  <data name="DeviceConnectedMessage" xml:space="preserve"><value>{0} connected.</value></data>
+  <data name="DeviceDisconnectedMessage" xml:space="preserve"><value>{0} disconnected.</value></data>
+  <data name="LowBatteryNotificationTitle" xml:space="preserve"><value>Low battery</value></data>
+  <data name="RefreshHelp" xml:space="preserve"><value>Choose how often the dashboard checks Bluetooth devices automatically.</value></data>
+  <data name="RefreshInterval" xml:space="preserve"><value>Refresh interval</value></data>
+  <data name="Every30Seconds" xml:space="preserve"><value>Every 30 seconds</value></data>
+  <data name="EveryMinute" xml:space="preserve"><value>Every minute</value></data>
+  <data name="Every5Minutes" xml:space="preserve"><value>Every 5 minutes</value></data>
+  <data name="LowBatteryThreshold" xml:space="preserve"><value>Mark battery as low at</value></data>
+  <data name="LowBatteryThresholdHelp" xml:space="preserve"><value>Show a low-battery status when a device reaches this level.</value></data>
+  <data name="Battery10" xml:space="preserve"><value>10% or below</value></data>
+  <data name="Battery15" xml:space="preserve"><value>15% or below</value></data>
+  <data name="Battery20" xml:space="preserve"><value>20% or below</value></data>
+  <data name="Battery25" xml:space="preserve"><value>25% or below</value></data>
+  <data name="Battery30" xml:space="preserve"><value>30% or below</value></data>
+  <data name="Battery40" xml:space="preserve"><value>40% or below</value></data>
+  <data name="Battery50" xml:space="preserve"><value>50% or below</value></data>
+  <data name="Language" xml:space="preserve"><value>Language</value></data>
+  <data name="LanguageHelp" xml:space="preserve"><value>Choose the language used by the app.</value></data>
+  <data name="LanguageAuto" xml:space="preserve"><value>Automatic (Windows)</value></data>
+  <data name="LanguageRussian" xml:space="preserve"><value>Русский</value></data>
+  <data name="LanguageEnglish" xml:space="preserve"><value>English</value></data>
+  <data name="Save" xml:space="preserve"><value>Save</value></data>
+  <data name="SettingsSaved" xml:space="preserve"><value>Settings saved.</value></data>
+  <data name="SettingsFailed" xml:space="preserve"><value>Could not apply setting: {0}</value></data>
+  <data name="RuntimeUnavailable" xml:space="preserve"><value>Bluetooth runtime is unavailable.</value></data>
+  <data name="ChooseSettings" xml:space="preserve"><value>Choose valid settings first.</value></data>
+  <data name="NoBattery" xml:space="preserve"><value>Not Reported</value></data>
+  <data name="LowBattery" xml:space="preserve"><value>Low battery</value></data>
+  <data name="Connected" xml:space="preserve"><value>Connected</value></data>
+  <data name="Disconnected" xml:space="preserve"><value>Disconnected</value></data>
+  <data name="ConnectionUnknown" xml:space="preserve"><value>Connection state unknown</value></data>
+  <data name="ScanningTitle" xml:space="preserve"><value>Scanning for Bluetooth devices</value></data>
+  <data name="ScanningMessage" xml:space="preserve"><value>Reading paired devices and available battery services...</value></data>
+  <data name="RuntimeUnavailableTitle" xml:space="preserve"><value>Bluetooth runtime unavailable</value></data>
+  <data name="RuntimeUnavailableMessage" xml:space="preserve"><value>Restart the application to initialize Bluetooth monitoring.</value></data>
+  <data name="DevicesDiscovered" xml:space="preserve"><value>{0} device(s) discovered</value></data>
+  <data name="LastUpdated" xml:space="preserve"><value>Last updated {0}</value></data>
+  <data name="WaitingForScan" xml:space="preserve"><value>Waiting for the first device scan...</value></data>
+  <data name="NoDevices" xml:space="preserve"><value>No Bluetooth devices found</value></data>
+  <data name="NoDevicesHelp" xml:space="preserve"><value>Pair a Bluetooth device or refresh to check again.</value></data>
+  <data name="RefreshFailed" xml:space="preserve"><value>Refresh failed</value></data>
+  <data name="ViewTiles" xml:space="preserve"><value>Tiles</value></data>
+  <data name="ViewList" xml:space="preserve"><value>List</value></data>
+  <data name="SelectDevices" xml:space="preserve"><value>Select</value></data>
+  <data name="CancelSelection" xml:space="preserve"><value>Cancel selection</value></data>
+  <data name="SelectAll" xml:space="preserve"><value>Select all</value></data>
+  <data name="UnselectAll" xml:space="preserve"><value>Unselect all</value></data>
+  <data name="InvertSelection" xml:space="preserve"><value>Invert selection</value></data>
+  <data name="Actions" xml:space="preserve"><value>Actions</value></data>
+  <data name="Filter" xml:space="preserve"><value>Filter</value></data>
+  <data name="FilterActive" xml:space="preserve"><value>Filtered</value></data>
+  <data name="ClearFilters" xml:space="preserve"><value>Clear filters</value></data>
+  <data name="SortBy" xml:space="preserve"><value>Sort by</value></data>
+  <data name="SortConnected" xml:space="preserve"><value>Connection status</value></data>
+  <data name="SortDeviceType" xml:space="preserve"><value>Device type</value></data>
+  <data name="SortDeviceName" xml:space="preserve"><value>Device name</value></data>
+  <data name="SortBattery" xml:space="preserve"><value>Battery level</value></data>
+  <data name="HideSelected" xml:space="preserve"><value>Hide selected</value></data>
+  <data name="ShowSelected" xml:space="preserve"><value>Show selected</value></data>
+  <data name="RenameSelected" xml:space="preserve"><value>Rename selected…</value></data>
+  <data name="RenameDevice" xml:space="preserve"><value>Rename device…</value></data>
+  <data name="ToggleVisibility" xml:space="preserve"><value>Hide or show device</value></data>
+  <data name="HideDevice" xml:space="preserve"><value>Hide device</value></data>
+  <data name="ShowDevice" xml:space="preserve"><value>Show device</value></data>
+  <data name="DeviceOptions" xml:space="preserve"><value>Device options</value></data>
+  <data name="SelectedCount" xml:space="preserve"><value>{0} selected</value></data>
+  <data name="ShowHidden" xml:space="preserve"><value>Show hidden devices</value></data>
+  <data name="ConnectedFilter" xml:space="preserve"><value>Connected</value></data>
+  <data name="DisconnectedFilter" xml:space="preserve"><value>Disconnected</value></data>
+  <data name="DeviceTypeFilter" xml:space="preserve"><value>Device type</value></data>
+  <data name="AllDevicesHidden" xml:space="preserve"><value>All detected devices are hidden</value></data>
+  <data name="ChangeDeviceFilter" xml:space="preserve"><value>Adjust the filters or show hidden devices to see devices here.</value></data>
+  <data name="RenameDeviceTitle" xml:space="preserve"><value>Rename device</value></data>
+  <data name="RenameDeviceHelp" xml:space="preserve"><value>Enter a custom name. Leave it empty to use the detected name.</value></data>
+  <data name="CustomName" xml:space="preserve"><value>Custom name</value></data>
+  <data name="Apply" xml:space="preserve"><value>Apply</value></data>
+  <data name="Cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="DeviceTraySettings" xml:space="preserve"><value>Battery and tray icon…</value></data>
+  <data name="DeviceTraySettingsTitle" xml:space="preserve"><value>Battery and tray icon</value></data>
+  <data name="IncludeInCombinedTrayIcon" xml:space="preserve"><value>Include in combined tray icon</value></data>
+  <data name="ShowIndividualTrayIcon" xml:space="preserve"><value>Show an individual tray icon</value></data>
+  <data name="TrayBatteryChoice" xml:space="preserve"><value>Battery shown in the tray icon</value></data>
+  <data name="IndividualTrayIconStyle" xml:space="preserve"><value>Individual icon style</value></data>
+  <data name="BatteryModeAutomatic" xml:space="preserve"><value>Automatic (lowest earbud)</value></data>
+  <data name="BatteryModeLeft" xml:space="preserve"><value>Left earbud</value></data>
+  <data name="BatteryModeRight" xml:space="preserve"><value>Right earbud</value></data>
+  <data name="BatteryModeCase" xml:space="preserve"><value>Charging case</value></data>
+  <data name="BatteryModeEarbudsLowest" xml:space="preserve"><value>Lowest earbud</value></data>
+  <data name="BatteryModeEarbudsAverage" xml:space="preserve"><value>Average earbuds</value></data>
+  <data name="StylePercentage" xml:space="preserve"><value>Percentage</value></data>
+  <data name="StyleBattery" xml:space="preserve"><value>Battery</value></data>
+  <data name="StyleRing" xml:space="preserve"><value>Ring</value></data>
+  <data name="StyleSegmentedRing" xml:space="preserve"><value>Segmented ring</value></data>
+  <data name="StyleBars" xml:space="preserve"><value>Bars</value></data>
+  <data name="StyleVerticalBattery" xml:space="preserve"><value>Vertical battery</value></data>
+  <data name="StyleMinimal" xml:space="preserve"><value>Minimal</value></data>
+  <data name="StyleCapsule" xml:space="preserve"><value>Capsule</value></data>
+  <data name="StyleGradient" xml:space="preserve"><value>Gradient</value></data>
+  <data name="StyleGauge" xml:space="preserve"><value>Gauge</value></data>
+  <data name="Charging" xml:space="preserve"><value>Charging</value></data>
+  <data name="TrayOpen" xml:space="preserve"><value>Open BT Charge Indicator</value></data>
+  <data name="TrayRefresh" xml:space="preserve"><value>Refresh devices</value></data>
+  <data name="TrayExit" xml:space="preserve"><value>Exit</value></data>
+  <data name="TrayPreferredDevice" xml:space="preserve"><value>Preferred device</value></data>
+  <data name="TrayAllDevices" xml:space="preserve"><value>Combined device battery</value></data>
+  <data name="TrayIconStyle" xml:space="preserve"><value>Icon style</value></data>
+</root>

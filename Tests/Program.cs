@@ -1,8 +1,262 @@
+using System.Text.Json;
+using BTChargeIndicator.Settings;
 using BTChargeIndicator.Services;
 using BTChargeIndicator.Models;
+using BTChargeIndicator.Runtime;
 using Windows.Devices.Bluetooth;
 
 await LocalizationTests.RunAsync();
+
+var redmiDevice = new BluetoothBatteryDevice(
+    "windows-device-id",
+    "Redmi Buds 6 Pro",
+    55,
+    true,
+    null,
+    Guid.Parse("863f1b84-9ff7-508a-aa4a-7126cc525e46"))
+{
+    BatterySource = BatteryReadingSource.GoogleFastPairAdvertisement,
+    Categories = ["Communication.Headset.Bluetooth"],
+    Components = new BatteryComponents(100, 100, 55),
+    ObservedAtUtc = new DateTimeOffset(2026, 11, 4, 12, 30, 0, TimeSpan.Zero)
+};
+var normalizedSnapshot = BatterySnapshot.FromDevice(redmiDevice);
+Assert(normalizedSnapshot.DevicePercent == 55 &&
+       normalizedSnapshot.GetComponent(BatteryComponentKind.Left) == 100 &&
+       normalizedSnapshot.GetComponent(BatteryComponentKind.Case) == 55,
+    "Normalized snapshots preserve the scalar and typed component values");
+Assert(normalizedSnapshot.ObservedAtUtc == redmiDevice.ObservedAtUtc &&
+       normalizedSnapshot.Source == BatteryReadingSource.GoogleFastPairAdvertisement &&
+       normalizedSnapshot.IsConnected == true,
+    "Normalized snapshots preserve observation time, source, and connection state");
+
+var classicEndpoint = redmiDevice with
+{
+    Id = "classic-endpoint",
+    Address = "AA:BB:CC:DD:EE:01",
+    BatteryPercent = 55,
+    Components = new BatteryComponents(100, null, 55)
+};
+var bleEndpoint = redmiDevice with
+{
+    Id = "ble-endpoint",
+    Address = "AA:BB:CC:DD:EE:02",
+    BatteryPercent = 100,
+    Components = new BatteryComponents(null, 100, null)
+};
+var physicalDevices = BatteryDeviceIdentity.Deduplicate([classicEndpoint, bleEndpoint]);
+Assert(physicalDevices.Count == 1 &&
+       physicalDevices[0].Components is { LeftPercent: 100, RightPercent: 100, CasePercent: 55 },
+    "Endpoints with the same Windows container are merged once with all known components preserved");
+var invalidSnapshot = BatterySnapshot.FromDevice(redmiDevice with
+{
+    BatteryPercent = 150,
+    Components = new BatteryComponents(-1, 101, null)
+});
+Assert(invalidSnapshot.DevicePercent is null && invalidSnapshot.Components.Count == 0,
+    "Normalized snapshots discard invalid percentages instead of treating them as valid readings");
+var defaultProfile = BatteryProfileEngine.CreateDefaultProfile();
+var redmiProfile = new BatteryProfile
+{
+    Id = "redmi-buds",
+    Name = "Redmi Buds",
+    Match = new BatteryProfileMatch
+    {
+        NameContains = ["Redmi Buds"],
+        Sources = [BatteryReadingSource.GoogleFastPairAdvertisement]
+    },
+    AggregationMode = BatteryAggregationMode.EarbudsLowest
+};
+var caseProfile = new BatteryProfile
+{
+    Id = "case-priority",
+    Name = "Case priority",
+    AggregationMode = BatteryAggregationMode.Case
+};
+var resolvedRedmiProfile = BatteryProfileEngine.Resolve(
+    redmiDevice, [defaultProfile, redmiProfile]);
+Assert(resolvedRedmiProfile.Id == "redmi-buds",
+    "Device profile matching uses model and protocol hints");
+Assert(BatteryProfileEngine.GetBatteryPercent(redmiDevice, resolvedRedmiProfile) == 100,
+    "Default Redmi profile uses earbud battery and ignores the case");
+var leftOnlyProfile = new BatteryProfile
+{
+    Id = "left-only",
+    Name = "Left only",
+    AggregationMode = BatteryAggregationMode.Left
+};
+var invalidScalarCaseDevice = redmiDevice with
+{
+    BatteryPercent = 150,
+    Components = new BatteryComponents(null, null, 45)
+};
+Assert(BatteryProfileEngine.GetBatteryPercent(invalidScalarCaseDevice, defaultProfile) == 45,
+    "Earbud profiles fall back to a valid case reading when the scalar value is invalid");
+var scalarOnlyDevice = redmiDevice with
+{
+    BatteryPercent = 78,
+    Components = null
+};
+Assert(BatteryProfileEngine.GetBatteryPercent(scalarOnlyDevice, defaultProfile) == 78,
+    "Default aggregation retains scalar battery support for non-component devices");
+Assert(BatteryProfileEngine.GetBatteryPercent(scalarOnlyDevice, leftOnlyProfile) is null,
+    "A left-only profile does not invent a left reading for scalar-only devices");
+Assert(BatteryProfileEngine.Resolve(
+        redmiDevice, [defaultProfile, redmiProfile, caseProfile], "case-priority").Id == "case-priority",
+    "Explicit device profile assignment overrides automatic matching");
+Assert(BatteryProfileEngine.GetBatteryPercent(redmiDevice, caseProfile) == 55,
+    "A selected case profile can display the charging case");
+
+var missingLeftDevice = redmiDevice with
+{
+    Components = new BatteryComponents(null, 100, 55)
+};
+Assert(BatteryProfileEngine.GetBatteryPercent(missingLeftDevice, leftOnlyProfile) is null,
+    "A missing explicitly selected component stays unknown instead of falling back to another component");
+
+var containerSpecificProfile = new BatteryProfile
+{
+    Id = "container-specific",
+    Name = "Container-specific",
+    Match = new BatteryProfileMatch
+    {
+        ContainerIds = ["863f1b84-9ff7-508a-aa4a-7126cc525e46"]
+    },
+    AggregationMode = BatteryAggregationMode.Case
+};
+Assert(BatteryProfileEngine.Resolve(
+        redmiDevice, [defaultProfile, redmiProfile, containerSpecificProfile]).Id == "container-specific",
+    "Stable Windows container identity outranks model and protocol hints");
+
+var legacySettings = JsonSerializer.Deserialize<AppSettings>(
+    "{\"Language\":2,\"RefreshIntervalSeconds\":300,\"Devices\":{\"address:AA:BB\":{\"CustomName\":\"My buds\"}}}")!;
+legacySettings.Normalize();
+Assert(legacySettings.GlobalAggregationMode == BatteryAggregationMode.Lowest &&
+       legacySettings.Devices["address:AA:BB"].CustomName == "My buds",
+    "Legacy settings keep their values and receive defaults for new profile settings");
+
+var settingsForClone = new AppSettings
+{
+    Language = AppLanguage.Russian,
+    Devices =
+    {
+        ["container:test"] = new DevicePreferences
+        {
+            CustomName = "My device",
+            ShowIndividualTrayIcon = true,
+            IndividualTrayIconStyle = TrayIconStyle.Ring
+        }
+    }
+};
+var clonedSettings = settingsForClone.DeepClone();
+clonedSettings.Language = AppLanguage.English;
+clonedSettings.Devices["container:test"].CustomName = "Changed name";
+Assert(settingsForClone.Language == AppLanguage.Russian &&
+       settingsForClone.Devices["container:test"].CustomName == "My device",
+    "Settings snapshots deeply clone device preferences so unapplied edits cannot affect applied settings");
+
+var customRuleProfile = new BatteryProfile
+{
+    Id = "custom-earbud-case",
+    Name = "Custom earbud and case",
+    AggregationMode = BatteryAggregationMode.Custom,
+    CustomRule = new BatteryAggregationRule
+    {
+        Components = [BatteryComponentKind.Left, BatteryComponentKind.Case],
+        Operation = BatteryAggregationOperation.Minimum
+    }
+};
+Assert(BatteryProfileEngine.IsValidProfile(customRuleProfile),
+    "Safe custom aggregation rule validates");
+Assert(BatteryProfileEngine.GetBatteryPercent(redmiDevice, customRuleProfile) == 55,
+    "Custom aggregation selects only configured components");
+customRuleProfile.CustomRule!.Components.Add(BatteryComponentKind.Left);
+Assert(!BatteryProfileEngine.IsValidProfile(customRuleProfile),
+    "Custom aggregation rejects duplicate components");
+
+var profileTempDirectory = Path.Combine(Path.GetTempPath(), "BTChargeIndicatorTests", Guid.NewGuid().ToString("N"));
+Directory.CreateDirectory(profileTempDirectory);
+try
+{
+    var profilePath = Path.Combine(profileTempDirectory, "profiles.json");
+    var profileStore = new BatteryProfileStore(profilePath);
+    profileStore.Save([redmiProfile, caseProfile]);
+    profileStore.Save([redmiProfile, caseProfile, new BatteryProfile
+    {
+        Id = "custom-test",
+        Name = "Custom test",
+        AggregationMode = BatteryAggregationMode.Custom,
+        CustomRule = new BatteryAggregationRule
+        {
+            Components = [BatteryComponentKind.Right, BatteryComponentKind.Case],
+            Operation = BatteryAggregationOperation.Maximum
+        }
+    }]);
+    var loadedProfiles = profileStore.Load();
+    Assert(loadedProfiles.Count == 4,
+        "Profile store round-trips custom profiles and supplies the built-in default");
+    Assert(loadedProfiles.Any(profile => profile.Id == "redmi-buds"),
+        "Profile store preserves matching criteria");
+    Assert(loadedProfiles.Any(profile => profile.Id == "custom-test" &&
+        profile.CustomRule?.Components.SequenceEqual(
+            [BatteryComponentKind.Right, BatteryComponentKind.Case]) == true),
+        "Profile store round-trips declarative custom rules");
+
+    File.WriteAllText(profilePath, "{ invalid json");
+    var recoveredProfiles = profileStore.Load();
+    Assert(recoveredProfiles.Count == 3 && recoveredProfiles.Any(profile => profile.Id == "redmi-buds"),
+        "Malformed profile JSON recovers the previous valid backup");
+    Assert(File.ReadAllText(profilePath) == "{ invalid json",
+        "Malformed profile JSON is preserved for manual recovery");
+    Assert(File.Exists(profilePath + ".bak"),
+        "Profile store keeps a backup of the previous valid document");
+}
+finally
+{
+    Directory.Delete(profileTempDirectory, true);
+}
+
+
+var aggregationComponents = new BatteryComponents(100, 80, 15);
+Assert(BatteryAggregationEngine.Aggregate(aggregationComponents, BatteryAggregationMode.EarbudsLowest) == 80,
+    "Earbuds minimum excludes the case");
+Assert(BatteryAggregationEngine.Aggregate(aggregationComponents, BatteryAggregationMode.EarbudsAverage) == 90,
+    "Earbuds average excludes the case");
+Assert(BatteryAggregationEngine.Aggregate(aggregationComponents, BatteryAggregationMode.Lowest) == 15,
+    "All-components minimum includes the case when explicitly selected");
+Assert(BatteryAggregationEngine.Aggregate(aggregationComponents, BatteryAggregationMode.Highest) == 100,
+    "All-components maximum includes all known components");
+Assert(BatteryAggregationEngine.Aggregate(aggregationComponents, BatteryAggregationMode.Case) == 15,
+    "Case-only aggregation selects the case");
+Assert(BatteryAggregationEngine.Aggregate(new BatteryComponents(null, 72, 25), BatteryAggregationMode.EarbudsLowest) == 72,
+    "Earbuds aggregation uses the one known earbud");
+Assert(BatteryAggregationEngine.Aggregate(new BatteryComponents(null, null, 42), BatteryAggregationMode.EarbudsLowest) == 42,
+    "Earbuds aggregation falls back to case-only readings");
+Assert(BatteryAggregationEngine.Aggregate(new BatteryComponents(null, null, null), BatteryAggregationMode.EarbudsLowest) is null,
+    "Unknown components remain unavailable");
+Assert(BatteryAggregationEngine.Aggregate(new BatteryComponents(150, -1, 45), BatteryAggregationMode.EarbudsLowest) == 45,
+    "Invalid component values are ignored and case fallback is used");
+Assert(BatteryAggregationEngine.AggregateValues([90, null, 60, 80], BatteryAggregationMode.Lowest) == 60,
+    "Global minimum ignores missing values");
+Assert(BatteryAggregationEngine.AggregateValues([90, null, 60, 80], BatteryAggregationMode.Average) == 77,
+    "Global average ignores missing values and rounds predictably");
+Assert(BatteryAggregationEngine.AggregateValues([null, null], BatteryAggregationMode.Lowest) is null,
+    "Global aggregation returns unknown when every device is unknown");
+
+
+var earbudsWithCase = new TwsBatteryReading(100, 100, 55);
+Assert(earbudsWithCase.LowestPercent == 100,
+    "TWS primary percentage ignores a lower charging-case value");
+Assert(earbudsWithCase.Components.CasePercent == 55,
+    "TWS case percentage remains available as a separate component");
+
+var oneEarbudWithCase = new TwsBatteryReading(null, 72, 25);
+Assert(oneEarbudWithCase.LowestPercent == 72,
+    "TWS primary percentage uses the known earbud when the other is unavailable");
+
+var caseOnly = new TwsBatteryReading(null, null, 42);
+Assert(caseOnly.LowestPercent == 42,
+    "TWS case-only reading remains a fallback when no earbud level is known");
 
 var fastPairShow = FastPairBatteryService.ParseServiceData(
     [0x2C, 0xFE, 0x00, 0xAA, 0xBB, 0x33, 0x57, 0x41, 0x7F]);
@@ -151,6 +405,28 @@ Assert(dualEndpointNotifications.Observe([
 var radioOff = dualEndpointNotifications.Observe([], BluetoothAvailability.TurnedOff);
 Assert(radioOff.Count == 1 && !radioOff[0].IsConnected, "Radio off produces one physical disconnect popup");
 
+var runtimeScanner = new FakeBluetoothBatteryScanner(new BluetoothScanResult(
+    [ConnectionDevice("runtime-headset", true, 91)],
+    BluetoothAvailability.Available));
+await using (var runtime = new ApplicationRuntime(runtimeScanner))
+{
+    var stateChanges = 0;
+    runtime.StateChanged += _ => stateChanges++;
+    await runtime.StartAsync(TimeSpan.FromMinutes(1));
+    Assert(runtime.State.Devices.Count == 1 && runtime.State.Devices[0].BatteryPercent == 91,
+        "Runtime publishes the first scan as its shared device state");
+    Assert(runtime.State.IsScanning == false && runtime.State.LastUpdatedUtc.HasValue,
+        "Runtime publishes completed scan metadata");
+    await runtime.UpdateRefreshIntervalAsync(TimeSpan.FromSeconds(30));
+    Assert(runtime.State.Devices.Count == 1,
+        "Changing the refresh interval preserves the current published device state");
+    await runtime.RefreshAsync(refreshGattBattery: true);
+    Assert(runtimeScanner.LastRefreshRequested,
+        "Runtime forwards an explicit GATT refresh request to the platform scanner");
+    Assert(stateChanges >= 4,
+        "Runtime notifies subscribers when scan state and results change");
+    await runtime.StopAsync();
+}
 Console.WriteLine("Protocol parser, Bluetooth device change, and connection notification tests passed.");
 
 if (args.Contains("--watch", StringComparer.OrdinalIgnoreCase))
@@ -216,5 +492,17 @@ static void Assert(bool condition, string name)
     if (!condition)
     {
         throw new InvalidOperationException($"Failed: {name}");
+    }
+}
+
+
+internal sealed class FakeBluetoothBatteryScanner(BluetoothScanResult result) : IBluetoothBatteryScanner
+{
+    public bool LastRefreshRequested { get; private set; }
+
+    public Task<BluetoothScanResult> ScanAsync(bool refreshGattBattery = false)
+    {
+        LastRefreshRequested = refreshGattBattery;
+        return Task.FromResult(result);
     }
 }

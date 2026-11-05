@@ -1,0 +1,78 @@
+name: Windows CI
+
+on:
+  push:
+    branches:
+      - main
+      - feature/**
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    runs-on: windows-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore .\Tests\BTChargeIndicator.ProtocolTests.csproj
+
+      - name: Build application and tests
+        run: dotnet build .\Tests\BTChargeIndicator.ProtocolTests.csproj --configuration Release --no-restore
+
+      - name: Run protocol and regression tests
+        run: dotnet run --project .\Tests\BTChargeIndicator.ProtocolTests.csproj --configuration Release --no-build
+
+      - name: Build WinUI 3 host
+        run: dotnet build .\src\BTChargeIndicator.WinUI\BTChargeIndicator.WinUI.csproj --configuration Release
+
+      - name: Publish self-contained Windows x64 application
+        run: >-
+          dotnet publish .\BTChargeIndicator.csproj
+          --configuration Release
+          --runtime win-x64
+          --self-contained true
+          --output .\artifacts\BTChargeIndicator-win-x64
+          -p:PublishSingleFile=true
+          -p:EnableCompressionInSingleFile=true
+
+      - name: Publish self-contained WinUI dashboard
+        run: >-
+          dotnet publish .\src\BTChargeIndicator.WinUI\BTChargeIndicator.WinUI.csproj
+          --configuration Release
+          --runtime win-x64
+          --self-contained true
+          --output .\artifacts\BTChargeIndicator-WinUI-win-x64
+          -p:WindowsAppSDKSelfContained=true
+          -p:PublishTrimmed=false
+          -p:PublishSingleFile=false
+          -p:PublishReadyToRun=false
+
+      - name: Upload Windows x64 application
+        uses: actions/upload-artifact@v4
+        with:
+          name: BTChargeIndicator-win-x64
+          path: artifacts/BTChargeIndicator-win-x64/
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload WinUI dashboard
+        uses: actions/upload-artifact@v4
+        with:
+          name: BTChargeIndicator-WinUI-win-x64
+          path: artifacts/BTChargeIndicator-WinUI-win-x64/
+          if-no-files-found: error
+          retention-days: 14

@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>BTChargeIndicator.Core</AssemblyName>
+    <RootNamespace>BTChargeIndicator</RootNamespace>
+    <Description>Presentation-independent domain models, battery policies, and settings persistence for BT Charge Indicator.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\Models\BatteryAggregationMode.cs" Link="Models\BatteryAggregationMode.cs" />
+    <Compile Include="..\..\Models\BatteryAggregationRule.cs" Link="Models\BatteryAggregationRule.cs" />
+    <Compile Include="..\..\Models\BatterySnapshot.cs" Link="Models\BatterySnapshot.cs" />
+    <Compile Include="..\..\Models\BluetoothBatteryDevice.cs" Link="Models\BluetoothBatteryDevice.cs" />
+    <Compile Include="..\..\Models\TwsBatteryReading.cs" Link="Models\TwsBatteryReading.cs" />
+
+    <Compile Include="..\..\Services\BatteryAggregationEngine.cs" Link="Services\BatteryAggregationEngine.cs" />
+    <Compile Include="..\..\Services\BatteryDeviceIdentity.cs" Link="Services\BatteryDeviceIdentity.cs" />
+    <Compile Include="..\..\Services\BatteryProfileEngine.cs" Link="Services\BatteryProfileEngine.cs" />
+    <Compile Include="..\..\Services\DeviceConnectionTracker.cs" Link="Services\DeviceConnectionTracker.cs" />
+
+    <Compile Include="..\..\Settings\AppSettings.cs" Link="Settings\AppSettings.cs" />
+    <Compile Include="..\..\Settings\BatteryProfile.cs" Link="Settings\BatteryProfile.cs" />
+    <Compile Include="..\..\Settings\BatteryProfileStore.cs" Link="Settings\BatteryProfileStore.cs" />
+    <Compile Include="..\..\Settings\SettingsStore.cs" Link="Settings\SettingsStore.cs" />
+  </ItemGroup>
+</Project>

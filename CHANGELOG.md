@@ -2,6 +2,18 @@
 
 All notable changes to BT Charge Indicator are documented here.
 
+## Unreleased
+
+- Fixed TWS primary battery aggregation so a low charging-case value does not lower the earbud percentage when left or right readings are available.
+- Added typed battery snapshots with observation timestamps and validation for unknown or invalid component readings.
+- Added versioned JSON battery profiles, stable Windows container matching, automatic and explicit profile selection, safe custom aggregation rules, backup recovery, and profile import/export.
+- Added a native profile editor with sample preview and a tabbed settings window.
+- Added configurable global minimum/maximum/average aggregation and optional per-device tray icons with independent styles.
+- Added matching device actions to individual tray icon context menus and image previews for individual tray styles.
+- Added an Apply button to Settings; applied changes update the running app without closing the window, while Cancel discards only unapplied edits.
+- Updated tray percentages and low-battery notifications to use profile-computed values.
+- Added regression coverage and a Windows CI build/test workflow.
+
 ## 1.8.0 - 2026-10-11
 
 - Added English and Russian translations for tray menus, connection cards, dialogs, diagnostics, and Windows notifications, including snooze and dismiss actions.

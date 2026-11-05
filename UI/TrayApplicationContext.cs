@@ -3,27 +3,31 @@ using BTChargeIndicator.Localization;
 using BTChargeIndicator.Models;
 using BTChargeIndicator.Services;
 using BTChargeIndicator.Settings;
+using BTChargeIndicator.Runtime;
 
 namespace BTChargeIndicator.UI;
 
 internal sealed class TrayApplicationContext : ApplicationContext
 {
-    private readonly BluetoothBatteryService _bluetoothService = new();
+    private readonly BluetoothBatteryScannerAdapter _scanner = new();
+    private readonly ApplicationRuntime _runtime;
     private readonly BluetoothDeviceWatcher _deviceWatcher = new();
     private readonly DeviceConnectionTracker _connectionTracker = new(GetDeviceKey);
     private readonly ConnectionNotificationPresenter _connectionNotifications = new();
     private readonly UpdateService _updateService = new();
     private readonly SettingsStore _settingsStore = new();
+    private readonly BatteryProfileStore _profileStore = new();
     private readonly NotifyIcon _notifyIcon;
     private readonly Bitmap _appLogo = AppBranding.CreateLogoBitmap(24);
-    private readonly System.Windows.Forms.Timer _refreshTimer;
     private readonly System.Windows.Forms.Timer _deviceChangeTimer;
-    private readonly SemaphoreSlim _refreshLock = new(1, 1);
     private readonly HashSet<string> _lowBatteryNotifications = new(StringComparer.OrdinalIgnoreCase);
     // Images are shared across rebuilt menus and owned by this context.
     private readonly Dictionary<(TrayIconStyle Style, int Threshold), Bitmap> _trayIconPreviews = [];
+    private readonly Dictionary<string, DeviceTrayIconState> _deviceTrayIcons =
+        new(StringComparer.OrdinalIgnoreCase);
 
     private AppSettings _settings;
+    private IReadOnlyList<BatteryProfile> _profiles = [];
     private IReadOnlyList<BluetoothBatteryDevice> _devices = [];
     private BluetoothAvailability _availability = BluetoothAvailability.Available;
     private string? _lastErrorMessage;
@@ -37,11 +41,15 @@ internal sealed class TrayApplicationContext : ApplicationContext
     private bool _processingDeviceChanges;
     private bool _deviceChangeRefreshPending;
     private bool _connectionRefreshPending;
+    private ApplicationRuntimeState? _pendingRuntimeState;
     private DateTime? _connectionRetryAt;
 
     public TrayApplicationContext()
     {
         _settings = _settingsStore.Load();
+        _profiles = _profileStore.Load();
+        _runtime = new ApplicationRuntime(_scanner);
+        _runtime.StateChanged += Runtime_StateChanged;
         AppText.Apply(_settings.Language);
         DesktopNotificationService.Initialize();
         _currentIcon = TrayIconRenderer.Create(
@@ -59,13 +67,6 @@ internal sealed class TrayApplicationContext : ApplicationContext
         _notifyIcon.DoubleClick += (_, _) => OpenBluetoothSettings();
         _connectionNotifications.Idle += ConnectionNotifications_Idle;
 
-        _refreshTimer = new System.Windows.Forms.Timer
-        {
-            Interval = _settings.RefreshIntervalSeconds * 1000,
-            Enabled = true
-        };
-        _refreshTimer.Tick += async (_, _) => await RefreshAsync();
-
         _deviceChangeTimer = new System.Windows.Forms.Timer
         {
             Interval = 500,
@@ -75,7 +76,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
         _deviceWatcher.Changed += DeviceWatcher_Changed;
         _deviceWatcher.Start();
 
-        _ = RefreshAsync();
+        _ = StartRuntimeAsync();
     }
 
     private void DeviceWatcher_Changed(BluetoothDeviceChangeKind change)
@@ -87,6 +88,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
 
     private async Task ProcessDeviceChangesAsync()
     {
+        ApplyPendingRuntimeState();
         if (_isExiting || _processingDeviceChanges)
         {
             return;
@@ -129,59 +131,115 @@ internal sealed class TrayApplicationContext : ApplicationContext
         }
     }
 
+    private async Task StartRuntimeAsync()
+    {
+        try
+        {
+            await _runtime.StartAsync(TimeSpan.FromSeconds(_settings.RefreshIntervalSeconds));
+        }
+        catch (Exception ex)
+        {
+            AppLogger.Error("Application runtime could not be started.", ex);
+        }
+    }
+
+    private void Runtime_StateChanged(ApplicationRuntimeState state)
+    {
+        if (!_isExiting)
+        {
+            // The runtime can publish from a worker thread. The existing WinForms
+            // timer consumes the latest snapshot on the UI thread.
+            Volatile.Write(ref _pendingRuntimeState, state);
+        }
+    }
+
+    private void ApplyPendingRuntimeState()
+    {
+        var state = Interlocked.Exchange(ref _pendingRuntimeState, null);
+        if (state is null || state.IsScanning || _isExiting)
+        {
+            return;
+        }
+
+        _devices = state.Devices;
+        _availability = state.Availability;
+        _lastErrorMessage = state.ErrorMessage;
+        _lastUpdated = state.LastUpdatedUtc?.LocalDateTime;
+
+        ShowConnectionNotifications();
+        UpdateTrayIcon();
+        ReplaceContextMenu();
+        ShowLowBatteryNotificationIfNeeded();
+
+        if (!_automaticUpdateCheckStarted)
+        {
+            _automaticUpdateCheckStarted = true;
+            _ = CheckForUpdatesIfNeededAsync();
+        }
+    }
+
     private async Task<bool> RefreshAsync(bool refreshGattBattery = false)
     {
-        if (_isExiting || !await _refreshLock.WaitAsync(0))
+        if (_isExiting)
         {
             return false;
         }
 
         try
         {
-            SetTrayText(AppText.Get("Refreshing"));
-            var result = await _bluetoothService.ScanAsync(refreshGattBattery);
-            if (_isExiting)
+            await _runtime.RefreshAsync(refreshGattBattery);
+            return !_isExiting;
+        }
+        catch (Exception ex)
+        {
+            if (!_isExiting)
             {
-                return true;
+                AppLogger.Error("Bluetooth refresh request failed.", ex);
             }
-            _devices = result.Devices;
-            _availability = result.Availability;
-            _lastErrorMessage = result.ErrorMessage;
-            _lastUpdated = DateTime.Now;
+            return false;
+        }
+    }
 
-            ShowConnectionNotifications();
-
-            UpdateTrayIcon();
-            ReplaceContextMenu();
-            ShowLowBatteryNotificationIfNeeded();
-
-            if (!_automaticUpdateCheckStarted)
+    private async Task UpdateRuntimeRefreshIntervalAsync(int seconds)
+    {
+        try
+        {
+            await _runtime.UpdateRefreshIntervalAsync(TimeSpan.FromSeconds(seconds));
+        }
+        catch (Exception ex)
+        {
+            if (!_isExiting)
             {
-                _automaticUpdateCheckStarted = true;
-                _ = CheckForUpdatesIfNeededAsync();
+                AppLogger.Error("Bluetooth refresh interval could not be updated.", ex);
             }
-            return true;
+        }
+    }
+
+    private async Task ShutdownRuntimeAsync()
+    {
+        try
+        {
+            await _runtime.DisposeAsync();
+        }
+        catch (Exception ex)
+        {
+            AppLogger.Error("Application runtime shutdown failed.", ex);
         }
         finally
         {
-            _refreshLock.Release();
-            if (_isExiting)
-            {
-                _bluetoothService.Dispose();
-                _refreshLock.Dispose();
-            }
+            _scanner.Dispose();
         }
     }
 
     private void ShowConnectionNotifications()
     {
-        var changes = _connectionTracker.Observe(_devices, _availability);
+        var changes = _connectionTracker.Observe(BatteryDeviceIdentity.Deduplicate(_devices), _availability);
         if (!_settings.ConnectionNotifications) return;
         foreach (var change in changes)
         {
             if (GetDevicePreferences(change.Device).IsHidden) continue;
             _connectionNotifications.Show(new ConnectionNotification(GetDeviceKey(change.Device),
-                GetDisplayName(change.Device), change.IsConnected, change.Device.BatteryPercent));
+                GetDisplayName(change.Device), change.IsConnected, GetEffectiveBatteryPercent(change.Device)));
         }
     }
 
@@ -190,7 +248,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
         var device = GetVisibleDevices().FirstOrDefault(item => item.IsConnected is true);
         _connectionNotifications.Show(new ConnectionNotification("preview",
             device is null ? AppText.Get("PreviewDevice") : GetDisplayName(device), connected,
-            device is null ? 76 : device.BatteryPercent));
+            device is null ? 76 : GetEffectiveBatteryPercent(device) ?? 76));
     }
 
     private ContextMenuStrip BuildContextMenu()
@@ -253,6 +311,10 @@ internal sealed class TrayApplicationContext : ApplicationContext
         refreshItem.Click += async (_, _) => await RefreshAsync();
         menu.Items.Add(refreshItem);
 
+        var settingsItem = new ToolStripMenuItem(AppText.Get("SettingsTitle"));
+        settingsItem.Click += (_, _) => OpenSettings();
+        menu.Items.Add(settingsItem);
+
         var bluetoothSettingsItem = new ToolStripMenuItem(AppText.Get("BluetoothSettings"));
         bluetoothSettingsItem.Click += (_, _) => OpenBluetoothSettings();
         menu.Items.Add(bluetoothSettingsItem);
@@ -267,6 +329,10 @@ internal sealed class TrayApplicationContext : ApplicationContext
         menu.Items.Add(BuildLanguageMenu());
         menu.Items.Add(BuildRefreshIntervalMenu());
         menu.Items.Add(BuildTrayIconStyleMenu());
+        menu.Items.Add(BuildGlobalAggregationMenu());
+        var manageProfilesItem = new ToolStripMenuItem(AppText.Get("ManageProfiles"));
+        manageProfilesItem.Click += (_, _) => OpenBatteryProfileEditor();
+        menu.Items.Add(manageProfilesItem);
         menu.Items.Add(BuildLowBatteryThresholdMenu());
 
         var notificationsItem = new ToolStripMenuItem(AppText.Get("LowBatteryNotifications"))
@@ -385,6 +451,39 @@ internal sealed class TrayApplicationContext : ApplicationContext
         return menu;
     }
 
+    private void OpenSettings()
+    {
+        using var settingsForm = new SettingsForm(
+            _settings, _devices, _profileStore, _profiles, ApplySettings);
+        settingsForm.ShowDialog();
+    }
+
+    private void ApplySettings(AppSettings settings)
+    {
+        _settings = settings.DeepClone();
+        _settingsStore.Save(_settings);
+        AppText.Apply(_settings.Language);
+        _ = UpdateRuntimeRefreshIntervalAsync(_settings.RefreshIntervalSeconds);
+        _lowBatteryNotifications.Clear();
+        UpdateTrayIcon();
+        ReplaceContextMenu();
+        _connectionNotifications.RefreshLanguage();
+        ShowLowBatteryNotificationIfNeeded();
+    }
+
+    private void OpenBatteryProfileEditor()
+    {
+        using var editor = new BatteryProfileEditorForm(_profiles, _profileStore);
+        if (editor.ShowDialog() != DialogResult.OK)
+        {
+            return;
+        }
+
+        _profiles = _profileStore.Load();
+        UpdateTrayIcon();
+        ReplaceContextMenu();
+    }
+
     private ToolStripMenuItem BuildStatusItem()
     {
         var status = _availability switch
@@ -422,8 +521,9 @@ internal sealed class TrayApplicationContext : ApplicationContext
         item.DropDownItems.Add(openItem);
 
         var diagnosticsItem = new ToolStripMenuItem(AppText.Get("DeviceDiagnosticsMenu"));
-        diagnosticsItem.Click += (_, _) => ShowDeviceDiagnostics(device);
+        diagnosticsItem.Click += (_, _) => ShowDeviceDiagnostics(FindCurrentDevice(GetDeviceKey(device), device));
         item.DropDownItems.Add(diagnosticsItem);
+        item.DropDownItems.Add(BuildDeviceProfileMenu(device, preferences));
 
         var renameItem = new ToolStripMenuItem(AppText.Get("Rename"));
         renameItem.Click += (_, _) =>
@@ -458,6 +558,19 @@ internal sealed class TrayApplicationContext : ApplicationContext
         };
         item.DropDownItems.Add(trayItem);
 
+        var individualTrayItem = new ToolStripMenuItem(AppText.Get("IndividualTrayIcon"))
+        {
+            CheckOnClick = true,
+            Checked = preferences.ShowIndividualTrayIcon
+        };
+        individualTrayItem.CheckedChanged += (_, _) =>
+        {
+            preferences.ShowIndividualTrayIcon = individualTrayItem.Checked;
+            SaveDeviceSettings();
+        };
+        item.DropDownItems.Add(individualTrayItem);
+        item.DropDownItems.Add(BuildDeviceTrayIconStyleMenu(preferences));
+
         var notificationItem = new ToolStripMenuItem(AppText.Get("DeviceLowBatteryNotifications"))
         {
             CheckOnClick = true,
@@ -468,7 +581,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
             preferences.LowBatteryNotifications = notificationItem.Checked;
             if (!notificationItem.Checked)
             {
-                _lowBatteryNotifications.Remove(device.Id);
+                _lowBatteryNotifications.Remove(GetDeviceKey(device));
             }
             SaveDeviceSettings(updateIcon: false);
         };
@@ -487,6 +600,214 @@ internal sealed class TrayApplicationContext : ApplicationContext
         item.DropDownItems.Add(visibleItem);
 
         return item;
+    }
+
+    private ToolStripMenuItem BuildDeviceProfileMenu(
+        BluetoothBatteryDevice device,
+        DevicePreferences preferences)
+    {
+        var menu = new ToolStripMenuItem(AppText.Get("BatteryProfile"));
+        var defaultItem = new ToolStripMenuItem(AppText.Get("DefaultProfile"))
+        {
+            Checked = string.IsNullOrWhiteSpace(preferences.ProfileId) ||
+                      string.Equals(preferences.ProfileId, BatteryProfileEngine.DefaultProfileId,
+                          StringComparison.OrdinalIgnoreCase)
+        };
+        defaultItem.Click += (_, _) =>
+        {
+            preferences.ProfileId = null;
+            SaveDeviceSettings();
+        };
+        menu.DropDownItems.Add(defaultItem);
+
+        foreach (var profile in _profiles.Where(profile =>
+                     !string.Equals(profile.Id, BatteryProfileEngine.DefaultProfileId,
+                         StringComparison.OrdinalIgnoreCase)))
+        {
+            var item = new ToolStripMenuItem(profile.Name)
+            {
+                Checked = string.Equals(preferences.ProfileId, profile.Id,
+                    StringComparison.OrdinalIgnoreCase)
+            };
+            item.Click += (_, _) =>
+            {
+                preferences.ProfileId = profile.Id;
+                SaveDeviceSettings();
+            };
+            menu.DropDownItems.Add(item);
+        }
+
+        return menu;
+    }
+
+    private ToolStripMenuItem BuildDeviceTrayIconStyleMenu(DevicePreferences preferences)
+    {
+        var menu = new ToolStripMenuItem(AppText.Get("IndividualTrayIconStyle"));
+        ConfigureTrayIconPreviewMenu(menu);
+        var inheritItem = new ToolStripMenuItem(AppText.Get("UseGlobalTrayIconStyle"))
+        {
+            Checked = !preferences.IndividualTrayIconStyle.HasValue
+        };
+        inheritItem.Click += (_, _) =>
+        {
+            preferences.IndividualTrayIconStyle = null;
+            SaveDeviceSettings();
+        };
+        menu.DropDownItems.Add(inheritItem);
+
+        foreach (var (style, key) in GetTrayIconStyleLabels())
+        {
+            AddTrayIconStyleItem(menu, AppText.Get(key), style,
+                preferences.IndividualTrayIconStyle,
+                selectedStyle =>
+                {
+                    preferences.IndividualTrayIconStyle = selectedStyle;
+                    SaveDeviceSettings();
+                });
+        }
+        return menu;
+    }
+
+    private static (TrayIconStyle Style, string Key)[] GetTrayIconStyleLabels() =>
+    [
+        (TrayIconStyle.Percentage, "StylePercentage"),
+        (TrayIconStyle.Battery, "StyleBattery"),
+        (TrayIconStyle.Ring, "StyleRing"),
+        (TrayIconStyle.SegmentedRing, "StyleSegmentedRing"),
+        (TrayIconStyle.Bars, "StyleBars"),
+        (TrayIconStyle.VerticalBattery, "StyleVerticalBattery"),
+        (TrayIconStyle.Minimal, "StyleMinimal"),
+        (TrayIconStyle.Capsule, "StyleCapsule"),
+        (TrayIconStyle.Gradient, "StyleGradient"),
+        (TrayIconStyle.Gauge, "StyleGauge")
+    ];
+
+    private void UpdateIndividualTrayIcons()
+    {
+        var activeKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var device in BatteryDeviceIdentity.Deduplicate(_devices))
+        {
+            var preferences = GetDevicePreferences(device);
+            if (!preferences.ShowIndividualTrayIcon)
+            {
+                continue;
+            }
+
+            var key = GetDeviceKey(device);
+            if (!activeKeys.Add(key))
+            {
+                continue;
+            }
+
+            var style = preferences.IndividualTrayIconStyle ?? _settings.IconStyle;
+            var icon = TrayIconRenderer.Create(
+                GetEffectiveBatteryPercent(device),
+                style,
+                _settings.LowBatteryThreshold);
+
+            if (_deviceTrayIcons.TryGetValue(key, out var existing))
+            {
+                var previous = existing.Icon;
+                existing.Icon = icon;
+                existing.NotifyIcon.Icon = icon;
+                existing.NotifyIcon.Text = BuildDeviceTrayTooltip(device);
+                var previousMenu = existing.NotifyIcon.ContextMenuStrip;
+                existing.NotifyIcon.ContextMenuStrip = BuildDeviceTrayContextMenu(device);
+                previousMenu?.Dispose();
+                previous.Dispose();
+            }
+            else
+            {
+                var notifyIcon = new NotifyIcon
+                {
+                    Icon = icon,
+                    Visible = true,
+                    Text = BuildDeviceTrayTooltip(device),
+                    ContextMenuStrip = BuildDeviceTrayContextMenu(device)
+                };
+                notifyIcon.DoubleClick += (_, _) => OpenBluetoothSettings();
+                _deviceTrayIcons.Add(key, new DeviceTrayIconState(notifyIcon, icon));
+            }
+        }
+
+        foreach (var key in _deviceTrayIcons.Keys.Where(key => !activeKeys.Contains(key)).ToArray())
+        {
+            _deviceTrayIcons[key].Dispose();
+            _deviceTrayIcons.Remove(key);
+        }
+    }
+
+    private ContextMenuStrip BuildDeviceTrayContextMenu(BluetoothBatteryDevice device)
+    {
+        var menu = new ContextMenuStrip { ShowCheckMargin = true };
+        var deviceKey = GetDeviceKey(device);
+        var detailsItem = new ToolStripMenuItem(AppText.Get("ShowDeviceBatteryDetails"));
+        detailsItem.Click += (_, _) =>
+        {
+            var currentDevice = FindCurrentDevice(deviceKey, device);
+            var text = $"{GetDisplayName(currentDevice)}: {FormatBatterySummary(currentDevice)}";
+            _deviceTrayIcons.GetValueOrDefault(deviceKey)?.NotifyIcon.ShowBalloonTip(
+                3500, "BT Charge Indicator", text, ToolTipIcon.Info);
+        };
+        menu.Items.Add(detailsItem);
+        menu.Items.Add(new ToolStripSeparator());
+
+        // Reuse the exact actions from the main tray icon's device submenu.
+        using var deviceMenuItem = BuildDeviceMenuItem(device);
+        foreach (ToolStripItem child in deviceMenuItem.DropDownItems.Cast<ToolStripItem>().ToArray())
+        {
+            deviceMenuItem.DropDownItems.Remove(child);
+            menu.Items.Add(child);
+        }
+        return menu;
+    }
+
+    private BluetoothBatteryDevice FindCurrentDevice(string deviceKey, BluetoothBatteryDevice fallback) =>
+        BatteryDeviceIdentity.Deduplicate(_devices).FirstOrDefault(candidate =>
+            string.Equals(GetDeviceKey(candidate), deviceKey, StringComparison.OrdinalIgnoreCase)) ?? fallback;
+
+    private string BuildDeviceTrayTooltip(BluetoothBatteryDevice device)
+    {
+        var percentage = GetEffectiveBatteryPercent(device);
+        var components = FormatBatteryComponents(device.Components).Trim();
+        var text = components.Length == 0
+            ? $"{GetDisplayName(device)}: {(percentage.HasValue ? $"{percentage}%" : AppText.Get("NoData"))}"
+            : $"{GetDisplayName(device)}: {(percentage.HasValue ? $"{percentage}%" : AppText.Get("NoData"))} {components}";
+        return text.Length <= 63 ? text : text[..60] + "…";
+    }
+
+    private ToolStripMenuItem BuildGlobalAggregationMenu()
+    {
+        var menu = new ToolStripMenuItem(AppText.Get("GlobalBatteryAggregation"));
+        foreach (var (mode, key) in new[]
+                 {
+                     (BatteryAggregationMode.Lowest, "AggregationLowest"),
+                     (BatteryAggregationMode.Highest, "AggregationHighest"),
+                     (BatteryAggregationMode.Average, "AggregationAverage")
+                 })
+        {
+            var item = new ToolStripMenuItem(AppText.Get(key))
+            {
+                Checked = _settings.GlobalAggregationMode == mode
+            };
+            item.Click += (_, _) =>
+            {
+                _settings.GlobalAggregationMode = mode;
+                _settingsStore.Save(_settings);
+                UpdateTrayIcon();
+                ReplaceContextMenu();
+            };
+            menu.DropDownItems.Add(item);
+        }
+
+        return menu;
+    }
+
+    private int? GetEffectiveBatteryPercent(BluetoothBatteryDevice device)
+    {
+        var preferences = GetDevicePreferences(device);
+        var profile = BatteryProfileEngine.Resolve(device, _profiles, preferences.ProfileId);
+        return BatteryProfileEngine.GetBatteryPercent(device, profile);
     }
 
     private ToolStripMenuItem? BuildHiddenDevicesMenu()
@@ -587,7 +908,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
         {
             _settings.RefreshIntervalSeconds = seconds;
             _settingsStore.Save(_settings);
-            _refreshTimer.Interval = seconds * 1000;
+            _ = UpdateRuntimeRefreshIntervalAsync(seconds);
             ReplaceContextMenu();
         };
         parent.DropDownItems.Add(item);
@@ -596,26 +917,33 @@ internal sealed class TrayApplicationContext : ApplicationContext
     private ToolStripMenuItem BuildTrayIconStyleMenu()
     {
         var styleMenu = new ToolStripMenuItem(AppText.Get("TrayIconStyle"));
-        if (styleMenu.DropDown is ToolStripDropDownMenu dropDown)
+        ConfigureTrayIconPreviewMenu(styleMenu);
+        foreach (var (style, key) in GetTrayIconStyleLabels())
+        {
+            AddTrayIconStyleItem(styleMenu, AppText.Get(key), style, _settings.IconStyle, selectedStyle =>
+            {
+                _settings.IconStyle = selectedStyle;
+                _settingsStore.Save(_settings);
+                UpdateTrayIcon();
+                ReplaceContextMenu();
+            });
+        }
+        return styleMenu;
+    }
+
+    private static void ConfigureTrayIconPreviewMenu(ToolStripMenuItem menu)
+    {
+        if (menu.DropDown is ToolStripDropDownMenu dropDown)
         {
             dropDown.ShowImageMargin = true;
             dropDown.ShowCheckMargin = true;
             dropDown.ImageScalingSize = new Size(20, 20);
         }
-        AddTrayIconStyleItem(styleMenu, AppText.Get("StylePercentage"), TrayIconStyle.Percentage);
-        AddTrayIconStyleItem(styleMenu, AppText.Get("StyleBattery"), TrayIconStyle.Battery);
-        AddTrayIconStyleItem(styleMenu, AppText.Get("StyleRing"), TrayIconStyle.Ring);
-        AddTrayIconStyleItem(styleMenu, AppText.Get("StyleSegmentedRing"), TrayIconStyle.SegmentedRing);
-        AddTrayIconStyleItem(styleMenu, AppText.Get("StyleBars"), TrayIconStyle.Bars);
-        AddTrayIconStyleItem(styleMenu, AppText.Get("StyleVerticalBattery"), TrayIconStyle.VerticalBattery);
-        AddTrayIconStyleItem(styleMenu, AppText.Get("StyleMinimal"), TrayIconStyle.Minimal);
-        AddTrayIconStyleItem(styleMenu, AppText.Get("StyleCapsule"), TrayIconStyle.Capsule);
-        AddTrayIconStyleItem(styleMenu, AppText.Get("StyleGradient"), TrayIconStyle.Gradient);
-        AddTrayIconStyleItem(styleMenu, AppText.Get("StyleGauge"), TrayIconStyle.Gauge);
-        return styleMenu;
     }
 
-    private void AddTrayIconStyleItem(ToolStripMenuItem parent, string text, TrayIconStyle style)
+    private void AddTrayIconStyleItem(
+        ToolStripMenuItem parent, string text, TrayIconStyle style,
+        TrayIconStyle? selectedStyle, Action<TrayIconStyle> onSelected)
     {
         var key = (style, _settings.LowBatteryThreshold);
         if (!_trayIconPreviews.TryGetValue(key, out var preview))
@@ -625,16 +953,10 @@ internal sealed class TrayApplicationContext : ApplicationContext
         }
         var item = new ToolStripMenuItem(text)
         {
-            Checked = _settings.IconStyle == style,
+            Checked = selectedStyle == style,
             Image = preview
         };
-        item.Click += (_, _) =>
-        {
-            _settings.IconStyle = style;
-            _settingsStore.Save(_settings);
-            UpdateTrayIcon();
-            ReplaceContextMenu();
-        };
+        item.Click += (_, _) => onSelected(style);
         parent.DropDownItems.Add(item);
     }
 
@@ -654,23 +976,25 @@ internal sealed class TrayApplicationContext : ApplicationContext
 
     private void UpdateTrayIcon()
     {
-        var knownDevices = _devices
-            .Where(device => device.BatteryPercent.HasValue &&
+        var knownDevices = BatteryDeviceIdentity.Deduplicate(_devices)
+            .Where(device => GetEffectiveBatteryPercent(device).HasValue &&
                              GetDevicePreferences(device).IncludeInTrayIcon)
             .ToArray();
         var connectedDevices = knownDevices.Where(device => device.IsConnected == true).ToArray();
         var relevantDevices = connectedDevices.Length > 0 ? connectedDevices : knownDevices;
-        var lowestCharge = relevantDevices.Select(device => device.BatteryPercent).Min();
+        var displayedCharge = BatteryAggregationEngine.AggregateValues(
+            relevantDevices.Select(GetEffectiveBatteryPercent), _settings.GlobalAggregationMode);
 
         var previousIcon = _currentIcon;
         _currentIcon = TrayIconRenderer.Create(
-            lowestCharge,
+            displayedCharge,
             _settings.IconStyle,
             _settings.LowBatteryThreshold);
         _notifyIcon.Icon = _currentIcon;
         previousIcon?.Dispose();
 
         SetTrayText(BuildToolTip());
+        UpdateIndividualTrayIcons();
     }
 
     private string BuildToolTip()
@@ -685,13 +1009,27 @@ internal sealed class TrayApplicationContext : ApplicationContext
             return AppText.Get("TooltipNoDevices");
         }
 
-        var includedDevices = _devices
+        var includedDevices = BatteryDeviceIdentity.Deduplicate(_devices)
             .Where(device => GetDevicePreferences(device).IncludeInTrayIcon)
             .ToArray();
-        var first = includedDevices.FirstOrDefault(device => device.BatteryPercent.HasValue);
-        return first is null
-            ? AppText.Format("TooltipBatteryUnavailable", includedDevices.Length)
-            : $"{GetDisplayName(first)}: {FormatBatterySummary(first)}";
+        var knownDevices = includedDevices
+            .Where(device => GetEffectiveBatteryPercent(device).HasValue)
+            .ToArray();
+        var connectedDevices = knownDevices.Where(device => device.IsConnected == true).ToArray();
+        var relevantDevices = connectedDevices.Length > 0 ? connectedDevices : knownDevices;
+        var first = relevantDevices.FirstOrDefault();
+        if (first is null)
+        {
+            return AppText.Format("TooltipBatteryUnavailable", includedDevices.Length);
+        }
+
+        var percentage = BatteryAggregationEngine.AggregateValues(
+            relevantDevices.Select(GetEffectiveBatteryPercent), _settings.GlobalAggregationMode);
+        var details = first.Components is null
+            ? string.Empty
+            : $" ({FormatBatterySummary(first)})";
+        var otherDevices = relevantDevices.Length > 1 ? $" +{relevantDevices.Length - 1}" : string.Empty;
+        return $"{percentage}% · {GetDisplayName(first)}{otherDevices}{details}";
     }
 
     private void SetTrayText(string text)
@@ -701,7 +1039,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
 
     private IReadOnlyList<BluetoothBatteryDevice> GetVisibleDevices()
     {
-        return _devices
+        return BatteryDeviceIdentity.Deduplicate(_devices)
             .Where(device => !GetDevicePreferences(device).IsHidden)
             .ToArray();
     }
@@ -709,30 +1047,34 @@ internal sealed class TrayApplicationContext : ApplicationContext
     private DevicePreferences GetDevicePreferences(BluetoothBatteryDevice device)
     {
         var key = GetDeviceKey(device);
-        if (!_settings.Devices.TryGetValue(key, out var preferences))
+        if (!_settings.Devices.TryGetValue(key, out var preferences) || preferences is null)
         {
-            preferences = new DevicePreferences();
-            _settings.Devices[key] = preferences;
+            // Migrate the previous address-based key to the stable Windows container ID.
+            var legacyAddressKey = string.IsNullOrWhiteSpace(device.Address)
+                ? null
+                : $"address:{device.Address.Trim()}";
+            if (key.StartsWith("container:", StringComparison.OrdinalIgnoreCase) &&
+                legacyAddressKey is not null &&
+                _settings.Devices.Remove(legacyAddressKey, out var legacyPreferences) &&
+                legacyPreferences is not null)
+            {
+                preferences = legacyPreferences;
+                _settings.Devices[key] = preferences;
+                _settingsStore.Save(_settings);
+            }
+            else
+            {
+                preferences = new DevicePreferences();
+                _settings.Devices[key] = preferences;
+            }
         }
 
         preferences.LastKnownName = device.Name;
         return preferences;
     }
 
-    private static string GetDeviceKey(BluetoothBatteryDevice device)
-    {
-        if (!string.IsNullOrWhiteSpace(device.Address))
-        {
-            return $"address:{device.Address.Trim()}";
-        }
-
-        if (device.ContainerId.HasValue)
-        {
-            return $"container:{device.ContainerId.Value:D}";
-        }
-
-        return $"id:{device.Id}";
-    }
+    private static string GetDeviceKey(BluetoothBatteryDevice device) =>
+        BatteryDeviceIdentity.GetKey(device);
 
     private string GetDisplayName(BluetoothBatteryDevice device)
     {
@@ -763,11 +1105,11 @@ internal sealed class TrayApplicationContext : ApplicationContext
         return parts.Count == 0 ? string.Empty : $"  [{string.Join(" · ", parts)}]";
     }
 
-    private static string FormatBatterySummary(BluetoothBatteryDevice device)
+    private string FormatBatterySummary(BluetoothBatteryDevice device)
     {
         if (device.Components is null)
         {
-            return device.BatteryPercent is int percentage ? $"{percentage}%" : AppText.Get("NoData");
+            return GetEffectiveBatteryPercent(device) is int percentage ? $"{percentage}%" : AppText.Get("NoData");
         }
 
         var formatted = FormatBatteryComponents(device.Components).Trim();
@@ -814,9 +1156,10 @@ internal sealed class TrayApplicationContext : ApplicationContext
             _ => AppText.Get("SourceNotFound")
         };
 
+        var effectiveBatteryPercent = GetEffectiveBatteryPercent(device);
         var text = AppText.Format("DiagnosticsText",
             GetDisplayName(device), device.Name, connection,
-            device.BatteryPercent is int percent ? $"{percent}%" : AppText.Get("NoData"),
+            effectiveBatteryPercent is int percent ? $"{percent}%" : AppText.Get("NoData"),
             source, components, categories,
             device.BluetoothClassMajor?.ToString() ?? AppText.Get("Unspecified"),
             device.Address ?? AppText.Get("Unspecified"),
@@ -826,7 +1169,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
             text,
             AppText.Get("DeviceDiagnostics"),
             MessageBoxButtons.OK,
-            device.BatteryPercent.HasValue ? MessageBoxIcon.Information : MessageBoxIcon.Warning);
+            effectiveBatteryPercent.HasValue ? MessageBoxIcon.Information : MessageBoxIcon.Warning);
     }
 
     private async Task CheckForUpdatesIfNeededAsync()
@@ -939,7 +1282,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
             false => "○",
             null => "◌"
         };
-        var battery = device.BatteryPercent is int percent ? $"{percent,3}%" : "  — ";
+        var battery = GetEffectiveBatteryPercent(device) is int percent ? $"{percent,3}%" : "  — ";
         var components = FormatBatteryComponents(device.Components);
         return $"{connection}  {battery}   {GetDisplayName(device)}{components}";
     }
@@ -963,9 +1306,10 @@ internal sealed class TrayApplicationContext : ApplicationContext
 
     private void ShowLowBatteryNotificationIfNeeded()
     {
-        var currentlyLow = _devices
-            .Where(device => device is { IsConnected: true, BatteryPercent: not null } &&
-                             device.BatteryPercent <= _settings.LowBatteryThreshold &&
+        var currentlyLow = BatteryDeviceIdentity.Deduplicate(_devices)
+            .Where(device => device.IsConnected == true &&
+                             GetEffectiveBatteryPercent(device) is int percentage &&
+                             percentage <= _settings.LowBatteryThreshold &&
                              GetDevicePreferences(device).LowBatteryNotifications)
             .ToArray();
 
@@ -985,7 +1329,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
         }
 
         var newLowDevices = currentlyLow
-            .Where(device => _lowBatteryNotifications.Add(device.Id))
+            .Where(device => _lowBatteryNotifications.Add(GetDeviceKey(device)))
             .ToArray();
         if (newLowDevices.Length == 0)
         {
@@ -1030,7 +1374,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
     {
         if (device.Components is null)
         {
-            return $"{GetDisplayName(device)}: {device.BatteryPercent}%";
+            return $"{GetDisplayName(device)}: {GetEffectiveBatteryPercent(device)}%";
         }
 
         var lowComponents = new[]
@@ -1045,7 +1389,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
             .ToArray();
 
         return lowComponents.Length == 0
-            ? $"{GetDisplayName(device)}: {device.BatteryPercent}%"
+            ? $"{GetDisplayName(device)}: {GetEffectiveBatteryPercent(device)}%"
             : $"{GetDisplayName(device)}: {string.Join(" · ", lowComponents)}";
     }
 
@@ -1079,6 +1423,26 @@ internal sealed class TrayApplicationContext : ApplicationContext
         }
     }
 
+    private sealed class DeviceTrayIconState : IDisposable
+    {
+        public NotifyIcon NotifyIcon { get; }
+        public Icon Icon { get; set; }
+
+        public DeviceTrayIconState(NotifyIcon notifyIcon, Icon icon)
+        {
+            NotifyIcon = notifyIcon;
+            Icon = icon;
+        }
+
+        public void Dispose()
+        {
+            NotifyIcon.Visible = false;
+            NotifyIcon.ContextMenuStrip?.Dispose();
+            NotifyIcon.Dispose();
+            Icon.Dispose();
+        }
+    }
+
     protected override void ExitThreadCore()
     {
         if (_isExiting)
@@ -1087,9 +1451,10 @@ internal sealed class TrayApplicationContext : ApplicationContext
         }
 
         _isExiting = true;
-        _refreshTimer.Stop();
         _deviceChangeTimer.Stop();
         _deviceWatcher.Changed -= DeviceWatcher_Changed;
+        _runtime.StateChanged -= Runtime_StateChanged;
+        _ = ShutdownRuntimeAsync();
         _deviceWatcher.Dispose();
         _connectionNotifications.Idle -= ConnectionNotifications_Idle;
         _connectionNotifications.Dispose();
@@ -1101,15 +1466,14 @@ internal sealed class TrayApplicationContext : ApplicationContext
             preview.Dispose();
         }
         _trayIconPreviews.Clear();
+        foreach (var deviceTrayIcon in _deviceTrayIcons.Values)
+        {
+            deviceTrayIcon.Dispose();
+        }
+        _deviceTrayIcons.Clear();
         _appLogo.Dispose();
         _currentIcon?.Dispose();
-        _refreshTimer.Dispose();
         _deviceChangeTimer.Dispose();
-        if (_refreshLock.CurrentCount > 0)
-        {
-            _bluetoothService.Dispose();
-            _refreshLock.Dispose();
-        }
         _updateService.Dispose();
         base.ExitThreadCore();
     }

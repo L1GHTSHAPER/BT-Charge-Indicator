@@ -388,4 +388,179 @@ This option appears only if your Bluetooth adapter, its driver, and your headset
   <data name="LanguageEnglish" xml:space="preserve">
     <value>English</value>
   </data>
+
+  <data name="BatteryProfile" xml:space="preserve">
+    <value>Battery profile</value>
+  </data>
+  <data name="DefaultProfile" xml:space="preserve">
+    <value>Default profile</value>
+  </data>
+  <data name="GlobalBatteryAggregation" xml:space="preserve">
+    <value>Global battery aggregation</value>
+  </data>
+  <data name="AggregationLowest" xml:space="preserve">
+    <value>Lowest battery</value>
+  </data>
+  <data name="AggregationHighest" xml:space="preserve">
+    <value>Highest battery</value>
+  </data>
+  <data name="AggregationAverage" xml:space="preserve">
+    <value>Average battery</value>
+  </data>
+  <data name="ProfileEditorTitle" xml:space="preserve">
+    <value>Battery profile editor</value>
+  </data>
+  <data name="ProfileNew" xml:space="preserve">
+    <value>New</value>
+  </data>
+  <data name="ProfileDuplicate" xml:space="preserve">
+    <value>Duplicate</value>
+  </data>
+  <data name="ProfileDelete" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="ProfileName" xml:space="preserve">
+    <value>Profile name</value>
+  </data>
+  <data name="ProfileContainerIds" xml:space="preserve">
+    <value>Windows container IDs</value>
+  </data>
+  <data name="ProfileNameContains" xml:space="preserve">
+    <value>Device name contains</value>
+  </data>
+  <data name="ProfileCategories" xml:space="preserve">
+    <value>Device categories</value>
+  </data>
+  <data name="ProfileAnySource" xml:space="preserve">
+    <value>Any source</value>
+  </data>
+  <data name="ProfileBatterySource" xml:space="preserve">
+    <value>Battery source</value>
+  </data>
+  <data name="ProfileAggregation" xml:space="preserve">
+    <value>Battery calculation</value>
+  </data>
+  <data name="ProfileRuleComponents" xml:space="preserve">
+    <value>Custom rule components</value>
+  </data>
+  <data name="ProfileRuleOperation" xml:space="preserve">
+    <value>Custom rule operation</value>
+  </data>
+  <data name="ProfileMatchHelp" xml:space="preserve">
+    <value>Matching: all configured groups must match; values within a group use OR. Container IDs are strongest. Separate multiple values with semicolons. Custom rules only use the listed components and operations.</value>
+  </data>
+  <data name="ProfilePreview" xml:space="preserve">
+    <value>Preview sample</value>
+  </data>
+  <data name="ProfileSave" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="ProfileCancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="ProfileImport" xml:space="preserve">
+    <value>Import JSON</value>
+  </data>
+  <data name="ProfileExport" xml:space="preserve">
+    <value>Export JSON</value>
+  </data>
+  <data name="ProfileNameInvalid" xml:space="preserve">
+    <value>Enter a profile name between 1 and 80 characters.</value>
+  </data>
+  <data name="ProfileContainerInvalid" xml:space="preserve">
+    <value>Every container ID must be a valid Windows GUID.</value>
+  </data>
+  <data name="ProfileRuleComponentsInvalid" xml:space="preserve">
+    <value>Select at least one component for the custom rule.</value>
+  </data>
+  <data name="ProfileInvalid" xml:space="preserve">
+    <value>The profile contains invalid or unsupported settings.</value>
+  </data>
+  <data name="ProfileNewName" xml:space="preserve">
+    <value>New profile</value>
+  </data>
+  <data name="ProfileCopyName" xml:space="preserve">
+    <value>{0} copy</value>
+  </data>
+  <data name="ProfileDeleteConfirm" xml:space="preserve">
+    <value>Delete profile '{0}'?</value>
+  </data>
+  <data name="ProfileSaveError" xml:space="preserve">
+    <value>Could not save profiles: {0}</value>
+  </data>
+  <data name="ProfileImportError" xml:space="preserve">
+    <value>Could not import profile: {0}</value>
+  </data>
+  <data name="ProfileExportError" xml:space="preserve">
+    <value>Could not export profile: {0}</value>
+  </data>
+  <data name="ProfilePreviewUnavailable" xml:space="preserve">
+    <value>Select a profile to preview it.</value>
+  </data>
+  <data name="ProfilePreviewResult" xml:space="preserve">
+    <value>Sample reading (L 100%, R 100%, case 55%): {0}</value>
+  </data>
+  <data name="ManageProfiles" xml:space="preserve">
+    <value>Manage battery profiles</value>
+  </data>
+  <data name="ProfileSourceInvalid" xml:space="preserve">
+    <value>Enter valid battery source enum names separated by semicolons.</value>
+  </data>
+  <data name="IndividualTrayIcon" xml:space="preserve">
+    <value>Show separate tray icon</value>
+  </data>
+  <data name="IndividualTrayIconStyle" xml:space="preserve">
+    <value>Individual tray icon style</value>
+  </data>
+  <data name="UseGlobalTrayIconStyle" xml:space="preserve">
+    <value>Use global style</value>
+  </data>
+  <data name="HideIndividualTrayIcon" xml:space="preserve">
+    <value>Hide this tray icon</value>
+  </data>
+  <data name="ShowDeviceBatteryDetails" xml:space="preserve">
+    <value>Show battery details</value>
+  </data>
+  <data name="SettingsTitle" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="SettingsTabOverview" xml:space="preserve">
+    <value>Overview</value>
+  </data>
+  <data name="SettingsTabDevices" xml:space="preserve">
+    <value>Devices</value>
+  </data>
+  <data name="SettingsTabProfiles" xml:space="preserve">
+    <value>Profiles</value>
+  </data>
+  <data name="SettingsTabTray" xml:space="preserve">
+    <value>Tray and global battery</value>
+  </data>
+  <data name="SettingsTabNotifications" xml:space="preserve">
+    <value>Notifications</value>
+  </data>
+  <data name="SettingsTabAdvanced" xml:space="preserve">
+    <value>Advanced</value>
+  </data>
+  <data name="SettingsOverviewText" xml:space="preserve">
+    <value>Monitoring {0} paired devices, including {2} currently connected. You have {1} custom battery profiles. Configure each device, tray icons, and battery calculations in the tabs.</value>
+  </data>
+  <data name="SettingsProfileHelp" xml:space="preserve">
+    <value>Profiles control how each device's battery is calculated. You can match devices automatically or assign a profile manually. Custom rules only use known battery components and safe built-in operations.</value>
+  </data>
+  <data name="SettingsNotificationsHelp" xml:space="preserve">
+    <value>Low-battery notifications use each device's profile-calculated primary percentage. Component details remain available in the device summary.</value>
+  </data>
+  <data name="SettingsSave" xml:space="preserve">
+    <value>Save changes</value>
+  </data>
+  <data name="SettingsApply" xml:space="preserve">
+    <value>Apply</value>
+  </data>
+  <data name="SettingsApplyError" xml:space="preserve">
+    <value>Could not apply settings.</value>
+  </data>
+  <data name="SettingsCancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
 </root>

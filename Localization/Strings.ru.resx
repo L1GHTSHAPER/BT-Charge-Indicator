@@ -388,4 +388,179 @@ ID устройства:
   <data name="LanguageEnglish" xml:space="preserve">
     <value>English</value>
   </data>
+
+  <data name="BatteryProfile" xml:space="preserve">
+    <value>Профиль батареи</value>
+  </data>
+  <data name="DefaultProfile" xml:space="preserve">
+    <value>Профиль по умолчанию</value>
+  </data>
+  <data name="GlobalBatteryAggregation" xml:space="preserve">
+    <value>Общий уровень заряда</value>
+  </data>
+  <data name="AggregationLowest" xml:space="preserve">
+    <value>Минимальный заряд</value>
+  </data>
+  <data name="AggregationHighest" xml:space="preserve">
+    <value>Максимальный заряд</value>
+  </data>
+  <data name="AggregationAverage" xml:space="preserve">
+    <value>Средний заряд</value>
+  </data>
+  <data name="ProfileEditorTitle" xml:space="preserve">
+    <value>Редактор профилей батареи</value>
+  </data>
+  <data name="ProfileNew" xml:space="preserve">
+    <value>Создать</value>
+  </data>
+  <data name="ProfileDuplicate" xml:space="preserve">
+    <value>Дублировать</value>
+  </data>
+  <data name="ProfileDelete" xml:space="preserve">
+    <value>Удалить</value>
+  </data>
+  <data name="ProfileName" xml:space="preserve">
+    <value>Название профиля</value>
+  </data>
+  <data name="ProfileContainerIds" xml:space="preserve">
+    <value>Идентификаторы контейнеров Windows</value>
+  </data>
+  <data name="ProfileNameContains" xml:space="preserve">
+    <value>Название устройства содержит</value>
+  </data>
+  <data name="ProfileCategories" xml:space="preserve">
+    <value>Категории устройства</value>
+  </data>
+  <data name="ProfileAnySource" xml:space="preserve">
+    <value>Любой источник</value>
+  </data>
+  <data name="ProfileBatterySource" xml:space="preserve">
+    <value>Источник заряда</value>
+  </data>
+  <data name="ProfileAggregation" xml:space="preserve">
+    <value>Расчёт заряда</value>
+  </data>
+  <data name="ProfileRuleComponents" xml:space="preserve">
+    <value>Компоненты правила</value>
+  </data>
+  <data name="ProfileRuleOperation" xml:space="preserve">
+    <value>Операция правила</value>
+  </data>
+  <data name="ProfileMatchHelp" xml:space="preserve">
+    <value>Совпадение: должны совпасть все заданные группы; внутри группы достаточно одного значения. Идентификаторы контейнеров имеют наивысший приоритет. Разделяйте значения точкой с запятой. Пользовательские правила используют только указанные компоненты и операции.</value>
+  </data>
+  <data name="ProfilePreview" xml:space="preserve">
+    <value>Проверить пример</value>
+  </data>
+  <data name="ProfileSave" xml:space="preserve">
+    <value>Сохранить</value>
+  </data>
+  <data name="ProfileCancel" xml:space="preserve">
+    <value>Отмена</value>
+  </data>
+  <data name="ProfileImport" xml:space="preserve">
+    <value>Импорт JSON</value>
+  </data>
+  <data name="ProfileExport" xml:space="preserve">
+    <value>Экспорт JSON</value>
+  </data>
+  <data name="ProfileNameInvalid" xml:space="preserve">
+    <value>Введите название профиля длиной от 1 до 80 символов.</value>
+  </data>
+  <data name="ProfileContainerInvalid" xml:space="preserve">
+    <value>Каждый идентификатор контейнера должен быть корректным GUID Windows.</value>
+  </data>
+  <data name="ProfileRuleComponentsInvalid" xml:space="preserve">
+    <value>Выберите хотя бы один компонент для пользовательского правила.</value>
+  </data>
+  <data name="ProfileInvalid" xml:space="preserve">
+    <value>Профиль содержит недопустимые или неподдерживаемые параметры.</value>
+  </data>
+  <data name="ProfileNewName" xml:space="preserve">
+    <value>Новый профиль</value>
+  </data>
+  <data name="ProfileCopyName" xml:space="preserve">
+    <value>Копия {0}</value>
+  </data>
+  <data name="ProfileDeleteConfirm" xml:space="preserve">
+    <value>Удалить профиль «{0}»?</value>
+  </data>
+  <data name="ProfileSaveError" xml:space="preserve">
+    <value>Не удалось сохранить профили: {0}</value>
+  </data>
+  <data name="ProfileImportError" xml:space="preserve">
+    <value>Не удалось импортировать профиль: {0}</value>
+  </data>
+  <data name="ProfileExportError" xml:space="preserve">
+    <value>Не удалось экспортировать профиль: {0}</value>
+  </data>
+  <data name="ProfilePreviewUnavailable" xml:space="preserve">
+    <value>Выберите профиль для предварительного просмотра.</value>
+  </data>
+  <data name="ProfilePreviewResult" xml:space="preserve">
+    <value>Пример (L 100%, R 100%, кейс 55%): {0}</value>
+  </data>
+  <data name="ManageProfiles" xml:space="preserve">
+    <value>Управление профилями батареи</value>
+  </data>
+  <data name="ProfileSourceInvalid" xml:space="preserve">
+    <value>Введите допустимые имена источников батареи через точку с запятой.</value>
+  </data>
+  <data name="IndividualTrayIcon" xml:space="preserve">
+    <value>Отдельный значок в трее</value>
+  </data>
+  <data name="IndividualTrayIconStyle" xml:space="preserve">
+    <value>Стиль значка устройства</value>
+  </data>
+  <data name="UseGlobalTrayIconStyle" xml:space="preserve">
+    <value>Использовать общий стиль</value>
+  </data>
+  <data name="HideIndividualTrayIcon" xml:space="preserve">
+    <value>Скрыть этот значок</value>
+  </data>
+  <data name="ShowDeviceBatteryDetails" xml:space="preserve">
+    <value>Показать уровень заряда</value>
+  </data>
+  <data name="SettingsTitle" xml:space="preserve">
+    <value>Настройки</value>
+  </data>
+  <data name="SettingsTabOverview" xml:space="preserve">
+    <value>Обзор</value>
+  </data>
+  <data name="SettingsTabDevices" xml:space="preserve">
+    <value>Устройства</value>
+  </data>
+  <data name="SettingsTabProfiles" xml:space="preserve">
+    <value>Профили</value>
+  </data>
+  <data name="SettingsTabTray" xml:space="preserve">
+    <value>Трей и общий заряд</value>
+  </data>
+  <data name="SettingsTabNotifications" xml:space="preserve">
+    <value>Уведомления</value>
+  </data>
+  <data name="SettingsTabAdvanced" xml:space="preserve">
+    <value>Дополнительно</value>
+  </data>
+  <data name="SettingsOverviewText" xml:space="preserve">
+    <value>Отслеживается устройств: {0}, подключено сейчас: {2}. Пользовательских профилей батареи: {1}. Настройте устройства, значки и расчёт заряда на вкладках.</value>
+  </data>
+  <data name="SettingsProfileHelp" xml:space="preserve">
+    <value>Профили определяют способ расчёта заряда каждого устройства. Устройства можно сопоставлять автоматически или назначать профиль вручную. Пользовательские правила используют только известные компоненты и безопасные встроенные операции.</value>
+  </data>
+  <data name="SettingsNotificationsHelp" xml:space="preserve">
+    <value>Уведомления о низком заряде используют основной процент, рассчитанный профилем устройства. Подробности по компонентам доступны в сводке устройства.</value>
+  </data>
+  <data name="SettingsSave" xml:space="preserve">
+    <value>Сохранить изменения</value>
+  </data>
+  <data name="SettingsApply" xml:space="preserve">
+    <value>Применить</value>
+  </data>
+  <data name="SettingsApplyError" xml:space="preserve">
+    <value>Не удалось применить настройки.</value>
+  </data>
+  <data name="SettingsCancel" xml:space="preserve">
+    <value>Отмена</value>
+  </data>
 </root>

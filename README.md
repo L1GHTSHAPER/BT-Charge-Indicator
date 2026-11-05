@@ -4,10 +4,10 @@
 
 # Bluetooth Battery Indicator for Windows
 
-[![Windows](https://img.shields.io/badge/Windows-10%20%7C%2011-0078D4?logo=windows)](https://github.com/L1GHTSHAPER/BT-Charge-Indicator)
-[![.NET](https://img.shields.io/badge/.NET-9.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com/)
-[![Release](https://img.shields.io/github/v/release/L1GHTSHAPER/BT-Charge-Indicator)](https://github.com/L1GHTSHAPER/BT-Charge-Indicator/releases/latest)
-[![License](https://img.shields.io/github/license/L1GHTSHAPER/BT-Charge-Indicator)](LICENSE)
+[![Windows](https://img.shields.io/badge/Windows-10%20%7C%2011-0078D4?logo=windows)](https://github.com/realSamy/BT-Charge-Indicator)
+[![.NET](https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com/)
+[![Release](https://img.shields.io/github/v/release/realSamy/BT-Charge-Indicator)](https://github.com/realSamy/BT-Charge-Indicator/releases/latest)
+[![License](https://img.shields.io/github/license/realSamy/BT-Charge-Indicator)](LICENSE)
 
 **BT Charge Indicator** is a lightweight Windows system tray app that displays the battery percentage of connected Bluetooth devices: wireless headphones, earbuds, headsets, game controllers, keyboards, mice, speakers, and other accessories.
 
@@ -15,7 +15,7 @@ It works natively on Windows 10 and Windows 11 and reads battery levels through 
 
 ## Download
 
-Download the latest ready-to-run Windows executable from [GitHub Releases](https://github.com/L1GHTSHAPER/BT-Charge-Indicator/releases/latest). The app is portable and does not require installation.
+This fork does not have a tagged release yet. For a ready-to-run build, open the latest successful [Windows CI run](https://github.com/realSamy/BT-Charge-Indicator/actions/workflows/windows-ci.yml) and download the `BTChargeIndicator-win-x64` artifact. You can also build it locally with the .NET 10 SDK using the instructions below. Tagged releases will appear on [GitHub Releases](https://github.com/realSamy/BT-Charge-Indicator/releases) when the fork is ready.
 
 ## Features
 
@@ -36,6 +36,10 @@ Download the latest ready-to-run Windows executable from [GitHub Releases](https
 - configurable low battery threshold and native Windows notifications with snooze;
 - English and Russian interface and notifications, automatic Windows language detection, and a saved language selector;
 - per-device renaming, hiding, tray icon inclusion, and notification settings;
+- versioned JSON battery profiles with a native profile editor, matching rules, import/export, and live sample preview;
+- built-in and safe custom battery aggregation rules for left/right earbuds, charging cases, and combined device readings;
+- independent tray icons and icon styles for selected devices, alongside a configurable global battery icon;
+- stable Windows device-container profile matching with migration from older address-based device preferences;
 - device diagnostics showing the battery data source and Bluetooth identifiers;
 - optional startup with Windows;
 - optional automatic update checks through GitHub Releases;
@@ -59,17 +63,20 @@ Battery reporting depends on the device firmware and Windows driver. Separate TW
 
 ## Usage
 
-1. Download and run `BTChargeIndicator.exe`.
+1. Download the `BTChargeIndicator-win-x64` artifact from a successful [Windows CI run](https://github.com/realSamy/BT-Charge-Indicator/actions/workflows/windows-ci.yml), or build it with `build.ps1`.
 2. Find the colored percentage icon in the Windows system tray.
 3. Left-click the icon for a quick battery summary.
-4. Right-click it for the full device list and settings.
-5. Double-click it to open Windows Bluetooth settings.
+4. Right-click it for the device list, quick options, and the tabbed **Settings** window.
+5. Open **Settings** to manage devices, profiles, global aggregation, tray styles, notifications, and advanced options.
+6. Double-click it to open Windows Bluetooth settings.
 
-The tray icon shows the lowest known battery percentage among currently connected devices, helping you notice the accessory that needs charging first.
+By default, the global tray icon shows the lowest known battery percentage among currently connected devices. Change it to the highest or average value from **Global battery aggregation**. Each device can use its own battery profile and optional separate tray icon. For TWS earbuds, the default primary percentage uses the lowest known left/right earbud level; the charging case remains visible in the details but does not lower the primary percentage while an earbud reading is available.
 
 The app uses Russian when the Windows display language is Russian and English for other display languages. Select **Language / Язык → Automatic (Windows), Русский, or English** in the tray menu to choose a language. The selection is saved and applies immediately to menus, dialogs, new Windows notifications, and active connection cards. Device names stay as you entered them. Windows owns the generic buttons in its standard message boxes.
 
-Choose a style from **Tray icon style / Вид значка в трее** in the right-click menu. The selection is saved automatically; every style indicates low charge in red, medium charge in amber, and unavailable readings with a question mark.
+Choose a style from **Tray icon style / Вид значка в трее** in the right-click menu. For an individual device, open its device submenu, enable **Show separate tray icon**, and choose an individual style or inherit the global style. The selection is saved automatically; every style indicates low charge in red, medium charge in amber, and unavailable readings with a question mark.
+
+Open **Manage battery profiles** to create, duplicate, delete, import, export, and preview device profiles. Profiles can match by Windows container ID, device name, Windows category, or battery protocol. Custom rules select known battery components and apply a minimum, maximum, average, or first-available operation; they do not execute scripts or arbitrary code. See [Battery profiles](docs/PROFILES.md) and the [example profiles](docs/examples/profiles.json).
 
 ![Ten tray icon styles on dark and light backgrounds, at 32 and 16 pixels](docs/tray-icon-styles.png)
 
@@ -86,7 +93,7 @@ When a connection also reports low battery, the Windows warning waits until the 
 Requirements:
 
 - Windows 10 or Windows 11;
-- [.NET 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0).
+- [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0).
 
 Create a self-contained single-file build:
 
@@ -122,7 +129,9 @@ The Fast Pair battery layout follows the official [Google Fast Pair Battery Noti
 
 **BT Charge Indicator** — приложение для отображения заряда Bluetooth-устройств в системном трее Windows 10/11. Поддерживаются беспроводные наушники, TWS-гарнитуры, геймпады, мыши, клавиатуры, колонки и BLE-аксессуары.
 
-Скачайте готовый файл на странице [последнего релиза](https://github.com/L1GHTSHAPER/BT-Charge-Indicator/releases/latest), запустите его и откройте меню правым щелчком по значку в трее. Установка не требуется.
+Для этой версии форка пока нет отмеченного релиза. Готовую сборку можно скачать как артефакт `BTChargeIndicator-win-x64` из последнего успешного [запуска Windows CI](https://github.com/realSamy/BT-Charge-Indicator/actions/workflows/windows-ci.yml). Также можно собрать файл с помощью `build.ps1` и .NET 10 SDK. Установка не требуется.
+
+В меню **Управление профилями батареи** можно создавать и редактировать JSON-профили, задавать правила сопоставления устройств, выбирать алгоритм расчёта, импортировать и экспортировать профили, а также проверять результат на примере. Для отдельного значка устройства откройте его подменю и включите **Отдельный значок в трее**. Общий значок поддерживает минимальный, максимальный и средний заряд. По умолчанию заряд кейса не снижает основной процент TWS-наушников, если известен заряд хотя бы одного наушника. Подробнее: [профили батареи](docs/PROFILES.md).
 
 Уведомления, меню и диалоги поддерживают русский и английский. По умолчанию язык выбирается по языку интерфейса Windows: русский для русской Windows, английский для остальных языков. В меню **Язык / Language** можно выбрать **Автоматически (Windows)**, **Русский** или **English**. Выбор сохраняется и применяется сразу, без перезапуска; имена устройств остаются прежними.
 

@@ -117,12 +117,12 @@ internal sealed class BluetoothBatteryService : IDisposable
         }
         catch (UnauthorizedAccessException ex)
         {
-            AppLogger.Error("Bluetooth access was denied.", ex);
+            PlatformLogger.Error("Bluetooth access was denied.", ex);
             return new BluetoothScanResult([], BluetoothAvailability.AccessDenied, ex.Message);
         }
         catch (Exception ex)
         {
-            AppLogger.Error("Bluetooth scan failed.", ex);
+            PlatformLogger.Error("Bluetooth scan failed.", ex);
             return new BluetoothScanResult([], BluetoothAvailability.Error, ex.Message);
         }
     }
@@ -199,6 +199,7 @@ internal sealed class BluetoothBatteryService : IDisposable
             {
                 BatteryPercent = battery?.BatteryPercent ?? device.BatteryPercent,
                 Components = battery?.Components ?? device.Components,
+                IsCharging = battery?.IsCharging ?? device.IsCharging,
                 BatterySource = battery is null
                     ? device.BatterySource
                     : battery.Components is null
@@ -433,7 +434,12 @@ internal sealed class BluetoothBatteryService : IDisposable
             BatteryPercent = reading.LowestPercent ?? device.BatteryPercent,
             IsConnected = true,
             BatterySource = source,
-            Components = reading.Components
+            Components = reading.Components,
+            IsCharging = reading.LeftCharging == true || reading.RightCharging == true || reading.CaseCharging == true
+                ? true
+                : reading.LeftCharging == false && reading.RightCharging == false && reading.CaseCharging == false
+                    ? false
+                    : device.IsCharging
         };
     }
 
@@ -601,6 +607,23 @@ internal sealed class BluetoothBatteryService : IDisposable
             {
                 using (service)
                 {
+                    bool? isCharging = null;
+                    var statusResult = await service.GetCharacteristicsForUuidAsync(
+                        Guid.Parse("00002BED-0000-1000-8000-00805F9B34FB"), BluetoothCacheMode.Cached);
+                    if (statusResult.Status == GattCommunicationStatus.Success)
+                    {
+                        foreach (var statusCharacteristic in statusResult.Characteristics)
+                        {
+                                var statusValue = await statusCharacteristic.ReadValueAsync(BluetoothCacheMode.Uncached);
+                                if (statusValue.Status != GattCommunicationStatus.Success || statusValue.Value.Length < 3) continue;
+                                using var statusReader = DataReader.FromBuffer(statusValue.Value);
+                                _ = statusReader.ReadByte(); // Flags precede the two-byte Power State.
+                                var powerState = statusReader.ReadUInt16();
+                                var state = (powerState >> 5) & 0x03;
+                                isCharging = state == 1 ? true : state is 2 or 3 ? false : null;
+                        }
+                    }
+
                     var characteristicsResult = await service.GetCharacteristicsForUuidAsync(
                         GattCharacteristicUuids.BatteryLevel,
                         BluetoothCacheMode.Cached);
@@ -622,9 +645,33 @@ internal sealed class BluetoothBatteryService : IDisposable
                         var percentage = reader.ReadByte();
                         if (percentage <= 100)
                         {
-                            levels.Add(new GattComponentReading(
-                                percentage,
-                                ClassifyGattComponent(characteristic.UserDescription)));
+                            var kind = ClassifyGattComponent(characteristic.UserDescription);
+                            if (kind == BatteryComponentKind.Unknown)
+                            {
+                                var formatResult = await characteristic.GetDescriptorsForUuidAsync(
+                                    Guid.Parse("00002904-0000-1000-8000-00805F9B34FB"), BluetoothCacheMode.Cached);
+                                foreach (var descriptor in formatResult.Descriptors)
+                                {
+                                        var format = await descriptor.ReadValueAsync(BluetoothCacheMode.Uncached);
+                                        if (format.Status != GattCommunicationStatus.Success || format.Value.Length < 7) continue;
+                                        using var formatReader = DataReader.FromBuffer(format.Value);
+                                        formatReader.ReadByte(); formatReader.ReadByte(); formatReader.ReadUInt16();
+                                        var nameSpace = formatReader.ReadByte();
+                                        var description = formatReader.ReadUInt16();
+                                        if (nameSpace == 1)
+                                        {
+                                            kind = description switch
+                                            {
+                                                0x0945 => BatteryComponentKind.Left,
+                                                0x0946 => BatteryComponentKind.Right,
+                                                0x0788 => BatteryComponentKind.Case,
+                                                _ => BatteryComponentKind.Unknown
+                                            };
+                                        }
+                                        break;
+                                }
+                            }
+                            levels.Add(new GattComponentReading(percentage, kind, isCharging));
                         }
                     }
                 }
@@ -643,7 +690,9 @@ internal sealed class BluetoothBatteryService : IDisposable
                         components.RightPercent,
                         components.CasePercent)
                     .LowestPercent ?? levels.Min(level => level.Percentage);
-            return new GattBatteryReading(aggregate, components);
+            bool? overallCharging = levels.Any(level => level.IsCharging == true)
+                ? true : levels.All(level => level.IsCharging == false) ? false : null;
+            return new GattBatteryReading(aggregate, components, overallCharging);
         }
         catch
         {
@@ -692,7 +741,10 @@ internal sealed class BluetoothBatteryService : IDisposable
         // Some BAS 1.1 devices expose three service instances without textual
         // descriptors. The spec orders no instances, so do not guess left/right.
         return left.HasValue || right.HasValue || chargingCase.HasValue
-            ? new BatteryComponents(left, right, chargingCase)
+            ? new BatteryComponents(left, right, chargingCase,
+                readings.FirstOrDefault(reading => reading.Kind == BatteryComponentKind.Left)?.IsCharging,
+                readings.FirstOrDefault(reading => reading.Kind == BatteryComponentKind.Right)?.IsCharging,
+                readings.FirstOrDefault(reading => reading.Kind == BatteryComponentKind.Case)?.IsCharging)
             : null;
     }
 
@@ -708,7 +760,8 @@ internal sealed class BluetoothBatteryService : IDisposable
 
     private sealed record GattBatteryReading(
         int BatteryPercent,
-        BatteryComponents? Components);
+        BatteryComponents? Components,
+        bool? IsCharging);
 
     private sealed record NothingDeviceReading(
         string Id,
@@ -716,7 +769,8 @@ internal sealed class BluetoothBatteryService : IDisposable
 
     private sealed record GattComponentReading(
         int Percentage,
-        BatteryComponentKind Kind);
+        BatteryComponentKind Kind,
+        bool? IsCharging);
 
     private enum BatteryComponentKind
     {

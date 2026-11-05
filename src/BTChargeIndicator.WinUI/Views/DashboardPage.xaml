@@ -1,0 +1,257 @@
+<Page
+    x:Class="BTChargeIndicator.WinUI.Views.DashboardPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    SizeChanged="DashboardPage_SizeChanged">
+    <Page.Resources>
+        <ItemsPanelTemplate x:Key="ListItemsPanel">
+            <StackPanel Spacing="0" />
+        </ItemsPanelTemplate>
+            <ItemsPanelTemplate x:Key="TileItemsPanel">
+            <ItemsWrapGrid Orientation="Horizontal" ItemWidth="300" ItemHeight="220" />
+        </ItemsPanelTemplate>
+        <ItemsPanelTemplate x:Key="TileItemsPanelCompact">
+            <ItemsWrapGrid Orientation="Horizontal" ItemWidth="240" ItemHeight="220" />
+        </ItemsPanelTemplate>
+    </Page.Resources>
+    <ScrollViewer>
+        <StackPanel Spacing="20" Padding="28">
+            <Grid>
+                <StackPanel Spacing="5">
+                    <TextBlock x:Name="DashboardTitleText" Text="Dashboard" FontSize="30" FontWeight="SemiBold" />
+                    <TextBlock x:Name="DashboardDescriptionText" Text="Your Bluetooth devices and battery status in one place."
+                               FontSize="14" Opacity="0.72" />
+                </StackPanel>
+            </Grid>
+
+            <InfoBar x:Name="RuntimeStatus" IsOpen="True" IsClosable="False" Severity="Informational"
+                     Title="Starting Bluetooth" Message="Waiting for the first device scan..." />
+
+            <CommandBar x:Name="DashboardCommandBar" DefaultLabelPosition="Right"
+                        OverflowButtonVisibility="Collapsed">
+                <CommandBar.PrimaryCommands>
+                    <AppBarToggleButton x:Name="TilesButton" Label="Tiles" Icon="ViewAll" IsCompact="False"
+                                        IsChecked="True" Click="TilesButton_Click" />
+                    <AppBarToggleButton x:Name="ListButton" Label="List" Icon="List" IsCompact="False"
+                                        Click="ListButton_Click" />
+                    <AppBarSeparator />
+                    <AppBarToggleButton x:Name="SelectionButton" Label="Select" Icon="SelectAll" IsCompact="False"
+                                        Click="SelectionButton_Click" />
+                    <AppBarButton x:Name="SelectAllButton" Label="Select all" Icon="SelectAll" IsCompact="False"
+                                  IsEnabled="False" Visibility="Collapsed" Click="SelectAll_Click" />
+                    <AppBarButton x:Name="UnselectAllButton" Label="Unselect all" Icon="ClearSelection" IsCompact="False"
+                                  IsEnabled="False" Visibility="Collapsed" Click="UnselectAll_Click" />
+                    <AppBarButton x:Name="InvertSelectionButton" Label="Invert selection" Icon="Switch" IsCompact="False"
+                                  IsEnabled="False" Visibility="Collapsed" Click="InvertSelection_Click" />
+                    <AppBarSeparator x:Name="SelectionActionsSeparator" Visibility="Collapsed" />
+                    <AppBarButton x:Name="ActionsButton" Label="Actions" Icon="More" IsCompact="False" IsEnabled="False">
+                        <AppBarButton.Flyout>
+                        <MenuFlyout>
+                            <MenuFlyoutItem x:Name="HideSelectedAction" Text="Hide selected"
+                                            Click="HideSelected_Click" />
+                            <MenuFlyoutItem x:Name="ShowSelectedAction" Text="Show selected"
+                                            Click="ShowSelected_Click" />
+                        </MenuFlyout>
+                        </AppBarButton.Flyout>
+                    </AppBarButton>
+                    <AppBarSeparator />
+                    <AppBarButton x:Name="FilterButton" Label="Filter" Icon="Filter" IsCompact="False"
+                                  Click="FilterButton_Click">
+                        <AppBarButton.Flyout>
+                            <Flyout>
+                                <StackPanel x:Name="FilterFlyoutContent" MinWidth="250" MaxHeight="520"
+                                            Padding="16" Spacing="8">
+                                    <CheckBox x:Name="ShowHiddenFilterItem" Content="Show hidden devices"
+                                              Click="FilterChanged_Click" />
+                                    <Border Height="1" Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
+                                    <CheckBox x:Name="ConnectedFilterItem" Content="Connected" Click="FilterChanged_Click" />
+                                    <CheckBox x:Name="DisconnectedFilterItem" Content="Disconnected" Click="FilterChanged_Click" />
+                                    <Border Height="1" Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
+                                    <TextBlock x:Name="DeviceTypeFilterHeader" Text="Device type" FontWeight="SemiBold" />
+                                    <StackPanel x:Name="CategoryFilterList" Spacing="4" />
+                                </StackPanel>
+                            </Flyout>
+                        </AppBarButton.Flyout>
+                    </AppBarButton>
+                    <AppBarButton x:Name="ClearFiltersButton" Label="Clear filters" Icon="Cancel" IsCompact="False"
+                                  Visibility="Collapsed" Click="ClearFilters_Click" />
+                    <AppBarButton x:Name="SortButton" Label="Sort by" Icon="Sort" IsCompact="False">
+                        <AppBarButton.Flyout>
+                            <MenuFlyout>
+                                <ToggleMenuFlyoutItem x:Name="SortConnectedItem" Text="Connection" IsChecked="True" Click="SortOrder_Click" />
+                                <ToggleMenuFlyoutItem x:Name="SortTypeItem" Text="Device type" Click="SortOrder_Click" />
+                                <ToggleMenuFlyoutItem x:Name="SortNameItem" Text="Device name" Click="SortOrder_Click" />
+                                <ToggleMenuFlyoutItem x:Name="SortBatteryItem" Text="Battery level" Click="SortOrder_Click" />
+                            </MenuFlyout>
+                        </AppBarButton.Flyout>
+                    </AppBarButton>
+                    <AppBarButton x:Name="RefreshButton" Label="Refresh" Icon="Refresh" IsCompact="False"
+                                  Click="RefreshButton_Click">
+                        <AppBarButton.KeyboardAccelerators>
+                            <KeyboardAccelerator Key="R" Modifiers="Control" />
+                        </AppBarButton.KeyboardAccelerators>
+                    </AppBarButton>
+                </CommandBar.PrimaryCommands>
+            </CommandBar>
+            <TextBlock x:Name="SelectionCountText" VerticalAlignment="Center" Opacity="0.72"
+                       Visibility="Collapsed" />
+
+            <StackPanel x:Name="EmptyState" Spacing="8" Padding="24">
+                <TextBlock x:Name="NoDevicesTitleText" Text="No Bluetooth devices found" FontSize="20"
+                           FontWeight="SemiBold" HorizontalAlignment="Center" />
+                <TextBlock x:Name="NoDevicesHelpText" Text="Pair a Bluetooth device or refresh to check again."
+                           TextWrapping="Wrap" Opacity="0.72" HorizontalAlignment="Center" />
+            </StackPanel>
+
+            <ItemsControl x:Name="DeviceList">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Tapped="DeviceCard_Tapped" PointerEntered="DeviceCard_PointerEntered"
+                              PointerExited="DeviceCard_PointerExited" Background="Transparent" Margin="0,0,10,10">
+                            <Border Padding="12" CornerRadius="12"
+                                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
+                                <Grid>
+                                    <StackPanel Visibility="{Binding TileContentVisibility}" Spacing="8"
+                                                HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="250">
+                                        <FontIcon Glyph="{Binding DeviceGlyph}" FontSize="34" Margin="0,0,0,5"
+                                                  HorizontalAlignment="Center" />
+                                        <TextBlock Text="{Binding Name}" FontSize="16" FontWeight="SemiBold"
+                                                   TextTrimming="CharacterEllipsis" TextAlignment="Center"
+                                                   HorizontalAlignment="Center" Margin="0,0,0,5" />
+                                        <TextBlock Text="{Binding ConnectionLabel}" FontSize="12" Opacity="0.72"
+                                                   HorizontalAlignment="Center" Margin="0,0,0,3" />
+                                        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                                            <TextBlock Text="{Binding BatteryPercentLabel}" FontSize="18" FontWeight="SemiBold"
+                                                       VerticalAlignment="Center" Visibility="{Binding BatteryPercentVisibility}" />
+                                            <TextBlock Text="{Binding NoBatteryLabel}" FontSize="13" Opacity="0.58"
+                                                       HorizontalAlignment="Center" TextAlignment="Center"
+                                                       VerticalAlignment="Center" Visibility="{Binding NoBatteryVisibility}" />
+                                            <TextBlock Text="{Binding BatteryCondition}" FontSize="12" FontWeight="SemiBold"
+                                                       Foreground="{ThemeResource SystemFillColorCautionBrush}" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                        <TextBlock Text="{Binding BatteryDetailsLabel}" FontSize="12" Opacity="0.76"
+                                                   HorizontalAlignment="Center" Visibility="{Binding BatteryDetailsVisibility}" />
+                                        <TextBlock Text="{Binding ChargingLabel}" FontSize="12" FontWeight="SemiBold"
+                                                   Foreground="{ThemeResource SystemFillColorCautionBrush}"
+                                                   HorizontalAlignment="Center" Visibility="{Binding ChargingVisibility}" />
+                                        <ProgressBar Value="{Binding BatteryValue}" Maximum="100" Width="160"
+                                                     Visibility="{Binding BatteryBarVisibility}" />
+                                    </StackPanel>
+                                    <Grid Visibility="{Binding ListContentVisibility}" RowSpacing="12">
+                                    <Grid Visibility="{Binding WideListContentVisibility}" RowSpacing="12">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+                                    <Grid ColumnSpacing="8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <FontIcon Glyph="{Binding DeviceGlyph}" FontSize="24" VerticalAlignment="Center" />
+                                        <StackPanel Grid.Column="1" Spacing="5" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Name}" FontSize="16" FontWeight="SemiBold"
+                                                       TextTrimming="CharacterEllipsis" />
+                                            <TextBlock Text="{Binding ConnectionLabel}" FontSize="12" Opacity="0.72" />
+                                        </StackPanel>
+                                    </Grid>
+                                    <Grid Grid.Row="1" ColumnSpacing="10" VerticalAlignment="Center">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="{Binding BatteryPercentLabel}" FontSize="20" FontWeight="SemiBold"
+                                                   VerticalAlignment="Center" Visibility="{Binding BatteryPercentVisibility}" />
+                                        <TextBlock Grid.Column="0" Text="{Binding NoBatteryLabel}" FontSize="13"
+                                                   Opacity="0.58" VerticalAlignment="Center"
+                                                   Grid.ColumnSpan="3" HorizontalAlignment="Center" TextAlignment="Center"
+                                                   Visibility="{Binding NoBatteryVisibility}" />
+                                        <ProgressBar Grid.Column="1" Value="{Binding BatteryValue}" Maximum="100"
+                                                     Visibility="{Binding BatteryBarVisibility}" />
+                                        <TextBlock Grid.Column="2" Text="{Binding BatteryCondition}" FontSize="12"
+                                                   FontWeight="SemiBold" Foreground="{ThemeResource SystemFillColorCautionBrush}"
+                                                   VerticalAlignment="Center" />
+                                    </Grid>
+                                    <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="12">
+                                        <TextBlock Text="{Binding BatteryDetailsLabel}" FontSize="12" Opacity="0.76"
+                                                   Visibility="{Binding BatteryDetailsVisibility}" />
+                                        <TextBlock Text="{Binding ChargingLabel}" FontSize="12" FontWeight="SemiBold"
+                                                   Foreground="{ThemeResource SystemFillColorCautionBrush}"
+                                                   Visibility="{Binding ChargingVisibility}" />
+                                    </StackPanel>
+                                    </Grid>
+                                    <StackPanel Visibility="{Binding NarrowListContentVisibility}" Spacing="10"
+                                                Margin="0,4,38,0">
+                                        <Grid ColumnSpacing="10">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <FontIcon Glyph="{Binding DeviceGlyph}" FontSize="24" VerticalAlignment="Center" />
+                                            <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Name}" FontSize="16" FontWeight="SemiBold"
+                                                           TextTrimming="CharacterEllipsis" />
+                                                <TextBlock Text="{Binding ConnectionLabel}" FontSize="12" Opacity="0.72" />
+                                            </StackPanel>
+                                        </Grid>
+                                        <StackPanel Spacing="6">
+                                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                                <TextBlock Text="{Binding BatteryPercentLabel}" FontSize="20" FontWeight="SemiBold"
+                                                           Visibility="{Binding BatteryPercentVisibility}" />
+                                                <TextBlock Text="{Binding NoBatteryLabel}" FontSize="13" Opacity="0.58"
+                                                           Visibility="{Binding NoBatteryVisibility}" />
+                                                <TextBlock Text="{Binding BatteryCondition}" FontSize="12" FontWeight="SemiBold"
+                                                           Foreground="{ThemeResource SystemFillColorCautionBrush}" />
+                                            </StackPanel>
+                                            <ProgressBar Value="{Binding BatteryValue}" Maximum="100"
+                                                         Visibility="{Binding BatteryBarVisibility}" />
+                                        </StackPanel>
+                                        <StackPanel Spacing="4">
+                                            <TextBlock Text="{Binding BatteryDetailsLabel}" FontSize="12" Opacity="0.76"
+                                                       Visibility="{Binding BatteryDetailsVisibility}" />
+                                            <TextBlock Text="{Binding ChargingLabel}" FontSize="12" FontWeight="SemiBold"
+                                                       Foreground="{ThemeResource SystemFillColorCautionBrush}"
+                                                       Visibility="{Binding ChargingVisibility}" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                    </Grid>
+                                    <Button HorizontalAlignment="Right" VerticalAlignment="Top" Padding="8,4"
+                                            MinWidth="36" MinHeight="36" Background="Transparent" BorderThickness="0"
+                                            Tag="{Binding DeviceKey}" ToolTipService.ToolTip="{Binding DeviceOptionsLabel}">
+                                        <SymbolIcon Symbol="More" />
+                                        <Button.Flyout>
+                                            <MenuFlyout>
+                                                <MenuFlyoutItem Text="{Binding RenameMenuLabel}" Tag="{Binding DeviceKey}"
+                                                                Click="RenameDevice_Click" />
+                                                <MenuFlyoutItem Text="{Binding ToggleVisibilityMenuLabel}" Tag="{Binding DeviceKey}"
+                                                                Click="ToggleDeviceVisibility_Click" />
+                                                <MenuFlyoutSeparator />
+                                                <MenuFlyoutItem Text="{Binding TraySettingsMenuLabel}"
+                                                                Tag="{Binding DeviceKey}" Click="DeviceTraySettings_Click" />
+                                                <MenuFlyoutItem Text="{Binding NotificationSettingsMenuLabel}"
+                                                                Tag="{Binding DeviceKey}" Click="DeviceNotifications_Click" />
+                                            </MenuFlyout>
+                                        </Button.Flyout>
+                                    </Button>
+                                </Grid>
+                            </Border>
+                            <Border Background="{ThemeResource ControlFillColorSecondaryBrush}" Opacity="0.28"
+                                    CornerRadius="12" Visibility="{Binding HoverVisibility}"
+                                    IsHitTestVisible="False" />
+                            <Border Background="{ThemeResource AccentFillColorDefaultBrush}" Opacity="0.12"
+                                    CornerRadius="12" Visibility="{Binding SelectionVisibility}"
+                                    IsHitTestVisible="False" />
+                            <Border Width="4" HorizontalAlignment="Left" CornerRadius="2"
+                                    Background="{ThemeResource AccentFillColorDefaultBrush}"
+                                    Visibility="{Binding SelectionStripeVisibility}" IsHitTestVisible="False" />
+                        </Grid>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+    </ScrollViewer>
+</Page>

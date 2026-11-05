@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
+    <UseWinUI>true</UseWinUI>
+    <WindowsPackageType>None</WindowsPackageType>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <EnableMsixTooling>true</EnableMsixTooling>
+    <PublishTrimmed>false</PublishTrimmed>
+    <PublishSingleFile>false</PublishSingleFile>
+    <PublishReadyToRun>false</PublishReadyToRun>
+    <CETCompat>false</CETCompat>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <AssemblyName>BTChargeIndicator.WinUI</AssemblyName>
+    <RootNamespace>BTChargeIndicator.WinUI</RootNamespace>
+    <ApplicationTitle>BT Charge Indicator</ApplicationTitle>
+    <Description>Modern WinUI 3 dashboard for BT Charge Indicator.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.6.5" />
+    <ProjectReference Include="..\BTChargeIndicator.Core\BTChargeIndicator.Core.csproj" />
+    <ProjectReference Include="..\BTChargeIndicator.Platform.Windows\BTChargeIndicator.Platform.Windows.csproj" />
+    <Compile Include="..\..\Services\BluetoothDeviceWatcher.cs" Link="Services\BluetoothDeviceWatcher.cs" />
+    <Compile Include="..\..\Services\AppLogger.cs" Link="Services\AppLogger.cs" />
+  </ItemGroup>
+</Project>

@@ -20,6 +20,8 @@ internal sealed class AppSettings
 
     public BatteryAggregationMode GlobalAggregationMode { get; set; } = BatteryAggregationMode.Lowest;
 
+    public string? PreferredTrayDeviceKey { get; set; }
+
     public bool CheckForUpdatesAutomatically { get; set; } = true;
 
     public DateTimeOffset? LastUpdateCheckUtc { get; set; }
@@ -38,6 +40,7 @@ internal sealed class AppSettings
             ConnectionNotifications = ConnectionNotifications,
             IconStyle = IconStyle,
             GlobalAggregationMode = GlobalAggregationMode,
+            PreferredTrayDeviceKey = PreferredTrayDeviceKey,
             CheckForUpdatesAutomatically = CheckForUpdatesAutomatically,
             LastUpdateCheckUtc = LastUpdateCheckUtc
         };
@@ -49,11 +52,13 @@ internal sealed class AppSettings
                 LastKnownName = value.LastKnownName,
                 CustomName = value.CustomName,
                 ProfileId = value.ProfileId,
+                BatteryMode = value.BatteryMode,
                 ShowIndividualTrayIcon = value.ShowIndividualTrayIcon,
                 IndividualTrayIconStyle = value.IndividualTrayIconStyle,
                 IsHidden = value.IsHidden,
                 IncludeInTrayIcon = value.IncludeInTrayIcon,
-                LowBatteryNotifications = value.LowBatteryNotifications
+                LowBatteryNotifications = value.LowBatteryNotifications,
+                ConnectionNotifications = value.ConnectionNotifications
             };
         }
         return clone;
@@ -92,6 +97,10 @@ internal sealed class AppSettings
             {
                 preferences.IndividualTrayIconStyle = null;
             }
+            if (preferences.BatteryMode.HasValue && !Enum.IsDefined(preferences.BatteryMode.Value))
+            {
+                preferences.BatteryMode = null;
+            }
         }
     }
 }
@@ -112,6 +121,8 @@ internal sealed class DevicePreferences
 
     public string? ProfileId { get; set; }
 
+    public BatteryAggregationMode? BatteryMode { get; set; }
+
     public bool ShowIndividualTrayIcon { get; set; }
 
     public TrayIconStyle? IndividualTrayIconStyle { get; set; }
@@ -121,6 +132,8 @@ internal sealed class DevicePreferences
     public bool IncludeInTrayIcon { get; set; } = true;
 
     public bool LowBatteryNotifications { get; set; } = true;
+
+    public bool ConnectionNotifications { get; set; } = true;
 }
 
 internal enum TrayIconStyle

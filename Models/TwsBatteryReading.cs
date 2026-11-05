@@ -3,9 +3,13 @@ namespace BTChargeIndicator.Models;
 internal sealed record TwsBatteryReading(
     int? LeftPercent,
     int? RightPercent,
-    int? CasePercent)
+    int? CasePercent,
+    bool? LeftCharging = null,
+    bool? RightCharging = null,
+    bool? CaseCharging = null)
 {
-    public BatteryComponents Components => new(LeftPercent, RightPercent, CasePercent);
+    public BatteryComponents Components => new(LeftPercent, RightPercent, CasePercent,
+        LeftCharging, RightCharging, CaseCharging);
 
     // The primary TWS value represents the earbuds, not the charging case.
     // If neither earbud reports a level, retain a useful case-only fallback.

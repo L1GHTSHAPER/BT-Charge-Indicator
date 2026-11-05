@@ -14,6 +14,8 @@ internal sealed record BluetoothBatteryDevice(
 
     public BatteryComponents? Components { get; init; }
 
+    public bool? IsCharging { get; init; }
+
     public IReadOnlyList<string> Categories { get; init; } = [];
 
     public ushort? BluetoothClassMajor { get; init; }
@@ -22,7 +24,10 @@ internal sealed record BluetoothBatteryDevice(
 internal sealed record BatteryComponents(
     int? LeftPercent,
     int? RightPercent,
-    int? CasePercent);
+    int? CasePercent,
+    bool? LeftCharging = null,
+    bool? RightCharging = null,
+    bool? CaseCharging = null);
 
 internal enum BatteryReadingSource
 {

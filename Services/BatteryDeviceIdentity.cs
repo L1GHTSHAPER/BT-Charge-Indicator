@@ -51,7 +51,11 @@ internal static class BatteryDeviceIdentity
         var right = FirstKnown(candidates.Select(device => device.Components?.RightPercent));
         var casePercent = FirstKnown(candidates.Select(device => device.Components?.CasePercent));
         var components = left.HasValue || right.HasValue || casePercent.HasValue
-            ? new BatteryComponents(left, right, casePercent)
+            ? new BatteryComponents(
+                left, right, casePercent,
+                candidates.Select(device => device.Components?.LeftCharging).FirstOrDefault(value => value.HasValue),
+                candidates.Select(device => device.Components?.RightCharging).FirstOrDefault(value => value.HasValue),
+                candidates.Select(device => device.Components?.CaseCharging).FirstOrDefault(value => value.HasValue))
             : null;
 
         return preferred with
@@ -63,6 +67,9 @@ internal static class BatteryDeviceIdentity
                 : candidates.All(device => device.IsConnected == false) ? false : null,
             ObservedAtUtc = candidates.Max(device => device.ObservedAtUtc),
             Components = components,
+            IsCharging = candidates.Any(device => device.IsCharging == true)
+                ? true
+                : candidates.All(device => device.IsCharging == false) ? false : null,
             Categories = candidates.SelectMany(device => device.Categories)
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToArray(),

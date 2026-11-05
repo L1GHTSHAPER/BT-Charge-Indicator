@@ -8,8 +8,17 @@ public sealed partial class MainWindow : Microsoft.UI.Xaml.Window
     public MainWindow()
     {
         InitializeComponent();
+        App.LanguageChanged += ApplyLanguage;
+        Closed += (_, _) => App.LanguageChanged -= ApplyLanguage;
+        ApplyLanguage();
         RootNavigation.SelectedItem = RootNavigation.MenuItems[0];
         NavigateTo("Dashboard");
+    }
+
+    private void ApplyLanguage()
+    {
+        DashboardNavigationItem.Content = WinUIText.Get("NavDashboard");
+        SettingsNavigationItem.Content = WinUIText.Get("NavSettings");
     }
 
     private void RootNavigation_SelectionChanged(

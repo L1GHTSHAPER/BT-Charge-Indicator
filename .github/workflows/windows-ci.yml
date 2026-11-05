@@ -57,6 +57,9 @@ jobs:
           --self-contained true
           --output .\artifacts\BTChargeIndicator-WinUI-win-x64
           -p:WindowsAppSDKSelfContained=true
+          -p:PublishTrimmed=false
+          -p:PublishSingleFile=false
+          -p:PublishReadyToRun=false
 
       - name: Upload Windows x64 application
         uses: actions/upload-artifact@v4

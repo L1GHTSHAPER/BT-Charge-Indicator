@@ -15,9 +15,15 @@ internal static class AppText
     public static CultureInfo ResolveCulture(AppLanguage language, CultureInfo windowsCulture) =>
         CultureInfo.GetCultureInfo(language switch
         {
+            AppLanguage.Chinese => "zh-CN",
             AppLanguage.Russian => "ru",
             AppLanguage.English => "en",
-            _ => windowsCulture.TwoLetterISOLanguageName == "ru" ? "ru" : "en"
+            _ => windowsCulture.TwoLetterISOLanguageName switch
+            {
+                "zh" => "zh-CN",
+                "ru" => "ru",
+                _ => "en"
+            }
         });
 
     public static void Apply(AppLanguage language)

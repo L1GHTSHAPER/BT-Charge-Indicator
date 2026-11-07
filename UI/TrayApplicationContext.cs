@@ -524,7 +524,8 @@ internal sealed class TrayApplicationContext : ApplicationContext
                  {
                      (AppLanguage.Auto, "LanguageAuto"),
                      (AppLanguage.Russian, "LanguageRussian"),
-                     (AppLanguage.English, "LanguageEnglish")
+                     (AppLanguage.English, "LanguageEnglish"),
+                     (AppLanguage.Chinese, "LanguageChinese")
                  })
         {
             var item = new ToolStripMenuItem(AppText.Get(key))

@@ -18,7 +18,7 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
-    <SatelliteResourceLanguages>en;ru</SatelliteResourceLanguages>
+    <SatelliteResourceLanguages>en;ru;zh-CN</SatelliteResourceLanguages>
   </PropertyGroup>
   <ItemGroup>
     <EmbeddedResource Include="Assets\app.ico" LogicalName="BTChargeIndicator.AppIcon" />

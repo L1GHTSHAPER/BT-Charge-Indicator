@@ -388,4 +388,7 @@ This option appears only if your Bluetooth adapter, its driver, and your headset
   <data name="LanguageEnglish" xml:space="preserve">
     <value>English</value>
   </data>
+  <data name="LanguageChinese" xml:space="preserve">
+    <value>简体中文</value>
+  </data>
 </root>

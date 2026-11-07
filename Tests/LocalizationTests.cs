@@ -42,6 +42,8 @@ internal static class LocalizationTests
         var resources = new ResourceManager("BTChargeIndicator.Localization.Strings", typeof(AppText).Assembly);
         var english = Entries(resources.GetResourceSet(CultureInfo.InvariantCulture, true, false)!);
         var russian = Entries(resources.GetResourceSet(CultureInfo.GetCultureInfo("ru"), true, false)!);
+        var chinese = Entries(resources.GetResourceSet(CultureInfo.GetCultureInfo("zh-CN"), true, false)!);
+        Check(english.Keys.ToHashSet().SetEquals(chinese.Keys), "中文资源完整，无需回退到英语");
         Check(english.Count > 0 && english.Keys.ToHashSet().SetEquals(russian.Keys),
             "Both language catalogs are complete without resource fallback");
         foreach (var (key, value) in english)
@@ -51,7 +53,27 @@ internal static class LocalizationTests
             // Parsing every template catches malformed braces, including strings not used in the current device state.
             CompositeFormat.Parse(value);
             CompositeFormat.Parse(russian[key]);
+            Check(!string.IsNullOrWhiteSpace(chinese[key]), "中文翻译非空：" + key);
+            Check(Arguments(value).SequenceEqual(Arguments(chinese[key])), "中文占位符一致：" + key);
+            CompositeFormat.Parse(chinese[key]);
         }
+
+        // 验证自动识别中文、手动切换和通知 XML，设备名称保持原样。
+        foreach (var systemCulture in new[] { "zh-CN", "zh-TW", "zh-HK" })
+            Check(AppText.ResolveCulture(AppLanguage.Auto, CultureInfo.GetCultureInfo(systemCulture)).Name == "zh-CN",
+                "中文 Windows 自动使用简体中文");
+        Check(AppText.ResolveCulture(AppLanguage.Chinese, CultureInfo.GetCultureInfo("en-US")).Name == "zh-CN",
+            "英语 Windows 可以手动选择中文");
+        AppText.Apply(AppLanguage.Chinese);
+        Check(AppText.Get("RefreshNow") == "立即刷新", "中文菜单资源可读取");
+        Check(AppText.Format("ConnectionBattery", 85) == "蓝牙 · 电量 85%", "中文电量占位符正确");
+        var chineseToast = XDocument.Parse(DesktopNotificationService.BuildToastXml(
+            AppText.Get("LowBatteryTitle"), "Crush 80-1: 15%", AppText.Get("OpenBluetooth"),
+            "ms-settings:bluetooth", true));
+        Check(chineseToast.Descendants("text").First().Value == "蓝牙设备电量不足", "通知标题为中文");
+        Check(chineseToast.Descendants("text").Last().Value == "Crush 80-1: 15%", "通知保留原始设备名称和电量");
+        Check(chineseToast.Descendants("action").Single(a => a.Attribute("arguments")!.Value == "dismiss")
+            .Attribute("content")!.Value == "关闭", "通知按钮为中文");
 
         foreach (var language in new[] { AppLanguage.English, AppLanguage.Russian })
         {

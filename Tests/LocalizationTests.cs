@@ -68,10 +68,10 @@ internal static class LocalizationTests
         Check(AppText.Get("RefreshNow") == "立即刷新", "中文菜单资源可读取");
         Check(AppText.Format("ConnectionBattery", 85) == "蓝牙 · 电量 85%", "中文电量占位符正确");
         var chineseToast = XDocument.Parse(DesktopNotificationService.BuildToastXml(
-            AppText.Get("LowBatteryTitle"), "Crush 80-1: 15%", AppText.Get("OpenBluetooth"),
+            AppText.Get("LowBatteryTitle"), "测试键盘: 15%", AppText.Get("OpenBluetooth"),
             "ms-settings:bluetooth", true));
         Check(chineseToast.Descendants("text").First().Value == "蓝牙设备电量不足", "通知标题为中文");
-        Check(chineseToast.Descendants("text").Last().Value == "Crush 80-1: 15%", "通知保留原始设备名称和电量");
+        Check(chineseToast.Descendants("text").Last().Value == "测试键盘: 15%", "通知保留原始设备名称和电量");
         Check(chineseToast.Descendants("action").Single(a => a.Attribute("arguments")!.Value == "dismiss")
             .Attribute("content")!.Value == "关闭", "通知按钮为中文");
 

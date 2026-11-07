@@ -42,7 +42,8 @@ internal enum AppLanguage
     // Persisted in settings.json; keep these IDs stable.
     Auto = 0,
     Russian = 1,
-    English = 2
+    English = 2,
+    Chinese = 3
 }
 
 internal sealed class DevicePreferences
